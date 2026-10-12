@@ -62,3 +62,60 @@ export function validItem(
     ...over,
   }
 }
+
+export function validReceiptLine(over: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    n: 1,
+    itemCode: 'SCR-01',
+    scannedGtin: null,
+    authorityCode: null,
+    batchNo: 'B1',
+    mfgDate: null,
+    expiry: '2028-01',
+    invoicedQty: 5,
+    countedQty: 5,
+    priceMinor: 12550,
+    prevPriceMinor: 12000,
+    diffReason: null,
+    expiredReason: null,
+    ...over,
+  }
+}
+
+/** A draft receipt as the client writes it (no postedAt/cancelledAt keys yet). */
+export function validReceipt(over: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    status: 'draft',
+    supplier: 'الهيئة',
+    deliveryNo: 'D-1001',
+    invoiceNo: 'INV-1',
+    invoiceDate: '2026-10-01',
+    supplyRequestNo: null,
+    supplyOrderNo: null,
+    businessDate: '2026-10-01',
+    lines: [validReceiptLine()],
+    postedAt: null,
+    cancelledAt: null,
+    cancelReason: null,
+    priceUpdates: [],
+    ...over,
+  }
+}
+
+export function validIssueBatch(over: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    status: 'draft',
+    number: 1,
+    rep: 'مندوب',
+    businessDate: '2026-10-01',
+    permits: ['P-1'],
+    requested: [{ itemCode: 'SCR-01', qty: 2, priceMinor: 12550 }],
+    requestedValueMinor: 0,
+    issuedValueMinor: 0,
+    issued: [],
+    postedAt: null,
+    cancelledAt: null,
+    cancelReason: null,
+    ...over,
+  }
+}

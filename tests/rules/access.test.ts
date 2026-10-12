@@ -102,6 +102,28 @@ describe('rules test 9: items', () => {
     await assertFails(updateDoc(doc(db, 'items/SCR-05'), { code: 'SCR-06' }))
     await assertSucceeds(updateDoc(doc(db, 'items/SCR-05'), { active: false }))
   })
+
+  it('lets an item carry an authority code (8-9 digits) or null, and nothing else', async () => {
+    const db = ownerDb(env)
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'items/SCR-07'), validItem('SCR-07', { page: 7 }))
+    })
+    await assertSucceeds(updateDoc(doc(db, 'items/SCR-07'), { authorityCode: '70000409' }))
+    await assertSucceeds(updateDoc(doc(db, 'items/SCR-07'), { authorityCode: '150004771' }))
+    await assertSucceeds(updateDoc(doc(db, 'items/SCR-07'), { authorityCode: null }))
+    await assertFails(updateDoc(doc(db, 'items/SCR-07'), { authorityCode: '1234567' }))
+    await assertFails(updateDoc(doc(db, 'items/SCR-07'), { authorityCode: 70000409 }))
+    await assertFails(updateDoc(doc(db, 'items/SCR-07'), { somethingElse: 'x' }))
+  })
+
+  it('accepts a new item created with an authority code', async () => {
+    await assertSucceeds(
+      setDoc(
+        doc(ownerDb(env), 'items/SCR-08'),
+        validItem('SCR-08', { page: 8, authorityCode: '70000409' }),
+      ),
+    )
+  })
 })
 
 describe('settings', () => {
@@ -114,13 +136,5 @@ describe('settings', () => {
 
   it('owner cannot write other settings documents', async () => {
     await assertFails(setDoc(doc(ownerDb(env), 'settings/other'), { a: 1 }))
-  })
-})
-
-describe('receipts and issueBatches placeholders', () => {
-  it('stay deny-all until T047', async () => {
-    const db = ownerDb(env)
-    await assertFails(getDoc(doc(db, 'receipts/r1')))
-    await assertFails(setDoc(doc(db, 'issueBatches/b2'), { status: 'draft' }))
   })
 })

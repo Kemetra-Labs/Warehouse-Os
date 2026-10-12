@@ -41,6 +41,11 @@ export const itemSchema = z.object({
   unit: z.string().default('قطعة'),
   supplier: z.string().default(''),
   gtins: z.array(z.string().regex(/^(\d{8}|\d{13})$/)).default([]),
+  authorityCode: z
+    .string()
+    .regex(/^\d{8,9}$/)
+    .nullable()
+    .default(null),
   priceMinor: minor.min(0),
   reorderManual: z.number().int().nullable().default(null),
   active: z.boolean().default(true),
@@ -94,13 +99,16 @@ export const receiptLineSchema = z.object({
   n: z.number().int().min(1),
   itemCode: z.string().nullable(),
   scannedGtin: z.string().nullable(),
+  authorityCode: nullableString,
   batchNo: z.string().nullable(),
+  mfgDate: nullableString,
   expiry: z.string().nullable(),
   invoicedQty: z.number().int().min(0),
   countedQty: z.number().int().min(0),
   priceMinor: minor.min(0),
   prevPriceMinor: minor.min(0),
   diffReason: z.string().nullable(),
+  expiredReason: nullableString,
 })
 export type ReceiptLine = z.infer<typeof receiptLineSchema>
 
@@ -109,6 +117,9 @@ export const receiptSchema = z.object({
   supplier: z.string(),
   deliveryNo: z.string(),
   invoiceNo: z.string(),
+  invoiceDate: nullableString,
+  supplyRequestNo: nullableString,
+  supplyOrderNo: nullableString,
   businessDate: z.string().regex(DATE_PATTERN),
   lines: z.array(receiptLineSchema),
   postedAt: timestamp.nullable().default(null),

@@ -19,7 +19,8 @@ service cloud.firestore {
     function validItem(d) {
       return d.keys().hasAll(['code', 'page', 'category', 'nameAr', 'unit', 'gtins', 'priceMinor', 'active', 'updatedAt'])
         && d.keys().hasOnly(['code', 'page', 'category', 'nameAr', 'nameEn', 'material', 'size',
-                             'unit', 'supplier', 'gtins', 'priceMinor', 'reorderManual', 'active', 'updatedAt'])
+                             'unit', 'supplier', 'gtins', 'authorityCode', 'priceMinor', 'reorderManual',
+                             'active', 'updatedAt'])
         && d.code is string
         && d.page is int && d.page >= 1
         && d.category is string
@@ -31,6 +32,8 @@ service cloud.firestore {
         && d.updatedAt is timestamp
         && optString(d, 'nameEn') && optString(d, 'material') && optString(d, 'size')
         && optString(d, 'supplier')
+        && (d.get('authorityCode', null) == null
+            || (d.authorityCode is string && d.authorityCode.matches('^[0-9]{8,9}$')))
         && (d.get('reorderManual', null) == null || d.get('reorderManual', null) is int);
     }
 
@@ -82,13 +85,84 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // ---------- receipts / issueBatches: deny-all placeholders until task T047 ----------
+    // ---------- receipts / issueBatches (draft -> posted -> cancelled) ----------
+    // No exists()/get() here either. Lines are checked as a list only: the client validates each line.
+    function validReceipt(d) {
+      return d.keys().hasAll(['status', 'supplier', 'deliveryNo', 'invoiceNo', 'businessDate', 'lines'])
+        && d.keys().hasOnly(['status', 'supplier', 'deliveryNo', 'invoiceNo', 'invoiceDate',
+                             'supplyRequestNo', 'supplyOrderNo', 'businessDate', 'lines',
+                             'postedAt', 'cancelledAt', 'cancelReason', 'priceUpdates'])
+        && d.status in ['draft', 'posted', 'cancelled']
+        && d.supplier is string && d.deliveryNo is string && d.invoiceNo is string
+        && d.businessDate is string && d.businessDate.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && optString(d, 'invoiceDate') && optString(d, 'supplyRequestNo')
+        && optString(d, 'supplyOrderNo') && optString(d, 'cancelReason')
+        && d.lines is list && d.lines.size() <= 500
+        && (d.get('priceUpdates', []) is list)
+        && (d.get('postedAt', null) == null || d.postedAt is timestamp)
+        && (d.get('cancelledAt', null) == null || d.cancelledAt is timestamp);
+    }
+
+    function validIssueBatch(d) {
+      return d.keys().hasAll(['status', 'number', 'rep', 'businessDate', 'permits', 'requested', 'issued'])
+        && d.keys().hasOnly(['status', 'number', 'rep', 'businessDate', 'permits', 'requested',
+                             'requestedValueMinor', 'issuedValueMinor', 'issued',
+                             'postedAt', 'cancelledAt', 'cancelReason'])
+        && d.status in ['draft', 'posted', 'cancelled']
+        && d.number is int && d.number >= 1
+        && d.rep is string
+        && d.businessDate is string && d.businessDate.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && d.permits is list && d.requested is list && d.issued is list
+        && d.requested.size() <= 500 && d.issued.size() <= 500
+        && (d.get('requestedValueMinor', 0) is int) && (d.get('issuedValueMinor', 0) is int)
+        && optString(d, 'cancelReason')
+        && (d.get('postedAt', null) == null || d.postedAt is timestamp)
+        && (d.get('cancelledAt', null) == null || d.cancelledAt is timestamp);
+    }
+
+    // A draft stays editable and may be posted in the same write (postedAt == request.time).
+    function draftTransition(d, old) {
+      return old.status == 'draft'
+        && d.status in ['draft', 'posted']
+        && d.get('cancelledAt', null) == null
+        && ((d.status == 'draft' && d.get('postedAt', null) == null)
+            || (d.status == 'posted' && d.postedAt == request.time));
+    }
+
+    // posted -> cancelled touches exactly status, cancelledAt and cancelReason.
+    function cancelTransition(d, old) {
+      return old.status == 'posted'
+        && d.status == 'cancelled'
+        && d.cancelledAt == request.time
+        && d.diff(old).affectedKeys().hasOnly(['status', 'cancelledAt', 'cancelReason'])
+        && d.get('cancelReason', null) is string
+        && d.cancelReason.size() > 0;
+    }
+
     match /receipts/{id} {
-      allow read, write: if false;
+      allow read: if isOwner();
+      allow create: if isOwner() && validReceipt(request.resource.data)
+        && request.resource.data.status == 'draft'
+        && request.resource.data.get('postedAt', null) == null
+        && request.resource.data.get('cancelledAt', null) == null;
+      allow update: if isOwner()
+        && ((validReceipt(request.resource.data)
+             && draftTransition(request.resource.data, resource.data))
+            || cancelTransition(request.resource.data, resource.data));
+      allow delete: if isOwner() && resource.data.status == 'draft';
     }
 
     match /issueBatches/{id} {
-      allow read, write: if false;
+      allow read: if isOwner();
+      allow create: if isOwner() && validIssueBatch(request.resource.data)
+        && request.resource.data.status == 'draft'
+        && request.resource.data.get('postedAt', null) == null
+        && request.resource.data.get('cancelledAt', null) == null;
+      allow update: if isOwner()
+        && ((validIssueBatch(request.resource.data)
+             && draftTransition(request.resource.data, resource.data))
+            || cancelTransition(request.resource.data, resource.data));
+      allow delete: if isOwner() && resource.data.status == 'draft';
     }
 
     // ---------- settings/app ----------

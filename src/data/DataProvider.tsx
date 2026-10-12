@@ -6,6 +6,7 @@ import type { DataError } from './listener'
 import { createOutbox, type Outbox } from './outbox'
 import { subscribeItems } from './repos/items'
 import { subscribeMovements } from './repos/movements'
+import { reconcilePendingReceipts, subscribeReceipts, type ReceiptDoc } from './repos/receipts'
 import { subscribeSettings } from './repos/settings'
 import { syncStore } from './sync'
 
@@ -17,6 +18,8 @@ export interface DataValue {
   readonly items: readonly Item[]
   readonly movements: readonly MovementDoc[]
   readonly settings: Settings
+  /** Live receipts of every status; not part of the ready gate. */
+  readonly receipts: readonly ReceiptDoc[]
   readonly outbox: Outbox
 }
 
@@ -40,6 +43,7 @@ export function DataProvider({ children }: { readonly children: ReactNode }) {
   const [items, setItems] = useState<readonly Item[]>([])
   const [movements, setMovements] = useState<readonly MovementDoc[]>([])
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS)
+  const [receipts, setReceipts] = useState<readonly ReceiptDoc[]>([])
   const [loaded, setLoaded] = useState<Loaded>({ items: false, movements: false, settings: false })
   const [error, setError] = useState<DataError | null>(null)
 
@@ -63,6 +67,13 @@ export function DataProvider({ children }: { readonly children: ReactNode }) {
         },
         onError: fail,
       }),
+      subscribeReceipts({
+        onData: (rows, meta) => {
+          setReceipts(rows)
+          syncStore.reportPending('receipts', meta.pendingCount)
+        },
+        onError: fail,
+      }),
       subscribeSettings({
         onData: (s, meta) => {
           setSettings(s)
@@ -74,6 +85,11 @@ export function DataProvider({ children }: { readonly children: ReactNode }) {
     ]
     return () => offs.forEach((off) => off())
   }, [])
+
+  useEffect(() => {
+    // Receipt posts that were pending when the app closed: re-attach, then ask the server (R12).
+    reconcilePendingReceipts(outbox).catch(() => undefined)
+  }, [outbox])
 
   useEffect(() => {
     const refresh = (): void => {
@@ -99,8 +115,8 @@ export function DataProvider({ children }: { readonly children: ReactNode }) {
       : ready
         ? 'ready'
         : 'loading'
-    return { status, error, items, movements, settings, outbox }
-  }, [loaded, error, items, movements, settings, outbox])
+    return { status, error, items, movements, settings, receipts, outbox }
+  }, [loaded, error, items, movements, settings, receipts, outbox])
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>
 }

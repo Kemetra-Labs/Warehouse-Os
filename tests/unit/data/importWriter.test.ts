@@ -28,6 +28,7 @@ function item(n: number): ImportedItem {
     unit: 'قطعة',
     supplier: '',
     gtins: [],
+    authorityCode: null,
     priceMinor: 100 + n,
     reorderManual: null,
     active: true,
