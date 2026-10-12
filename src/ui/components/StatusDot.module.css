@@ -1,0 +1,53 @@
+.dot {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 20px;
+  block-size: 20px;
+  border-radius: 50%;
+  vertical-align: middle;
+  color: var(--surface);
+}
+
+.match {
+  background: var(--match);
+}
+
+.miss {
+  background: var(--miss);
+}
+
+.warn {
+  background: var(--amber);
+}
+
+.dot svg {
+  inline-size: 18px;
+  block-size: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Count-match tick: the check draws itself (motion table). */
+.tick {
+  stroke-dasharray: 16;
+  stroke-dashoffset: 0;
+  animation: draw var(--dur-tick) var(--ease-standard) both;
+}
+
+@keyframes draw {
+  from {
+    stroke-dashoffset: 16;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tick {
+    animation: none;
+  }
+}

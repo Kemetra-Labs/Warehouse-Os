@@ -13,6 +13,29 @@
   --amber: #9a6200;
   --line: #d5dfdc;
 
+  /* Surfaces and tints (derived from the palette above) */
+  --surface: #ffffff;
+  --on-scrub: #ffffff;
+  --on-scrub-muted: #bfe0da;
+  --scrub-line: #9fd1c8;
+  --hairline: #eef3f1;
+  --tint-neutral: #f7faf9;
+  --tint-miss: #fdecea;
+  --tint-marker: #f2f6fd;
+  --disabled-bg: #c9d6d3;
+  --disabled-ink: #3c4f4b;
+  --scrim: rgba(18, 35, 33, 0.35);
+
+  /* Radius and elevation */
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-sheet: 20px;
+  --shadow-sheet: 0 -6px 24px rgba(0, 0, 0, 0.18);
+
+  /* Layout */
+  --nav-height: 56px;
+  --tap-min: 44px;
+
   /* Type scale (minimum 12px) */
   --font-family: 'Almarai', system-ui, sans-serif;
   --text-xs: 12px;

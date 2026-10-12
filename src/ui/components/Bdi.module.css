@@ -1,0 +1,5 @@
+.bdi {
+  direction: ltr;
+  unicode-bidi: isolate;
+  font-variant-numeric: tabular-nums;
+}

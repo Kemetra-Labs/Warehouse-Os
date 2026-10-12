@@ -1,0 +1,26 @@
+.form {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.input {
+  min-block-size: var(--tap-min);
+  padding-inline: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: var(--text-md);
+}
+
+.input::placeholder {
+  color: var(--muted);
+}
+
+.hint {
+  min-block-size: 1.5em;
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-xs);
+}

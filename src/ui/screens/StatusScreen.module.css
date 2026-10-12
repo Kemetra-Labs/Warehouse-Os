@@ -1,0 +1,59 @@
+.screen {
+  display: grid;
+  place-items: center;
+  min-block-size: 100dvh;
+  padding: var(--space-4);
+}
+
+.card {
+  display: grid;
+  gap: var(--space-3);
+  inline-size: min(100%, 420px);
+  padding: var(--space-5);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.title {
+  margin: 0;
+  color: var(--scrub);
+  font-size: var(--text-xl);
+  font-weight: 800;
+}
+
+.message {
+  margin: 0;
+  color: var(--muted);
+}
+
+.button {
+  min-block-size: var(--tap-min);
+  padding-inline: var(--space-4);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--scrub);
+  color: var(--on-scrub);
+  font-family: inherit;
+  font-size: var(--text-md);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.button:disabled {
+  background: var(--disabled-bg);
+  color: var(--disabled-ink);
+  cursor: default;
+}
+
+.error {
+  margin: 0;
+  color: var(--miss);
+  font-size: var(--text-sm);
+}
+
+.list {
+  margin: 0;
+  padding-inline-start: var(--space-4);
+  font-size: var(--text-sm);
+}

@@ -54,7 +54,7 @@ US1 → US2 → US3 → US7. P2 stories follow: US4 → US5 → US6.
 - [X] T017 [P] Unit tests for piastre conversion, rounding, and formatting with Western digits in `tests/unit/domain/money.test.ts`
 - [X] T018 [P] Rules tests 1, 2 and 9 (signed out, non-owner, items not deletable and code immutable) in `tests/rules/access.test.ts`
 - [X] T019 [P] Rules tests 3, 4, 6 and 10 (movements create-only, deterministic-ID duplicates rejected, validation, 450-op and 30-line batch budget) in `tests/rules/movements.test.ts`
-- [ ] T020 [P] Unit tests for the outbox (store before commit, delete on ack, mark failed on reject, survive reload, **a rejected resend whose document is already posted on the server is cleared as success**) using `fake-indexeddb` in `tests/unit/data/outbox.test.ts`
+- [X] T020 [P] Unit tests for the outbox (store before commit, delete on ack, mark failed on reject, survive reload, **a rejected resend whose document is already posted on the server is cleared as success**) using `fake-indexeddb` in `tests/unit/data/outbox.test.ts`
 
 ### Implementation
 
@@ -64,14 +64,14 @@ US1 → US2 → US3 → US7. P2 stories follow: US4 → US5 → US6.
 - [X] T024 [P] Implement `src/domain/search.ts` so T016 passes
 - [X] T025 [P] Implement `src/domain/money.ts` so T017 passes
 - [X] T026 Write `firestore.rules.template` for items, movements and settings per `contracts/firestore-rules.md` (no `exists()` in movement rules) so T018 and T019 pass
-- [ ] T027 Initialise Firebase with `persistentLocalCache` and `persistentMultipleTabManager`, plus the emulator switch, in `src/data/firebase.ts`
-- [ ] T028 Implement Google sign-in, persisted session and owner gate in `src/data/auth.ts`, and the sign-in screen in `src/ui/screens/SignIn.tsx`
-- [ ] T029 [P] Implement live repositories for items, movements and settings in `src/data/repos/items.ts`, `src/data/repos/movements.ts` and `src/data/repos/settings.ts`
-- [ ] T030 Implement the IndexedDB outbox in `src/data/outbox.ts` so T020 passes (research R12)
-- [ ] T031 Implement the sync state (synced / pending N / failed) from `hasPendingWrites`, `waitForPendingWrites()` and the outbox in `src/data/sync.ts`, plus the `SyncPill` component in `src/ui/components/SyncPill.tsx`
-- [ ] T032 Implement the derived-state hook (balances, statuses, reorder points, pending settlements) with memoization in `src/data/useLedger.ts`, with a unit test in `tests/unit/data/useLedger.test.ts`
-- [ ] T033 [P] Build UI primitives in `src/ui/components/`: `Bdi.tsx` (LTR isolate for codes), `StatusDot.tsx` (colour plus glyph), `CountTable.tsx`, `Seal.tsx` (SVG with a stamp animation and reduced-motion fallback), `BottomSheet.tsx`, `SearchBox.tsx`
-- [ ] T034 Build the app shell (routes, header with SyncPill, bottom navigation الرئيسية / الأصناف / الحركات / التقارير, providers) in `src/app/App.tsx` and `src/app/routes.tsx`
+- [X] T027 Initialise Firebase with `persistentLocalCache` and `persistentMultipleTabManager`, plus the emulator switch, in `src/data/firebase.ts`
+- [X] T028 Implement Google sign-in, persisted session and owner gate in `src/data/auth.ts`, and the sign-in screen in `src/ui/screens/SignIn.tsx`
+- [X] T029 [P] Implement live repositories for items, movements and settings in `src/data/repos/items.ts`, `src/data/repos/movements.ts` and `src/data/repos/settings.ts`
+- [X] T030 Implement the IndexedDB outbox in `src/data/outbox.ts` so T020 passes (research R12)
+- [X] T031 Implement the sync state (synced / pending N / failed) from `hasPendingWrites`, `waitForPendingWrites()` and the outbox in `src/data/sync.ts`, plus the `SyncPill` component in `src/ui/components/SyncPill.tsx`
+- [X] T032 Implement the derived-state hook (balances, statuses, reorder points, pending settlements) with memoization in `src/data/useLedger.ts`, with a unit test in `tests/unit/data/useLedger.test.ts`
+- [X] T033 [P] Build UI primitives in `src/ui/components/`: `Bdi.tsx` (LTR isolate for codes), `StatusDot.tsx` (colour plus glyph), `CountTable.tsx`, `Seal.tsx` (SVG with a stamp animation and reduced-motion fallback), `BottomSheet.tsx`, `SearchBox.tsx`
+- [X] T034 Build the app shell (routes, header with SyncPill, bottom navigation الرئيسية / الأصناف / الحركات / التقارير, providers) in `src/app/App.tsx` and `src/app/routes.tsx`
 
 **Checkpoint**: domain tests and rules tests are green, and the shell runs signed in against the emulator.
 
@@ -118,6 +118,7 @@ US1 → US2 → US3 → US7. P2 stories follow: US4 → US5 → US6.
   - a business date in the future is rejected (edge case);
   - a line with counted quantity 0 writes no movement and keeps its difference on the receipt;
   - header fields `invoiceDate`, `supplyRequestNo`, `supplyOrderNo` and line fields `authorityCode`, `mfgDate` validate and round-trip;
+  - a second receipt with an existing `deliveryNo` is refused, and the existing one is returned (FR-030b);
   - a line resolved by authority code links nothing on posting (authority codes come only from the reviewed mapping, FR-017).
 - [ ] T045 [P] [US2] Rules tests 7 and 8 for documents (draft editable, posted frozen, posted → cancelled limited to three keys with `status == 'cancelled'` and `cancelledAt == request.time`, **posted → draft rejected, posted → posted rejected, delete after an attempted downgrade rejected**, drafts deletable) in `tests/rules/documents.test.ts`
 
@@ -134,7 +135,7 @@ US1 → US2 → US3 → US7. P2 stories follow: US4 → US5 → US6.
   - a reduced-motion fallback;
   - the camera hides when no camera is available.
 - [ ] T051 [US2] Build the receive screen in `src/ui/screens/Receive.tsx`. Requirements:
-  - header chips (supplier, delivery note, invoice number and date, supply request, supply order);
+  - header chips (supplier, delivery note, invoice number and date, supply request, supply order); scanning the note's QR fills the delivery-note number, and an existing receipt with that number opens instead (FR-030b);
   - the scanner and the always-visible SearchBox;
   - a line card with batch, expiry, invoiced and counted quantities, and price (flagged when it changes);
   - an expired batch shows a clear warning and asks for a reason before the line is added;
