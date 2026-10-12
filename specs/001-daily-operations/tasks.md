@@ -116,33 +116,36 @@ US1 → US2 → US3 → US7. P2 stories follow: US4 → US5 → US6.
   - `priceUpdates`; a warning when a GTIN is already linked to another item;
   - an expiry before the business date needs a reason (edge case);
   - a business date in the future is rejected (edge case);
-  - a line with counted quantity 0 writes no movement and keeps its difference on the receipt.
+  - a line with counted quantity 0 writes no movement and keeps its difference on the receipt;
+  - header fields `invoiceDate`, `supplyRequestNo`, `supplyOrderNo` and line fields `authorityCode`, `mfgDate` validate and round-trip;
+  - a line resolved by authority code links nothing on posting (authority codes come only from the reviewed mapping, FR-017).
 - [ ] T045 [P] [US2] Rules tests 7 and 8 for documents (draft editable, posted frozen, posted → cancelled limited to three keys with `status == 'cancelled'` and `cancelledAt == request.time`, **posted → draft rejected, posted → posted rejected, delete after an attempted downgrade rejected**, drafts deletable) in `tests/rules/documents.test.ts`
 
 ### Implementation for User Story 2
 
-- [ ] T046 [US2] Implement `src/domain/receipt.ts` so T044 passes
-- [ ] T047 [US2] Extend `firestore.rules.template` with the transitions for `receipts` and `issueBatches` so T045 passes
-- [ ] T048 [US2] Implement `src/data/repos/receipts.ts`: draft CRUD, plus one atomic post batch (movements, item price, GTIN link, status) written through the outbox
-- [ ] T049 [P] [US2] Implement the scanner in `src/scan/detector.ts` (barcode-detector ponyfill; EAN-13/8, Code-128 and DataMatrix) and `src/scan/Scanner.tsx`. Requirements:
+- [ ] T046 [US2] Update the search classifier per FR-020 and research R5: an 8–9 digit number is `{kind:'ambiguous'}` and resolves against both GTINs and authority codes, returning every match; add `authorityCode` (optional, `^\d{8,9}$`) to the item schema in `src/domain/types.ts`. Tests first in `tests/unit/domain/search.test.ts`, then `src/domain/search.ts`
+- [ ] T047 [US2] Implement `src/domain/receipt.ts` so T044 passes
+- [ ] T048 [US2] Extend `firestore.rules.template` with the transitions for `receipts` and `issueBatches` so T045 passes
+- [ ] T049 [US2] Implement `src/data/repos/receipts.ts`: draft CRUD, plus one atomic post batch (movements, item price, GTIN link, status) written through the outbox
+- [ ] T050 [P] [US2] Implement the scanner in `src/scan/detector.ts` (barcode-detector ponyfill; EAN-13/8, Code-128 and DataMatrix) and `src/scan/Scanner.tsx`. Requirements:
   - the whole view is the tap target, with continuous mode;
   - a beep and `navigator.vibrate`;
   - a green outline with a tick for known codes and a red outline with a cross for unknown ones;
   - a reduced-motion fallback;
   - the camera hides when no camera is available.
-- [ ] T050 [US2] Build the receive screen in `src/ui/screens/Receive.tsx`. Requirements:
-  - header chips (supplier, delivery note, invoice);
+- [ ] T051 [US2] Build the receive screen in `src/ui/screens/Receive.tsx`. Requirements:
+  - header chips (supplier, delivery note, invoice number and date, supply request, supply order);
   - the scanner and the always-visible SearchBox;
   - a line card with batch, expiry, invoiced and counted quantities, and price (flagged when it changes);
   - an expired batch shows a clear warning and asks for a reason before the line is added;
   - each scan increments the counted quantity.
-- [ ] T051 [US2] Build the receipt review screen in `src/ui/screens/ReceiptReview.tsx`. Requirements:
+- [ ] T052 [US2] Build the receipt review screen in `src/ui/screens/ReceiptReview.tsx`. Requirements:
   - the double-count table (الفاتورة | اتعدّ);
   - the difference-reason prompt;
   - the unknown-GTIN resolver;
   - اعتماد stays disabled until the review is valid;
   - the seal appears on post.
-- [ ] T052 [US2] Write an E2E receiving test in `tests/e2e/receive.spec.ts` covering:
+- [ ] T053 [US2] Write an E2E receiving test in `tests/e2e/receive.spec.ts` covering:
   - a fake-camera EAN-13 scan;
   - a typed page number;
   - an unknown GTIN;
@@ -162,12 +165,12 @@ US1 → US2 → US3 → US7. P2 stories follow: US4 → US5 → US6.
 
 ### Tests for User Story 3
 
-- [ ] T053 [P] [US3] Unit tests for substitute ranking in `tests/unit/domain/substitutes.test.ts`:
+- [ ] T054 [P] [US3] Unit tests for substitute ranking in `tests/unit/domain/substitutes.test.ts`:
   - same category, in stock, excluding the item itself;
   - ordered by absolute price difference, then by balance;
   - the "all categories" toggle;
   - a check against workbook prices (NAL-01 → NAL-07 ±0, NAL-11 +75%).
-- [ ] T054 [P] [US3] Unit tests for the issue domain in `tests/unit/domain/issue.test.ts`:
+- [ ] T055 [P] [US3] Unit tests for the issue domain in `tests/unit/domain/issue.test.ts`:
   - aggregation per item (FR-041);
   - the coverage check;
   - a negative issue needs a reason;
@@ -180,22 +183,22 @@ US1 → US2 → US3 → US7. P2 stories follow: US4 → US5 → US6.
 
 ### Implementation for User Story 3
 
-- [ ] T055 [P] [US3] Implement `src/domain/substitutes.ts` so T053 passes
-- [ ] T056 [US3] Implement `src/domain/issue.ts` so T054 passes
-- [ ] T057 [US3] Implement `src/data/repos/issues.ts` (drafts, local numbering, atomic post through the outbox)
-- [ ] T058 [US3] Build the issue screen in `src/ui/screens/Issue.tsx`. Requirements:
+- [ ] T056 [P] [US3] Implement `src/domain/substitutes.ts` so T054 passes
+- [ ] T057 [US3] Implement `src/domain/issue.ts` so T055 passes
+- [ ] T058 [US3] Implement `src/data/repos/issues.ts` (drafts, local numbering, atomic post through the outbox)
+- [ ] T059 [US3] Build the issue screen in `src/ui/screens/Issue.tsx`. Requirements:
   - rep name and permit numbers (numbers only);
   - requested lines;
   - the مطلوب | اتسلّم count table with status dots;
   - the totals summary;
   - the seal on post.
-- [ ] T059 [US3] Build the substitute bottom sheet in `src/ui/screens/SubstituteSheet.tsx`. Requirements:
+- [ ] T060 [US3] Build the substitute bottom sheet in `src/ui/screens/SubstituteSheet.tsx`. Requirements:
   - nearest price pre-selected;
   - difference shown in EGP and percent, with balance;
   - the "كل الفئات" toggle;
   - "صرف بالسالب + سبب".
-- [ ] T060 [US3] Build the home screen in `src/ui/screens/Home.tsx`: the open draft batch at the top, receive and issue actions, and tallies (تحتاج طلب / نافد / تسويات معلّقة)
-- [ ] T061 [US3] Write an E2E issuing test (aggregation, substitute, negative with a reason, post, totals) in `tests/e2e/issue.spec.ts`
+- [ ] T061 [US3] Build the home screen in `src/ui/screens/Home.tsx`: the open draft batch at the top, receive and issue actions, and tallies (تحتاج طلب / نافد / تسويات معلّقة)
+- [ ] T062 [US3] Write an E2E issuing test (aggregation, substitute, negative with a reason, post, totals) in `tests/e2e/issue.spec.ts`
 
 **Checkpoint**: the MVP's daily loop (import → receive → issue) works end to end.
 
@@ -209,19 +212,19 @@ US1 → US2 → US3 → US7. P2 stories follow: US4 → US5 → US6.
 
 ### Tests for User Story 7
 
-- [ ] T062 [P] [US7] E2E test in `tests/e2e/offline-sync.spec.ts`:
+- [ ] T063 [P] [US7] E2E test in `tests/e2e/offline-sync.spec.ts`:
   - two browser contexts;
   - offline receive and issue on the first;
   - "N مستنية النت", then "متزامن" after reconnect;
   - the same balances on the second context;
   - concurrent offline issues that push an item negative get flagged.
-- [ ] T063 [P] [US7] E2E test in `tests/e2e/outbox-rejected.spec.ts`: an offline post that the rules reject after reconnect turns the pill red, and the payload is kept on the unsent screen (research R12)
+- [ ] T064 [P] [US7] E2E test in `tests/e2e/outbox-rejected.spec.ts`: an offline post that the rules reject after reconnect turns the pill red, and the payload is kept on the unsent screen (research R12)
 
 ### Implementation for User Story 7
 
-- [ ] T064 [US7] Build the unsent-documents screen (list, details, retry, export to Excel) in `src/ui/screens/Unsent.tsx`
-- [ ] T065 [US7] Implement the post-sync negative flag and the "changed since seen" highlight (tint plus marker-blue dot, no side stripe; cleared when opened) in `src/data/useLedger.ts` and `src/ui/components/ItemRow.tsx`
-- [ ] T066 [US7] Add the duplicate batch-number warning after sync (research R10) in `src/data/repos/issues.ts` and `src/ui/screens/Issue.tsx`
+- [ ] T065 [US7] Build the unsent-documents screen (list, details, retry, export to Excel) in `src/ui/screens/Unsent.tsx`
+- [ ] T066 [US7] Implement the post-sync negative flag and the "changed since seen" highlight (tint plus marker-blue dot, no side stripe; cleared when opened) in `src/data/useLedger.ts` and `src/ui/components/ItemRow.tsx`
+- [ ] T067 [US7] Add the duplicate batch-number warning after sync (research R10) in `src/data/repos/issues.ts` and `src/ui/screens/Issue.tsx`
 
 **Checkpoint**: all P1 stories are done. This is the field-trial build.
 
@@ -233,14 +236,16 @@ US1 → US2 → US3 → US7. P2 stories follow: US4 → US5 → US6.
 
 **Independent Test**: open the card of an item that has an addition, an issue, a substitute and a reversal. Every movement shows with its running balance, and the reversal is struck through and linked.
 
-- [ ] T067 [P] [US4] Unit tests for item validation (unique code and page, GTIN format, a warning for duplicate GTINs, edits never touch movement prices) in `tests/unit/domain/items.test.ts`
-- [ ] T068 [P] [US4] Unit tests for settings validation (coverage months > 0, default reorder point ≥ 1) and recomputed reorder points after a change in `tests/unit/domain/settings.test.ts`
-- [ ] T069 [US4] Implement `src/domain/items.ts` so T067 passes
-- [ ] T070 [US4] Build the items list with filters (تحتاج طلب / نافد / تسويات معلّقة / category) and the search box in `src/ui/screens/Items.tsx`
-- [ ] T071 [US4] Build the item card in `src/ui/screens/ItemCard.tsx`. It shows master data, balance, status, reorder point, batches with expiry, and the movement history with running balance, price at the time, the document, and struck reversals.
-- [ ] T072 [US4] Build the item add/edit form (new code and page suggested, GTIN list) in `src/ui/screens/ItemEdit.tsx`
-- [ ] T073 [US4] Implement `src/domain/settings.ts` so T068 passes, and build the settings screen (مدة التغطية لحد الطلب، الحد الافتراضي للأصناف الجديدة) in `src/ui/screens/Settings.tsx` (FR-012)
-- [ ] T074 [US4] Write an E2E test for items (filter, open card, edit price; the history keeps its old prices) in `tests/e2e/items.spec.ts`
+- [ ] T068 [P] [US4] Unit tests for item validation (unique code and page, GTIN format, a warning for duplicate GTINs, edits never touch movement prices) in `tests/unit/domain/items.test.ts`
+- [ ] T069 [P] [US4] Unit tests for settings validation (coverage months > 0, default reorder point ≥ 1) and recomputed reorder points after a change in `tests/unit/domain/settings.test.ts`
+- [ ] T070 [US4] Implement `src/domain/items.ts` so T068 passes
+- [ ] T071 [US4] Build the items list with filters (تحتاج طلب / نافد / تسويات معلّقة / category) and the search box in `src/ui/screens/Items.tsx`
+- [ ] T072 [US4] Build the item card in `src/ui/screens/ItemCard.tsx`. It shows master data, balance, status, reorder point, batches with expiry, and the movement history with running balance, price at the time, the document, and struck reversals.
+- [ ] T073 [US4] Build the item add/edit form (new code and page suggested, GTIN list) in `src/ui/screens/ItemEdit.tsx`
+- [ ] T074 [US4] Implement `src/domain/settings.ts` so T069 passes, and build the settings screen (مدة التغطية لحد الطلب، الحد الافتراضي للأصناف الجديدة) in `src/ui/screens/Settings.tsx` (FR-012)
+- [ ] T075 [P] [US4] Unit tests for the authority-code mapping import (two columns الكود / كود الهيئة plus a تأكيد column; only confirmed rows; duplicate codes rejected; unknown item codes listed) in `tests/unit/excel/importAuthorityCodes.test.ts`, and a rules test that an item update may set `authorityCode` in `tests/rules/access.test.ts`
+- [ ] T076 [US4] Implement `src/excel/importAuthorityCodes.ts`, add `authorityCode` to the items allowlist in `firestore.rules.template`, and add an "استيراد أكواد الهيئة" action with a result summary to `src/ui/screens/ImportParity.tsx` (FR-017)
+- [ ] T077 [US4] Write an E2E test for items (filter, open card, edit price; the history keeps its old prices) in `tests/e2e/items.spec.ts`
 
 ---
 
@@ -250,16 +255,16 @@ US1 → US2 → US3 → US7. P2 stories follow: US4 → US5 → US6.
 
 **Independent Test**: cancel a posted issue batch. Balances return, both movements are visible, and a second cancel is refused.
 
-- [ ] T075 [P] [US5] Unit tests for cancel composition in `tests/unit/domain/cancel.test.ts`:
+- [ ] T078 [P] [US5] Unit tests for cancel composition in `tests/unit/domain/cancel.test.ts`:
   - receipt reversals plus the price-restore rule, with GTIN links kept;
   - issue reversals;
   - return (+) and signed adjustment;
   - a reason is required.
-- [ ] T076 [P] [US5] Rules test 5 (`rev-X` once only, reason required, `reverses == X`) in `tests/rules/movements.test.ts`
-- [ ] T077 [US5] Implement the cancel batches in `src/data/repos/receipts.ts` and `src/data/repos/issues.ts` (through the outbox) so T075 and T076 pass
-- [ ] T078 [US5] Build the return and adjustment screen in `src/ui/screens/Adjust.tsx`
-- [ ] T079 [US5] Add the cancel action with a reason and the red "ملغي" seal to `src/ui/screens/ReceiptReview.tsx` and `src/ui/screens/Issue.tsx`
-- [ ] T080 [US5] Write an E2E test (cancel a batch, adjust a pending settlement, re-cancel refused) in `tests/e2e/cancel.spec.ts`
+- [ ] T079 [P] [US5] Rules test 5 (`rev-X` once only, reason required, `reverses == X`) in `tests/rules/movements.test.ts`
+- [ ] T080 [US5] Implement the cancel batches in `src/data/repos/receipts.ts` and `src/data/repos/issues.ts` (through the outbox) so T078 and T079 pass
+- [ ] T081 [US5] Build the return and adjustment screen in `src/ui/screens/Adjust.tsx`
+- [ ] T082 [US5] Add the cancel action with a reason and the red "ملغي" seal to `src/ui/screens/ReceiptReview.tsx` and `src/ui/screens/Issue.tsx`
+- [ ] T083 [US5] Write an E2E test (cancel a batch, adjust a pending settlement, re-cancel refused) in `tests/e2e/cancel.spec.ts`
 
 ---
 
@@ -269,7 +274,7 @@ US1 → US2 → US3 → US7. P2 stories follow: US4 → US5 → US6.
 
 **Independent Test**: print a posted receipt to A4, and paste exported rows into a **copy** of the workbook so that its balances equal the app.
 
-- [ ] T081 [P] [US6] Unit tests for ledger rows in `tests/unit/excel/ledgerRows.test.ts`:
+- [ ] T084 [P] [US6] Unit tests for ledger rows in `tests/unit/excel/ledgerRows.test.ts`:
   - columns A–R in table order;
   - formula columns empty;
   - signed تسوية;
@@ -277,13 +282,13 @@ US1 → US2 → US3 → US7. P2 stories follow: US4 → US5 → US6.
   - only movements not yet exported; **imported movements are never exported, so the first export after an import is empty**; exported IDs are added with `arrayUnion`;
   - dates written correctly under `TZ=Africa/Cairo`;
   - the capacity warning beyond row 595.
-- [ ] T082 [P] [US6] Unit tests for the print files (official header rows, RTL view, A4, fit width, totals, signature block, the ملغي banner) in `tests/unit/excel/prints.test.ts`
-- [ ] T083 [P] [US6] Unit tests for the backup workbook (three sheets with all fields) and the 7-day reminder in `tests/unit/excel/backup.test.ts`
-- [ ] T084 [US6] Implement `src/excel/printReceipt.ts` and `src/excel/printIssue.ts` with ExcelJS so T082 passes
-- [ ] T085 [US6] Implement `src/excel/ledgerRows.ts` and the "تم اللصق" confirmation that records exported IDs, so T081 passes
-- [ ] T086 [US6] Implement `src/excel/backup.ts` and the reminder banner so T083 passes
-- [ ] T087 [US6] Build the exports screen (print, ledger rows with steps, backup) in `src/ui/screens/Exports.tsx`
-- [ ] T088 [US6] **Spike R8, with the user, on a COPY of the workbook**:
+- [ ] T085 [P] [US6] Unit tests for the print files (official header rows, RTL view, A4, fit width, totals, signature block, the ملغي banner) in `tests/unit/excel/prints.test.ts`
+- [ ] T086 [P] [US6] Unit tests for the backup workbook (three sheets with all fields) and the 7-day reminder in `tests/unit/excel/backup.test.ts`
+- [ ] T087 [US6] Implement `src/excel/printReceipt.ts` and `src/excel/printIssue.ts` with ExcelJS so T085 passes
+- [ ] T088 [US6] Implement `src/excel/ledgerRows.ts` and the "تم اللصق" confirmation that records exported IDs, so T084 passes
+- [ ] T089 [US6] Implement `src/excel/backup.ts` and the reminder banner so T086 passes
+- [ ] T090 [US6] Build the exports screen (print, ledger rows with steps, backup) in `src/ui/screens/Exports.tsx`
+- [ ] T091 [US6] **Spike R8, with the user, on a COPY of the workbook**:
   1. Paste exported rows with Paste Special → Skip blanks. The set must include at least one إضافة, one صرف, one positive تسوية, one negative تسوية, one مرتجع and one reversal pair, and column D's validation must accept them.
   2. Check that the formula columns still calculate and that the touched items' balances equal the app.
   3. Record the outcome in `specs/001-daily-operations/research.md`.
@@ -293,13 +298,13 @@ US1 → US2 → US3 → US7. P2 stories follow: US4 → US5 → US6.
 
 ## Phase 10: Polish & Cross-Cutting Concerns
 
-- [ ] T089 [P] Motion pass per `docs/design/ui-inspiration.md` (8 moments, transform and opacity only, reduced-motion fallbacks). Check the easing values against the official Material 3 tokens in `src/ui/tokens.css`
-- [ ] T090 [P] RTL and accessibility pass on the Android device: logical properties, `<bdi>` on codes, minimum 12 px text, contrast in dim light, two-line labels for long Arabic text
-- [ ] T091 [P] Performance checks against plan.md goals: a Vitest bench for search under 100 ms over 97 items and 1,000 movements in `tests/unit/domain/search.bench.ts`, and a Playwright trace for offline cold start under 2 s after install in `tests/e2e/perf.spec.ts`
-- [ ] T092 Run `impeccable detect` and the impeccable finish review on the built screens. Fix the findings, then write `DESIGN.md` with the documenter
-- [ ] T093 Coverage gate (≥ 80% for domain, data and excel) and the real-workbook parity gate (`WORKBOOK_PATH=… npm run test:parity`)
-- [ ] T094 Walk through `specs/001-daily-operations/quickstart.md` §4 on the phone with the user, timing SC-003 (a receive line under 30 s scanned and 45 s typed) and SC-004 (a 10-permit batch with one substitute under 5 min). Record the times in `specs/001-daily-operations/quickstart.md`
-- [ ] T095 Run `pr-review` in a fresh context, fix the findings, then deploy (`npm run deploy`) after the user approves
+- [ ] T092 [P] Motion pass per `docs/design/ui-inspiration.md` (8 moments, transform and opacity only, reduced-motion fallbacks). Check the easing values against the official Material 3 tokens in `src/ui/tokens.css`
+- [ ] T093 [P] RTL and accessibility pass on the Android device: logical properties, `<bdi>` on codes, minimum 12 px text, contrast in dim light, two-line labels for long Arabic text
+- [ ] T094 [P] Performance checks against plan.md goals: a Vitest bench for search under 100 ms over 97 items and 1,000 movements in `tests/unit/domain/search.bench.ts`, and a Playwright trace for offline cold start under 2 s after install in `tests/e2e/perf.spec.ts`
+- [ ] T095 Run `impeccable detect` and the impeccable finish review on the built screens. Fix the findings, then write `DESIGN.md` with the documenter
+- [ ] T096 Coverage gate (≥ 80% for domain, data and excel) and the real-workbook parity gate (`WORKBOOK_PATH=… npm run test:parity`)
+- [ ] T097 Walk through `specs/001-daily-operations/quickstart.md` §4 on the phone with the user, timing SC-003 (a receive line under 30 s scanned and 45 s typed) and SC-004 (a 10-permit batch with one substitute under 5 min). Record the times in `specs/001-daily-operations/quickstart.md`
+- [ ] T098 Run `pr-review` in a fresh context, fix the findings, then deploy (`npm run deploy`) after the user approves
 
 ---
 
@@ -308,11 +313,11 @@ US1 → US2 → US3 → US7. P2 stories follow: US4 → US5 → US6.
 ```text
 Setup (T001–T013) ─▶ Foundational (T014–T034) ─▶ US1 Import (T035–T043)
                                                    │
-                                                   ├─▶ US2 Receive (T044–T052) ─▶ US3 Issue (T053–T061) ─▶ US7 Offline (T062–T066)
+                                                   ├─▶ US2 Receive (T044–T053) ─▶ US3 Issue (T054–T062) ─▶ US7 Offline (T063–T067)
                                                    │                                   │
-                                                   └─▶ US4 Items (T067–T074)           └─▶ US5 Cancel (T075–T080)
-                                                                                           US6 Outputs (T081–T088) needs US2 + US3
-Polish (T089–T095) after all stories
+                                                   └─▶ US4 Items (T068–T077)           └─▶ US5 Cancel (T078–T083)
+                                                                                           US6 Outputs (T084–T091) needs US2 + US3
+Polish (T092–T098) after all stories
 ```
 
 - US1 comes first because every other story needs real items and balances.
@@ -326,8 +331,8 @@ Polish (T089–T095) after all stories
 - **Foundational tests**: T014, T015, T016, T017, T018, T019 and T020 together (separate files).
 - **Foundational domain code**: T022, T023, T024 and T025 together once T021 lands.
 - **US1**: T035, T036, T037 and T038 together, then T039 and T041 in parallel (separate files).
-- **US3**: T053 and T054 together, then T055 alongside T057.
-- **US6**: T081, T082 and T083 together.
+- **US3**: T054 and T055 together, then T056 alongside T058.
+- **US6**: T084, T085 and T086 together.
 
 ## Implementation Strategy
 
@@ -339,5 +344,5 @@ Polish (T089–T095) after all stories
 4. Polish, review, deploy. Then phase 2 (official monthly report and ID cards) gets its own
    spec.
 
-**Totals**: 95 tasks. Setup 13 · Foundational 21 · US1 9 · US2 9 · US3 9 · US7 5 · US4 8 ·
+**Totals**: 98 tasks. Setup 13 · Foundational 21 · US1 9 · US2 10 · US3 9 · US7 5 · US4 10 ·
 US5 6 · US6 8 · Polish 7.

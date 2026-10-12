@@ -95,8 +95,10 @@ current npm releases checked on 2026-10-12. Implementation pins exact versions i
   - **Normalisation**: a GTIN-14 with a leading 0 becomes GTIN-13, and a 12-digit UPC-A gets a
     leading 0 to become GTIN-13.
 - **Fallback**: the single search input (FR-020) is always visible. It is classified by shape:
-  a GS1 element string → parsed as above; `^\d{8}$`, `^\d{12}$`, `^\d{13}$` or `^\d{14}$` →
-  GTIN (normalised as above); `^\d{1,4}$` → page number; `^[A-Z]{3}-\d{2,3}$`
+  a GS1 element string → parsed as above; `^\d{8,9}$` → **ambiguous**: looked up both as a
+  GTIN (EAN-8) and as an authority code (كود الهيئة, e.g. `70000409`, `150004771`), and if two
+  different items match the user chooses; `^\d{12}$`, `^\d{13}$` or `^\d{14}$` → GTIN
+  (normalised as above); `^\d{1,4}$` → page number; `^[A-Z]{3}-\d{2,3}$`
   (case-insensitive) → code;
   anything else → name search. Arabic-Indic digits (٠-٩) are normalised to ASCII first.
 
