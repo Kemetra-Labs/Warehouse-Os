@@ -24,6 +24,7 @@ function item(code: string, extra: Partial<Item> = {}): Item {
     unit: 'قطعة',
     supplier: '',
     gtins: [],
+    authorityCode: null,
     priceMinor: 100,
     reorderManual: null,
     active: true,

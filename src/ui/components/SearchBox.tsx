@@ -10,6 +10,7 @@ export interface SearchBoxProps {
 const KIND_LABELS: Readonly<Record<SearchClass['kind'], string>> = {
   page: 'صفحة',
   gtin: 'GTIN',
+  ambiguous: 'باركود أو كود الهيئة',
   code: 'كود',
   name: 'اسم',
 }

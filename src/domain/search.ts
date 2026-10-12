@@ -11,6 +11,7 @@ export type SearchClass =
       readonly expiry: string | null
       readonly batchNo: string | null
     }
+  | { readonly kind: 'ambiguous'; readonly value: string }
   | { readonly kind: 'page'; readonly page: number }
   | { readonly kind: 'code'; readonly code: string }
   | { readonly kind: 'name'; readonly query: string }
@@ -116,7 +117,9 @@ export function classify(input: string): SearchClass {
   const s = normalizeDigits(input.trim())
   const gs1 = parseGs1(s)
   if (gs1) return { kind: 'gtin', ...gs1 }
-  if (/^(\d{8}|\d{12}|\d{13}|\d{14})$/.test(s)) {
+  // 8-9 digits: an EAN-8 or an authority code (FR-020); the caller looks up both.
+  if (/^\d{8,9}$/.test(s)) return { kind: 'ambiguous', value: s }
+  if (/^(\d{12}|\d{13}|\d{14})$/.test(s)) {
     return { kind: 'gtin', gtin: normalizeGtin(s), expiry: null, batchNo: null }
   }
   if (/^\d{1,4}$/.test(s)) return { kind: 'page', page: Number(s) }
@@ -144,4 +147,42 @@ export function searchItems<
     const hay = normalizeArabic(`${item.nameAr} ${item.nameEn ?? ''}`)
     return words.every((w) => hay.includes(w))
   })
+}
+
+export interface Identifiable {
+  readonly code: string
+  readonly gtins: readonly string[]
+  readonly authorityCode?: string | null | undefined
+}
+
+/** Every item whose GTIN list or authority code equals `value` (8-9 digit lookup, FR-020). */
+export function findByNumber<T extends Identifiable>(items: readonly T[], value: string): T[] {
+  return items.filter((i) => i.gtins.includes(value) || i.authorityCode === value)
+}
+
+/** Every item holding exactly this GTIN. */
+export function findByGtin<T extends Identifiable>(items: readonly T[], gtin: string): T[] {
+  return items.filter((i) => i.gtins.includes(gtin))
+}
+
+/** Resolves a classified input against the item list; every match is returned. */
+export function resolve<
+  T extends Identifiable & {
+    readonly nameAr: string
+    readonly nameEn?: string | undefined
+    readonly page?: number | undefined
+  },
+>(items: readonly T[], cls: SearchClass): T[] {
+  switch (cls.kind) {
+    case 'gtin':
+      return findByGtin(items, cls.gtin)
+    case 'ambiguous':
+      return findByNumber(items, cls.value)
+    case 'code':
+      return items.filter((i) => i.code === cls.code)
+    case 'name':
+      return searchItems(items, cls.query)
+    case 'page':
+      return items.filter((i) => i.page === cls.page)
+  }
 }

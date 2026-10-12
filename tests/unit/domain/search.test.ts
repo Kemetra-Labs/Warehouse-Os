@@ -5,6 +5,7 @@ import {
   normalizeDigits,
   normalizeGtin,
   parseGs1,
+  resolve,
   searchItems,
 } from '../../../src/domain/search'
 
@@ -35,8 +36,7 @@ describe('normalizeGtin', () => {
 })
 
 describe('classify', () => {
-  it('classifies 8 and 13 digits as GTIN', () => {
-    expect(classify('12345670')).toMatchObject({ kind: 'gtin', gtin: '12345670' })
+  it('classifies 13 digits as GTIN', () => {
     expect(classify('6221234567890')).toMatchObject({ kind: 'gtin', gtin: '6221234567890' })
   })
   it('normalises 12 and 14 digit GTINs', () => {
@@ -51,8 +51,13 @@ describe('classify', () => {
     expect(classify('SCR-01')).toEqual({ kind: 'code', code: 'SCR-01' })
     expect(classify('pla-123')).toEqual({ kind: 'code', code: 'PLA-123' })
   })
-  it('sends 5-7 and 9-11 digits to name search', () => {
-    for (const d of ['12345', '123456', '1234567', '123456789', '1234567890', '12345678901']) {
+  it('classifies 8 and 9 digits as ambiguous (GTIN or authority code)', () => {
+    expect(classify('12345670')).toEqual({ kind: 'ambiguous', value: '12345670' })
+    expect(classify('70000409')).toEqual({ kind: 'ambiguous', value: '70000409' })
+    expect(classify('150004771')).toEqual({ kind: 'ambiguous', value: '150004771' })
+  })
+  it('sends 5-7 and 10-11 digits to name search', () => {
+    for (const d of ['12345', '123456', '1234567', '1234567890', '12345678901']) {
       expect(classify(d).kind).toBe('name')
     }
   })
@@ -64,7 +69,7 @@ describe('classify', () => {
   it('trims whitespace and normalises Arabic digits first', () => {
     expect(classify('  ٧  ')).toEqual({ kind: 'page', page: 7 })
     expect(classify('٦٢٢١٢٣٤٥٦٧٨٩٠')).toMatchObject({ kind: 'gtin', gtin: '6221234567890' })
-    expect(classify('١٢٣٤٥٦٧٠')).toMatchObject({ kind: 'gtin', gtin: '12345670' })
+    expect(classify('١٢٣٤٥٦٧٠')).toEqual({ kind: 'ambiguous', value: '12345670' })
     expect(classify(' scr-٠١ ')).toEqual({ kind: 'code', code: 'SCR-01' })
   })
   it('parses a GS1 element string with GS separators', () => {
@@ -160,5 +165,38 @@ describe('searchItems', () => {
   it('returns nothing for an empty query or no match', () => {
     expect(searchItems(items, '  ')).toEqual([])
     expect(searchItems(items, 'zzz')).toEqual([])
+  })
+})
+
+describe('resolve (FR-020)', () => {
+  const items = [
+    { code: 'SCR-01', nameAr: 'مسمار عظم', gtins: ['12345670'], authorityCode: null },
+    { code: 'SCR-02', nameAr: 'مسمار نخاعي', gtins: [], authorityCode: '12345670' },
+    { code: 'PLA-01', nameAr: 'شريحة', gtins: ['6221234567890'], authorityCode: '70000409' },
+  ]
+  it('returns every item matching an 8-digit value as GTIN or authority code', () => {
+    const r = resolve(items, classify('12345670'))
+    expect(r.map((i) => i.code)).toEqual(['SCR-01', 'SCR-02'])
+  })
+  it('finds an item by its authority code alone', () => {
+    expect(resolve(items, classify('70000409')).map((i) => i.code)).toEqual(['PLA-01'])
+  })
+  it('resolves a GTIN, an item code and a name; a page resolves to nothing', () => {
+    expect(resolve(items, classify('6221234567890')).map((i) => i.code)).toEqual(['PLA-01'])
+    expect(resolve(items, classify('scr-02')).map((i) => i.code)).toEqual(['SCR-02'])
+    expect(resolve(items, classify('شريحة')).map((i) => i.code)).toEqual(['PLA-01'])
+    expect(resolve(items, classify('7'))).toEqual([])
+  })
+  it('resolves a page number to the items on that page', () => {
+    const paged = [
+      { code: 'SCR-01', nameAr: 'أ', gtins: [], page: 7 },
+      { code: 'SCR-02', nameAr: 'ب', gtins: [], page: 7 },
+      { code: 'PLA-01', nameAr: 'ج', gtins: [], page: 8 },
+    ]
+    expect(resolve(paged, classify('7')).map((i) => i.code)).toEqual(['SCR-01', 'SCR-02'])
+    expect(resolve(paged, classify('9'))).toEqual([])
+  })
+  it('returns nothing when no item matches', () => {
+    expect(resolve(items, classify('99999999'))).toEqual([])
   })
 })

@@ -181,7 +181,7 @@
 
 **الاستلام**
 - **FR-030**: A receipt MUST carry supplier, delivery-note number (رقم الإذن), invoice number and invoice date, supply request number (طلب إمداد) and supply order number (أمر توريد) when present, business date, and lines (item, authority code as printed, batch, manufacture date (optional), expiry, invoiced quantity, counted quantity, unit price, difference reason).
-- **FR-030b**: Scanning the QR code on the delivery note MUST fill the delivery-note number (the QR holds only that number, confirmed by the owner on 2026-10-12). If a receipt with the same delivery-note number already exists, the system MUST open it instead of creating a duplicate.
+- **FR-030b**: Scanning the QR code on the delivery note MUST fill the delivery-note number (the QR holds only that number, confirmed by the owner on 2026-10-12). If a draft or posted receipt with the same delivery-note number already exists, the system MUST open it instead of creating a duplicate. A cancelled receipt does not block re-entering the same note.
 - **FR-030a**: The unit price recorded for a receipt line, and therefore the item's current price, MUST be the price **after** the purchase fee (سعر الوحدة بعد رسم الشراء), as printed on the delivery note.
 - **FR-031**: Unit price MUST prefill with the item's latest purchase price; a different price MUST be visibly flagged with the previous price shown.
 - **FR-032**: A line whose counted quantity differs from the invoiced quantity MUST require a reason before posting. Stock increases by the counted quantity.

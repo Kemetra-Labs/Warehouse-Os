@@ -110,7 +110,7 @@ US1 → US2 → US3 → US7. P2 stories follow: US4 → US5 → US6.
 
 ### Tests for User Story 2
 
-- [ ] T044 [P] [US2] Unit tests for the receipt domain in `tests/unit/domain/receipt.test.ts`:
+- [X] T044 [P] [US2] Unit tests for the receipt domain in `tests/unit/domain/receipt.test.ts`:
   - line validation; a difference reason is required; an unresolved GTIN blocks posting;
   - `toMovements()` uses the counted quantity, IDs `{id}-L{n}` and the price snapshot;
   - `priceUpdates`; a warning when a GTIN is already linked to another item;
@@ -120,14 +120,14 @@ US1 → US2 → US3 → US7. P2 stories follow: US4 → US5 → US6.
   - header fields `invoiceDate`, `supplyRequestNo`, `supplyOrderNo` and line fields `authorityCode`, `mfgDate` validate and round-trip;
   - a second receipt with an existing `deliveryNo` is refused, and the existing one is returned (FR-030b);
   - a line resolved by authority code links nothing on posting (authority codes come only from the reviewed mapping, FR-017).
-- [ ] T045 [P] [US2] Rules tests 7 and 8 for documents (draft editable, posted frozen, posted → cancelled limited to three keys with `status == 'cancelled'` and `cancelledAt == request.time`, **posted → draft rejected, posted → posted rejected, delete after an attempted downgrade rejected**, drafts deletable) in `tests/rules/documents.test.ts`
+- [X] T045 [P] [US2] Rules tests 7 and 8 for documents (draft editable, posted frozen, posted → cancelled limited to three keys with `status == 'cancelled'` and `cancelledAt == request.time`, **posted → draft rejected, posted → posted rejected, delete after an attempted downgrade rejected**, drafts deletable) in `tests/rules/documents.test.ts`
 
 ### Implementation for User Story 2
 
-- [ ] T046 [US2] Update the search classifier per FR-020 and research R5: an 8–9 digit number is `{kind:'ambiguous'}` and resolves against both GTINs and authority codes, returning every match; add `authorityCode` (optional, `^\d{8,9}$`) to the item schema in `src/domain/types.ts`. Tests first in `tests/unit/domain/search.test.ts`, then `src/domain/search.ts`
-- [ ] T047 [US2] Implement `src/domain/receipt.ts` so T044 passes
-- [ ] T048 [US2] Extend `firestore.rules.template` with the transitions for `receipts` and `issueBatches` so T045 passes
-- [ ] T049 [US2] Implement `src/data/repos/receipts.ts`: draft CRUD, plus one atomic post batch (movements, item price, GTIN link, status) written through the outbox
+- [X] T046 [US2] Update the search classifier per FR-020 and research R5: an 8–9 digit number is `{kind:'ambiguous'}` and resolves against both GTINs and authority codes, returning every match; add `authorityCode` (optional, `^\d{8,9}$`) to the item schema in `src/domain/types.ts`. Tests first in `tests/unit/domain/search.test.ts`, then `src/domain/search.ts`
+- [X] T047 [US2] Implement `src/domain/receipt.ts` so T044 passes
+- [X] T048 [US2] Extend `firestore.rules.template` with the transitions for `receipts` and `issueBatches` so T045 passes
+- [X] T049 [US2] Implement `src/data/repos/receipts.ts`: draft CRUD, plus one atomic post batch (movements, item price, GTIN link, status) written through the outbox
 - [ ] T050 [P] [US2] Implement the scanner in `src/scan/detector.ts` (barcode-detector ponyfill; EAN-13/8, Code-128 and DataMatrix) and `src/scan/Scanner.tsx`. Requirements:
   - the whole view is the tap target, with continuous mode;
   - a beep and `navigator.vibrate`;

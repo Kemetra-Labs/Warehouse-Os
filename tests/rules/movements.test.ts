@@ -15,7 +15,7 @@ import {
   updateDoc,
   writeBatch,
 } from 'firebase/firestore'
-import { createEnv, ownerDb, validItem, validMovement } from './helpers'
+import { createEnv, ownerDb, validItem, validMovement, validReceipt } from './helpers'
 
 let env: RulesTestEnvironment
 
@@ -164,8 +164,7 @@ describe('rules test 10: batch budget (no exists/get calls)', () => {
         const code = `SCR-${String(n).padStart(2, '0')}`
         seed.set(doc(ctx.firestore(), `items/${code}`), validItem(code, { page: n }))
       }
-      // receipts are deny-all until T047, so the "1 document update" uses settings/app
-      seed.set(doc(ctx.firestore(), 'settings/app'), { coverageMonths: 1.5 })
+      seed.set(doc(ctx.firestore(), 'receipts/doc1'), validReceipt())
       await seed.commit()
     })
 
@@ -181,7 +180,10 @@ describe('rules test 10: batch budget (no exists/get calls)', () => {
         updatedAt: serverTimestamp(),
       })
     }
-    batch.update(doc(db, 'settings/app'), { defaultReorder: 6 })
+    batch.update(doc(db, 'receipts/doc1'), {
+      status: 'posted',
+      postedAt: serverTimestamp(),
+    })
     await assertSucceeds(batch.commit())
   })
 })
