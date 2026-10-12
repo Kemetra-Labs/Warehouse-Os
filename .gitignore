@@ -1,0 +1,11 @@
+.superpowers/
+.impeccable/
+node_modules/
+dist/
+coverage/
+.env*.local
+firestore.rules
+*.xlsx
+!tests/fixtures/mini-workbook.xlsx
+playwright-report/
+test-results/

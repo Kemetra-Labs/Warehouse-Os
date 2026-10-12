@@ -1,0 +1,123 @@
+<link href="https://fonts.googleapis.com/css2?family=Almarai:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  .fx{--scrub:#0f5f58;--scrub-2:#13756c;--board:#f4f7f6;--ink:#122321;--muted:#4b5f5c;--marker:#1f4fa3;--miss:#c2362b;--match:#2e7d4f;--seal:#5b2d8e;--amber:#9a6200;--line:#d5dfdc}
+  .fx-wrap{display:flex;gap:26px;flex-wrap:wrap;justify-content:center;margin-top:16px}
+  .fx-col{display:flex;flex-direction:column;align-items:center;gap:8px}
+  .fx-cap{font-family:'Almarai',sans-serif;direction:rtl;font-size:14px;font-weight:700}
+  .fx .ph{width:330px;height:690px;border-radius:34px;padding:11px;background:#1b1b1f;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+  .fx .sc{position:relative;width:100%;height:100%;border-radius:24px;overflow:hidden;direction:rtl;background:var(--board);color:var(--ink);font-family:'Almarai',sans-serif;font-variant-numeric:tabular-nums}
+  .fx .sc *{box-sizing:border-box}
+  .fx header{background:var(--scrub);color:#fff;padding:14px 16px 12px;display:flex;justify-content:space-between;align-items:center}
+  .fx header b{font-size:15px;font-weight:800}
+  .fx .sync{font-size:12px;padding:4px 9px;border-radius:99px;border:1.5px dashed #9fd1c8;color:#e7f5f2;white-space:nowrap}
+  .fx .sync.ok{border-style:solid}
+  .fx .meta{display:flex;gap:6px;flex-wrap:wrap;padding:10px 12px 0}
+  .fx .chip{background:#fff;border:1px solid var(--line);border-radius:99px;padding:4px 10px;font-size:12px;color:var(--muted)}
+  .fx .chip b{color:var(--ink)}
+  .fx .cam{margin:10px 12px;height:178px;border-radius:16px;background:radial-gradient(ellipse at 50% 45%,#3b4a47,#151c1b 75%);position:relative;overflow:hidden}
+  .fx .frame{position:absolute;left:50%;top:50%;width:210px;height:96px;transform:translate(-50%,-50%);border-radius:10px;box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 0 999px rgba(0,0,0,.25)}
+  .fx .bars{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-4deg);background:#f4f2ea;padding:8px 10px 4px;border-radius:3px}
+  .fx .bars svg{display:block;width:150px;height:46px}
+  .fx .bars div{font-size:12px;letter-spacing:.06em;text-align:center;color:#222;direction:ltr}
+  .fx .laser{position:absolute;left:62px;right:62px;top:50%;height:2px;background:#5fe0b6}
+  .fx .camhint{position:absolute;bottom:8px;left:0;right:0;text-align:center;color:#d8efe8;font-size:12px}
+  .fx .card{margin:0 12px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;box-shadow:0 2px 8px rgba(15,60,55,.08)}
+  .fx .card .nm{font-size:14px;font-weight:800}
+  .fx .card .cd{font-size:12px;color:var(--muted);margin-top:2px}
+  .fx .fields{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+  .fx .f{border:1px solid var(--line);border-radius:10px;padding:6px 9px}
+  .fx .f span{display:block;font-size:12px;color:var(--muted)}
+  .fx .f b{font-size:15px}
+  .fx .f.focus{border:2px solid var(--marker)}
+  .fx .f.warn{border-color:#e9c46a;background:#fff8e6}
+  .fx .f.warn span{color:var(--amber)}
+  .fx .add{margin:10px 12px 0;background:var(--scrub-2);color:#fff;border-radius:12px;padding:12px;text-align:center;font-weight:800;font-size:15px}
+  .fx .box{margin:10px 12px;background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;position:relative}
+  .fx .hd{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line);font-size:13px}
+  .fx .hd span{font-size:12px;color:var(--muted)}
+  .fx table{width:100%;border-collapse:collapse;font-size:12.5px}
+  .fx th{font-size:12px;color:var(--muted);text-align:right;padding:6px 12px;background:#f7faf9;font-weight:700}
+  .fx th.n,.fx td.n{text-align:center;width:50px;padding-left:4px;padding-right:4px}
+  .fx td{padding:7px 12px;border-top:1px solid #eef3f1;vertical-align:middle}
+  .fx td.n{font-size:15px;font-weight:800;color:var(--marker)}
+  .fx td.n.miss{color:var(--miss)}
+  .fx .sub{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+  .fx .sub.am{color:var(--amber)}
+  .fx tr.unk td{background:#fff8e6}
+  .fx .ft{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;background:#f7faf9;font-size:12px}
+  .fx .btn{padding:8px 14px;border-radius:10px;font-weight:800;font-size:13px;color:#fff;background:var(--seal)}
+  .fx .btn.off{background:#c9d6d3;color:#3c4f4b}
+  .fx .btn.blue{background:var(--marker)}
+  .fx .seal{position:absolute;left:12px;top:40px;width:92px;height:92px;border-radius:50%;border:3px solid var(--seal);color:var(--seal);display:flex;flex-direction:column;align-items:center;justify-content:center;transform:rotate(-14deg);opacity:.9;box-shadow:inset 0 0 0 4px #fff,inset 0 0 0 6px var(--seal);background:rgba(255,255,255,.55);text-align:center;line-height:1.25}
+  .fx .seal b{font-size:16px}.fx .seal span{font-size:12px}
+  .fx .sum{display:grid;grid-template-columns:1fr 1fr 1fr;margin:0 12px;background:#fff;border:1px solid var(--line);border-radius:14px;text-align:center}
+  .fx .sum div{padding:10px 4px}.fx .sum div+div{border-right:1px solid var(--line)}
+  .fx .sum b{display:block;font-size:15px}.fx .sum span{font-size:12px;color:var(--muted)}
+  .fx .exp{margin:10px 12px;display:grid;gap:8px}
+  .fx .exp div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:11px 12px;font-size:13px;font-weight:700;display:flex;justify-content:space-between}
+  .fx .exp div span{font-weight:400;color:var(--muted);font-size:12px}
+  .fx .note{margin:0 12px;font-size:12px;color:var(--amber);background:#fff8e6;border:1px solid #e9c46a;border-radius:10px;padding:8px 10px}
+</style>
+
+<div style="direction:rtl;text-align:right">
+<h2>شاشة الاستلام: العدّ المزدوج + ختم الاعتماد</h2>
+<p class="subtitle">صوّر العلبة، واكتب التشغيلة والصلاحية والكمية. البرنامج بيقارن اللي في الفاتورة باللي اتعدّ فعلاً. الأرقام توضيحية، والأسعار والـ GTIN من القائمة بتاعتك.</p>
+</div>
+
+<div class="fx fx-wrap">
+
+  <div class="fx-col"><div class="ph"><div class="sc">
+    <header><b>استلام · مسودة</b><div class="sync">مش متصل</div></header>
+    <div class="meta"><span class="chip">الشركة <b>المركز الدولي</b></span><span class="chip">إذن <b>19808953</b></span><span class="chip">فاتورة <b>47852</b></span></div>
+    <div class="cam">
+      <div class="bars"><svg viewBox="0 0 150 46" preserveAspectRatio="none"><g fill="#111"><rect x="0" width="2" height="46"/><rect x="4" width="1" height="46"/><rect x="7" width="3" height="40"/><rect x="12" width="1" height="40"/><rect x="15" width="2" height="40"/><rect x="20" width="1" height="40"/><rect x="23" width="3" height="40"/><rect x="29" width="1" height="40"/><rect x="32" width="2" height="40"/><rect x="37" width="1" height="40"/><rect x="40" width="3" height="40"/><rect x="46" width="2" height="40"/><rect x="51" width="1" height="40"/><rect x="54" width="2" height="40"/><rect x="58" width="1" height="40"/><rect x="61" width="3" height="40"/><rect x="66" width="1" height="40"/><rect x="72" width="1" height="46"/><rect x="75" width="1" height="46"/><rect x="80" width="2" height="40"/><rect x="85" width="1" height="40"/><rect x="88" width="3" height="40"/><rect x="94" width="1" height="40"/><rect x="97" width="2" height="40"/><rect x="102" width="1" height="40"/><rect x="105" width="3" height="40"/><rect x="111" width="1" height="40"/><rect x="114" width="2" height="40"/><rect x="119" width="3" height="40"/><rect x="125" width="1" height="40"/><rect x="128" width="2" height="40"/><rect x="133" width="1" height="40"/><rect x="136" width="3" height="40"/><rect x="142" width="1" height="46"/><rect x="146" width="2" height="46"/></g></svg><div>6 222015 842930</div></div>
+      <div class="frame"></div><div class="laser"></div>
+      <div class="camhint">وجّه الكاميرا على باركود العلبة</div>
+    </div>
+    <div class="card">
+      <div class="nm">مسمار نخاعي لإعادة بناء أعلى الفخذ</div>
+      <div class="cd">ص 1 · NAL-04 · GTIN 6222015842930</div>
+      <div class="fields">
+        <div class="f focus"><span>رقم التشغيلة</span><b>0230271</b></div>
+        <div class="f"><span>الصلاحية</span><b>03/2031</b></div>
+        <div class="f"><span>الكمية في الفاتورة</span><b>4</b></div>
+        <div class="f warn"><span>السعر · كان 5,118.10</span><b>5,290.00</b></div>
+      </div>
+    </div>
+    <div class="add">إضافة للإذن</div>
+  </div></div><div class="fx-cap">1. صوّر واكتب التشغيلة: الصنف بيظهر لوحده</div></div>
+
+  <div class="fx-col"><div class="ph"><div class="sc">
+    <header><b>استلام · مسودة</b><div class="sync">2 مستنية النت</div></header>
+    <div class="box">
+      <div class="hd"><b>إذن 19808953 · المركز الدولي</b><span>4 سطور</span></div>
+      <table>
+        <tr><th>الصنف</th><th class="n">الفاتورة</th><th class="n">اتعدّ</th></tr>
+        <tr><td>نخاعي لإعادة بناء أعلى الفخذ<span class="sub">تشغيلة 0230271 · 03/2031</span><span class="sub am">السعر اتغير ← 5,290.00</span></td><td class="n">4</td><td class="n">4</td></tr>
+        <tr><td>مسمار قشري تيتانيوم 3.5 مم<span class="sub">تشغيلة 0241652 · 11/2030</span></td><td class="n">50</td><td class="n miss">48</td></tr>
+        <tr><td>مثبت خارجي للرسغ والأصابع<span class="sub">تشغيلة 0239910 · 07/2032</span></td><td class="n">2</td><td class="n">2</td></tr>
+        <tr class="unk"><td>GTIN 6222015899012 مش معروف<span class="sub am">دوس واختار الصنف، والبرنامج هيفتكره</span></td><td class="n">10</td><td class="n">10</td></tr>
+      </table>
+      <div class="ft"><span>فرق في سطر · صنف مش معروف</span><span class="btn off">اعتماد</span></div>
+    </div>
+    <div class="note">المسمار القشري: الفاتورة 50 واتعدّ 48. يا إما تعدّل عدد الفاتورة، يا إما تعتمد 48 وتكتب سبب الفرق ("ناقص من المورد").</div>
+  </div></div><div class="fx-cap">2. المراجعة: الفاتورة قصاد اللي اتعدّ</div></div>
+
+  <div class="fx-col"><div class="ph"><div class="sc">
+    <header><b>إذن استلام 19808953</b><div class="sync ok">متزامن</div></header>
+    <div class="box" style="padding-bottom:4px">
+      <div class="hd"><b>المركز الدولي · فاتورة 47852</b><span>معتمد</span></div>
+      <table>
+        <tr><th>الصنف</th><th class="n">اتعدّ</th></tr>
+        <tr><td>نخاعي لإعادة بناء أعلى الفخذ<span class="sub">0230271 · 03/2031</span></td><td class="n">4</td></tr>
+        <tr><td>مسمار قشري تيتانيوم 3.5 مم<span class="sub">0241652 · ناقص 2 من المورد</span></td><td class="n">48</td></tr>
+        <tr><td>مثبت خارجي للرسغ والأصابع<span class="sub">0239910 · 07/2032</span></td><td class="n">2</td></tr>
+        <tr><td>مسمار قشري ذاتي الغلق 4 مم<span class="sub">GTIN اتربط بالصنف ده</span></td><td class="n">10</td></tr>
+      </table>
+      <div class="seal"><b>معتمد</b><span>12/10/2026</span><span>إذن 19808953</span></div>
+    </div>
+    <div class="sum"><div><b>64</b><span>قطعة</span></div><div><b>4</b><span>أصناف</span></div><div><b>1</b><span>سعر اتحدّث</span></div></div>
+    <div class="exp"><div>إذن استلام للطباعة<span>إكسيل</span></div><div>سطور لسجل الحركات<span>نسخ ولصق</span></div><div>إلغاء الإذن<span>حركة عكسية</span></div></div>
+  </div></div><div class="fx-cap">3. بعد الاعتماد: ختم، والسعر اتحدّث، والـ GTIN اتحفظ</div></div>
+
+</div>

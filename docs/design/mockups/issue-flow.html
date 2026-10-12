@@ -1,0 +1,130 @@
+<link href="https://fonts.googleapis.com/css2?family=Almarai:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  .fx{--scrub:#0f5f58;--scrub-2:#13756c;--board:#f4f7f6;--ink:#122321;--muted:#4b5f5c;--marker:#1f4fa3;--miss:#c2362b;--match:#2e7d4f;--seal:#5b2d8e;--line:#d5dfdc}
+  .fx-wrap{display:flex;gap:26px;flex-wrap:wrap;justify-content:center;margin-top:16px}
+  .fx-col{display:flex;flex-direction:column;align-items:center;gap:8px}
+  .fx-cap{font-family:'Almarai',sans-serif;direction:rtl;font-size:14px;font-weight:700}
+  .fx .ph{width:330px;height:690px;border-radius:34px;padding:11px;background:#1b1b1f;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+  .fx .sc{position:relative;width:100%;height:100%;border-radius:24px;overflow:hidden;direction:rtl;background:var(--board);color:var(--ink);font-family:'Almarai',sans-serif;font-variant-numeric:tabular-nums}
+  .fx .sc *{box-sizing:border-box}
+  .fx header{background:var(--scrub);color:#fff;padding:14px 16px 12px;display:flex;justify-content:space-between;align-items:flex-end}
+  .fx header small{font-size:12px;color:#bfe0da;display:block}
+  .fx header b{font-size:17px;font-weight:800}
+  .fx .sync{font-size:12px;padding:4px 9px;border-radius:99px;border:1.5px dashed #9fd1c8;color:#e7f5f2;white-space:nowrap}
+  .fx .sync.ok{border-style:solid}
+  .fx .back{font-size:13px;color:#e7f5f2}
+  .fx .box{margin:12px;background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(15,60,55,.08);position:relative}
+  .fx .hd{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line);font-size:13px}
+  .fx .hd span{font-size:12px;color:var(--muted)}
+  .fx table{width:100%;border-collapse:collapse;font-size:12.5px}
+  .fx th{font-size:12px;color:var(--muted);text-align:right;padding:6px 12px;background:#f7faf9;font-weight:700}
+  .fx th.n,.fx td.n{text-align:center;width:46px;padding-left:4px;padding-right:4px}
+  .fx td{padding:7px 12px;border-top:1px solid #eef3f1;vertical-align:middle}
+  .fx td.n{font-size:15px;font-weight:800;color:var(--marker)}
+  .fx td.n.miss{color:var(--miss)}
+  .fx .sub{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+  .fx .sub.sw{color:var(--marker)}
+  .fx .dot{display:inline-block;width:18px;height:18px;border-radius:50%;vertical-align:middle}
+  .fx .dot.ok{background:var(--match)}.fx .dot.bad{background:var(--miss)}
+  .fx .dot svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2.6}
+  .fx .ft{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;background:#f7faf9;font-size:12px}
+  .fx .ft b{color:var(--miss)}
+  .fx .btn{padding:8px 14px;border-radius:10px;font-weight:800;font-size:13px;color:#fff;background:var(--seal)}
+  .fx .btn.off{background:#c9d6d3;color:#3c4f4b}
+  .fx .acts{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 12px}
+  .fx .act{border-radius:14px;padding:13px;color:#fff;font-weight:800;font-size:16px;display:flex;align-items:center;gap:8px}
+  .fx .act svg{width:24px;height:24px;stroke:#fff;fill:none;stroke-width:2.4}
+  .fx .act.in{background:var(--scrub-2)}.fx .act.out{background:var(--marker)}
+  .fx .tally{display:grid;grid-template-columns:repeat(3,1fr);margin:12px;background:#fff;border:1px solid var(--line);border-radius:14px}
+  .fx .tally div{padding:10px 6px;text-align:center}
+  .fx .tally div+div{border-right:1px solid var(--line)}
+  .fx .tally b{font-size:20px;display:block}
+  .fx .tally span{font-size:12px;color:var(--muted)}
+  .fx .tally .lit{background:#fdecea}.fx .tally .lit b{color:var(--miss)}
+  .fx nav{position:absolute;bottom:0;left:0;right:0;height:56px;background:#fff;border-top:1px solid var(--line);display:flex;justify-content:space-around;align-items:center;font-size:12px;color:var(--muted)}
+  .fx nav .on{color:var(--scrub);font-weight:700}
+  .fx .sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:20px 20px 0 0;box-shadow:0 -6px 24px rgba(0,0,0,.18);padding:12px 14px 16px}
+  .fx .dim{position:absolute;inset:0;background:rgba(18,35,33,.35)}
+  .fx .grab{width:40px;height:4px;border-radius:4px;background:#c9d6d3;margin:0 auto 10px}
+  .fx .sheet h4{font-size:14px;margin:0 0 2px}
+  .fx .sheet p{font-size:12px;color:var(--muted);margin:0 0 8px}
+  .fx .opt{display:flex;justify-content:space-between;align-items:center;padding:9px 10px;border:1px solid var(--line);border-radius:12px;margin-bottom:7px;font-size:13px}
+  .fx .opt.sel{border:2px solid var(--marker);background:#f2f6fd}
+  .fx .opt .p{font-size:12px;color:var(--muted)}
+  .fx .diff{font-weight:800;font-size:13px}
+  .fx .diff.g{color:var(--match)}.fx .diff.r{color:var(--miss)}
+  .fx .seal{position:absolute;left:14px;top:44px;width:92px;height:92px;border-radius:50%;border:3px solid var(--seal);color:var(--seal);display:flex;flex-direction:column;align-items:center;justify-content:center;transform:rotate(-14deg);opacity:.9;box-shadow:inset 0 0 0 4px #fff,inset 0 0 0 6px var(--seal);background:rgba(255,255,255,.55);text-align:center;line-height:1.25}
+  .fx .seal b{font-size:16px}.fx .seal span{font-size:12px}
+  .fx .sum{display:grid;grid-template-columns:1fr 1fr 1fr;margin:0 12px;background:#fff;border:1px solid var(--line);border-radius:14px;text-align:center}
+  .fx .sum div{padding:10px 4px}.fx .sum div+div{border-right:1px solid var(--line)}
+  .fx .sum b{display:block;font-size:15px}.fx .sum span{font-size:12px;color:var(--muted)}
+  .fx .exp{margin:12px;display:grid;gap:8px}
+  .fx .exp div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:11px 12px;font-size:13px;font-weight:700;display:flex;justify-content:space-between}
+  .fx .exp div span{font-weight:400;color:var(--muted);font-size:12px}
+</style>
+
+<div style="direction:rtl;text-align:right">
+<h2>العدّ المزدوج + ختم الاعتماد: 3 شاشات من رحلة الصرف</h2>
+<p class="subtitle">العالم: ألوان العمليات ولوحة العدّ. لحظة الاعتماد: ختم بنفسجي بالتاريخ. البنفسجي محجوز للاعتماد بس، ومش هيظهر في أي حتة تانية. الأرقام توضيحية.</p>
+</div>
+
+<div class="fx fx-wrap">
+
+  <div class="fx-col"><div class="ph"><div class="sc">
+    <header><div><small>مستشفى القناطر الخيرية</small><b>مخزن الشرائح والمسامير</b></div><div class="sync">3 مستنية النت</div></header>
+    <div class="box">
+      <div class="hd"><b>دفعة صرف 14 · إيجي فيكس</b><span>مسودة</span></div>
+      <table>
+        <tr><th>الصنف</th><th class="n">مطلوب</th><th class="n">اتسلّم</th><th class="n"></th></tr>
+        <tr><td>مسمار قشري تيتانيوم 3.5<span class="sub">ص 10</span></td><td class="n">24</td><td class="n">24</td><td class="n"><span class="dot ok"><svg viewBox="0 0 18 18"><path d="M4.5 9.5l3 2.8L13.5 6"/></svg></span></td></tr>
+        <tr><td>نخاعي تشابكي للفخذ<span class="sub">ص 8 · الرصيد 4</span></td><td class="n">6</td><td class="n miss">4</td><td class="n"><span class="dot bad"><svg viewBox="0 0 18 18"><path d="M9 4.5v5.5M9 13v.5"/></svg></span></td></tr>
+      </table>
+      <div class="ft"><span>ناقص <b>2</b></span><span class="btn off">اعتماد</span></div>
+    </div>
+    <div class="acts">
+      <div class="act in"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 17v4h16v-4"/></svg>استلام</div>
+      <div class="act out"><svg viewBox="0 0 24 24"><path d="M12 15V3M7 8l5-5 5 5M4 17v4h16v-4"/></svg>صرف</div>
+    </div>
+    <div class="tally"><div><b>9</b><span>تحتاج طلب</span></div><div><b>3</b><span>نافد</span></div><div class="lit"><b>2</b><span>تسويات معلّقة</span></div></div>
+    <nav><div class="on">الرئيسية</div><div>الأصناف</div><div>الحركات</div><div>التقارير</div></nav>
+  </div></div><div class="fx-cap">1. الرئيسية: الدفعة المفتوحة قدامك</div></div>
+
+  <div class="fx-col"><div class="ph"><div class="sc">
+    <header><div class="back">رجوع</div><div class="sync">3 مستنية النت</div></header>
+    <div class="box">
+      <div class="hd"><b>دفعة صرف 14</b><span>12 إذن</span></div>
+      <table>
+        <tr><th>الصنف</th><th class="n">مطلوب</th><th class="n">اتسلّم</th></tr>
+        <tr><td>نخاعي تشابكي للفخذ<span class="sub">ص 8 · الرصيد 4</span></td><td class="n">6</td><td class="n miss">4</td></tr>
+      </table>
+    </div>
+    <div class="dim"></div>
+    <div class="sheet">
+      <div class="grab"></div>
+      <h4>بديل لـ 2 مسمار نخاعي تشابكي للفخذ</h4>
+      <p>مسامير نخاعية وديناميكية · ليها رصيد · مترتبة بأقرب سعر (2,895.70 ج)</p>
+      <div class="opt sel"><div>نخاعي تشابكي لكسور الساق تيتانيوم<div class="p">ص 7 · الرصيد 3 · 2,895.70 ج</div></div><span class="diff g">±0</span></div>
+      <div class="opt"><div>نخاعي متعدد الأخرام للقصبة<div class="p">ص 6 · الرصيد 9 · 5,064.13 ج</div></div><span class="diff r">+75%</span></div>
+      <div class="opt"><div>نخاعي لكسور الساق تيتانيوم<div class="p">ص 9 · الرصيد 2 · 3,986.66 ج</div></div><span class="diff r">+38%</span></div>
+      <div style="display:flex;gap:8px;margin-top:6px"><span class="btn" style="background:var(--marker);flex:1;text-align:center">صرف 2 بديل</span><span class="btn off" style="flex:1;text-align:center">صرف بالسالب + سبب</span></div>
+    </div>
+  </div></div><div class="fx-cap">2. الناقص: البدائل من نفس الفئة بأقرب سعر</div></div>
+
+  <div class="fx-col"><div class="ph"><div class="sc">
+    <header><div class="back">رجوع</div><div class="sync ok">متزامن</div></header>
+    <div class="box" style="padding-bottom:4px">
+      <div class="hd"><b>دفعة صرف 14 · إيجي فيكس</b><span>معتمدة</span></div>
+      <table>
+        <tr><th>الصنف</th><th class="n">مطلوب</th><th class="n">اتسلّم</th></tr>
+        <tr><td>مسمار قشري تيتانيوم 3.5</td><td class="n">24</td><td class="n">24</td></tr>
+        <tr><td>نخاعي تشابكي للفخذ</td><td class="n">6</td><td class="n">4</td></tr>
+        <tr><td>نخاعي للساق تيتانيوم<span class="sub sw">بديل عن 2 نخاعي للفخذ</span></td><td class="n">—</td><td class="n">2</td></tr>
+      </table>
+      <div class="seal"><b>معتمد</b><span>12/10/2026</span><span>دفعة 14</span></div>
+    </div>
+    <div class="sum"><div><b>22,546</b><span>قيمة المطلوب</span></div><div><b>22,546</b><span>اللي اتسلّم</span></div><div><b style="color:var(--match)">0</b><span>الفرق (ج)</span></div></div>
+    <div class="exp"><div>إذن صرف للطباعة<span>إكسيل</span></div><div>سطور لسجل الحركات<span>نسخ ولصق</span></div><div>إلغاء الدفعة<span>حركة عكسية</span></div></div>
+    <nav><div>الرئيسية</div><div>الأصناف</div><div class="on">الحركات</div><div>التقارير</div></nav>
+  </div></div><div class="fx-cap">3. بعد الاعتماد: الختم والطباعة</div></div>
+
+</div>
