@@ -1,0 +1,16 @@
+dist
+coverage
+node_modules
+package-lock.json
+playwright-report
+test-results
+dev-dist
+docs
+specs
+.claude
+.specify
+.superpowers
+.impeccable
+*.md
+LICENSE
+firestore.rules*

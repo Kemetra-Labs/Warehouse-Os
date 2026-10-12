@@ -1,7 +1,7 @@
 # Quickstart: Daily Operations (Phase 1)
 
 How to run, test, and verify phase 1 locally. Windows 11 with Git Bash. Toolchain present on
-2026-10-12: Node 22.14, npm 10.9, Firebase CLI 15.12, Java 17 (needed by the Firestore emulator).
+2026-10-12: Node 22.14, npm 10.9, Firebase CLI 15 (pinned as a dev dependency), and **Java 21** for the Firestore emulator. firebase-tools 15.33 refuses Java 17; this machine has Java 17, so local rules tests need JDK 21 installed. CI uses Java 21.
 
 ## 1. Install and configure
 

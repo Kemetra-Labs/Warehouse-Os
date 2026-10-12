@@ -29,10 +29,10 @@ Details: [research.md](./research.md).
 
 ## Technical Context
 
-**Language/Version**: TypeScript 7 (strict), targeting ES2022. Node 22 for tooling.
+**Language/Version**: TypeScript 6.0.3 (strict), targeting ES2022. Node 22 for tooling. (TypeScript 7 is out, but typescript-eslint 8.71 supports only versions below 6.1.)
 
 **Primary Dependencies**:
-- React 19, React Router 8, Vite 8, `vite-plugin-pwa` 2;
+- React 19.3, React Router 7.18 (8.x needs Node ≥ 22.22; upgrade when the machine's Node is upgraded), Vite 8, `vite-plugin-pwa` 2;
 - `firebase` 13 (Firestore with `persistentLocalCache`, Auth);
 - SheetJS CE 0.20.3 (reads the user's workbook; ExcelJS cannot open it), ExcelJS 4.4 (writes
   prints, exports and backup), `barcode-detector` 3 (ZXing WASM ponyfill), zod 4.

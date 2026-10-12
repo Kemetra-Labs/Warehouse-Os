@@ -1,0 +1,53 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "cream-palette",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/assigned.html"
+        ],
+        "createdAt": "2026-10-12T15:13:08.070Z",
+        "reason": "assistant decision: spent decision-round sketch, superseded by the chosen fused direction; not shipped"
+      },
+      {
+        "rule": "cream-palette",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/r1-pick.html"
+        ],
+        "createdAt": "2026-10-12T15:13:08.259Z",
+        "reason": "assistant decision: spent decision-round sketch, superseded by the chosen fused direction; not shipped"
+      },
+      {
+        "rule": "cream-palette",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/r1-consumer.html"
+        ],
+        "createdAt": "2026-10-12T15:13:08.440Z",
+        "reason": "assistant decision: spent decision-round sketch, superseded by the chosen fused direction; not shipped"
+      },
+      {
+        "rule": "cream-palette",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/challenger-coupon.html"
+        ],
+        "createdAt": "2026-10-12T15:13:08.623Z",
+        "reason": "assistant decision: spent decision-round sketch, superseded by the chosen fused direction; not shipped"
+      },
+      {
+        "rule": "ai-color-palette",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/challenger-coupon.html"
+        ],
+        "createdAt": "2026-10-12T15:13:08.813Z",
+        "reason": "assistant decision: spent decision-round sketch, superseded by the chosen fused direction; not shipped"
+      }
+    ]
+  }
+}

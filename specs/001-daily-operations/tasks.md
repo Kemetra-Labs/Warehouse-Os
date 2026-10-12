@@ -26,19 +26,19 @@ US1 → US2 → US3 → US7. P2 stories follow: US4 → US5 → US6.
 
 **Purpose**: Project initialization and tooling.
 
-- [ ] T001 Scaffold the Vite + React 19 + TypeScript (strict) app at the repository root: `package.json`, `vite.config.ts`, `tsconfig.json`, and `index.html` with `lang="ar" dir="rtl"`
-- [ ] T002 [P] Add ESLint (typescript-eslint, react-hooks) and Prettier config in `eslint.config.js` and `.prettierrc`
-- [ ] T003 [P] Configure Vitest with coverage thresholds of 80% for `src/domain`, `src/data` and `src/excel` in `vitest.config.ts`
-- [ ] T004 [P] Configure Playwright (Android Chrome viewport, emulator base URL, fake-camera launch flags) in `playwright.config.ts`
-- [ ] T005 [P] Add Firebase project files: `firebase.json` (hosting, firestore, Auth and Firestore emulators), `.firebaserc` (placeholder project), `firestore.indexes.json`
-- [ ] T006 [P] Add `.env.example` (`VITE_FIREBASE_*`, `VITE_USE_EMULATORS`, `OWNER_UID`). (`.gitignore` already covers `.env*.local`, `firestore.rules`, `*.xlsx` except the fixture, and `node_modules/`.)
-- [ ] T007 [P] Write `scripts/render-rules.mjs`, which renders `firestore.rules.template` to `firestore.rules` with `OWNER_UID` from the environment (research R3)
-- [ ] T008 Add npm scripts `dev`, `dev:https`, `emulators`, `test:unit`, `test:rules`, `test:e2e`, `test:parity`, `build` and `deploy` in `package.json`
-- [ ] T009 [P] Install pinned dependencies in `package.json`: `firebase` 13, `exceljs` 4.4, `barcode-detector` 3, `zod` 4, `react-router` 8, `vite-plugin-pwa` 2. Add SheetJS CE 0.20.3 from the vendor tarball `https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz` (research R6)
-- [ ] T010 [P] Configure the PWA: `vite-plugin-pwa` in `vite.config.ts`, a manifest with `dir: "rtl"`, `lang: "ar"` and standalone display, and precaching of fonts and the ZXing WASM. Add the reload prompt in `src/app/UpdatePrompt.tsx`
-- [ ] T011 [P] Self-host Almarai WOFF2 in `public/fonts/`. Define design tokens (palette, type scale with tabular numerals, spacing, motion durations and easings, `prefers-reduced-motion` overrides) in `src/ui/tokens.css`, following plan.md "Design Notes"
-- [ ] T012 [P] Add CI in `.github/workflows/ci.yml`: lint, typecheck, unit, rules (emulator), parity on the fixture, e2e
-- [ ] T013 Record the impeccable direction contract (count-board world, violet seal reserved for posted state, motion grammar) as the surface brief for `src/ui/tokens.css`, the design system every screen inherits (plan.md "Design Notes")
+- [X] T001 Scaffold the Vite + React 19 + TypeScript (strict) app at the repository root: `package.json`, `vite.config.ts`, `tsconfig.json`, and `index.html` with `lang="ar" dir="rtl"`
+- [X] T002 [P] Add ESLint (typescript-eslint, react-hooks) and Prettier config in `eslint.config.js` and `.prettierrc`
+- [X] T003 [P] Configure Vitest with coverage thresholds of 80% for `src/domain`, `src/data` and `src/excel` in `vitest.config.ts`
+- [X] T004 [P] Configure Playwright (Android Chrome viewport, emulator base URL, fake-camera launch flags) in `playwright.config.ts`
+- [X] T005 [P] Add Firebase project files: `firebase.json` (hosting, firestore, Auth and Firestore emulators), `.firebaserc` (placeholder project), `firestore.indexes.json`
+- [X] T006 [P] Add `.env.example` (`VITE_FIREBASE_*`, `VITE_USE_EMULATORS`, `OWNER_UID`). (`.gitignore` already covers `.env*.local`, `firestore.rules`, `*.xlsx` except the fixture, and `node_modules/`.)
+- [X] T007 [P] Write `scripts/render-rules.mjs`, which renders `firestore.rules.template` to `firestore.rules` with `OWNER_UID` from the environment (research R3)
+- [X] T008 Add npm scripts `dev`, `dev:https`, `emulators`, `test:unit`, `test:rules`, `test:e2e`, `test:parity`, `build` and `deploy` in `package.json`
+- [X] T009 [P] Install pinned dependencies in `package.json`: `firebase` 13, `exceljs` 4.4, `barcode-detector` 3, `zod` 4, `react-router` 8, `vite-plugin-pwa` 2. Add SheetJS CE 0.20.3 from the vendor tarball `https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz` (research R6)
+- [X] T010 [P] Configure the PWA: `vite-plugin-pwa` in `vite.config.ts`, a manifest with `dir: "rtl"`, `lang: "ar"` and standalone display, and precaching of fonts and the ZXing WASM. Add the reload prompt in `src/app/UpdatePrompt.tsx`
+- [X] T011 [P] Self-host Almarai WOFF2 in `public/fonts/`. Define design tokens (palette, type scale with tabular numerals, spacing, motion durations and easings, `prefers-reduced-motion` overrides) in `src/ui/tokens.css`, following plan.md "Design Notes"
+- [X] T012 [P] Add CI in `.github/workflows/ci.yml`: lint, typecheck, unit, rules (emulator), parity on the fixture, e2e
+- [X] T013 Record the impeccable direction contract (count-board world, violet seal reserved for posted state, motion grammar) as the surface brief for `src/ui/tokens.css`, the design system every screen inherits (plan.md "Design Notes")
 
 ---
 

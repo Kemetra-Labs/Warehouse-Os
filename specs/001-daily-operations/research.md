@@ -184,8 +184,8 @@ current npm releases checked on 2026-10-12. Implementation pins exact versions i
 
 - **Unit**: Vitest 5. Covers ledger math, status, reorder point, substitute ranking, the search
   classifier, import mapping, and export column mapping.
-- **Rules**: `@firebase/rules-unit-testing` 6 against the Firestore emulator (Firebase CLI 15,
-  Java 17 present).
+- **Rules**: `@firebase/rules-unit-testing` 6 against the Firestore emulator (firebase-tools 15.33,
+  which needs **Java 21**; CI uses Temurin 21).
 - **Parity**: a Vitest suite that reads the real workbook from `WORKBOOK_PATH`. The workbook
   contains government custody data and is **never committed**.
   - Locally the suite is mandatory before release.
