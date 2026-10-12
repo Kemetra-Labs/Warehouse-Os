@@ -1,0 +1,15 @@
+rules_version = '2';
+
+// Placeholder only. Real rules are task T026 (contracts/firestore-rules.md).
+// __OWNER_UID__ is substituted by scripts/render-rules.mjs; never commit the rendered file.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isOwner() {
+      return request.auth != null && request.auth.uid == '__OWNER_UID__';
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

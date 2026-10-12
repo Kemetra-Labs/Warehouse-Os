@@ -1,0 +1,92 @@
+/* Design tokens: count-board world (plan.md "Design Notes"). Logical properties only. */
+:root {
+  /* Palette */
+  --scrub: #0f5f58;
+  --scrub-2: #13756c;
+  --board: #f4f7f6;
+  --ink: #122321;
+  --muted: #4b5f5c;
+  --marker: #1f4fa3;
+  --miss: #c2362b;
+  --match: #2e7d4f;
+  --seal: #5b2d8e; /* reserved for posted/approved state ONLY */
+  --amber: #9a6200;
+  --line: #d5dfdc;
+
+  /* Type scale (minimum 12px) */
+  --font-family: 'Almarai', system-ui, sans-serif;
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-md: 15px;
+  --text-lg: 18px;
+  --text-xl: 22px;
+  --text-2xl: 28px;
+
+  /* Spacing scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  /* Motion: durations */
+  --dur-seal: 420ms;
+  --dur-scan: 200ms;
+  --dur-tick: 220ms;
+  --dur-sheet-in: 300ms;
+  --dur-sheet-out: 200ms;
+  --dur-sync: 250ms;
+  --dur-number: 120ms;
+  --dur-press: 80ms;
+
+  /* Motion: easings */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-decelerate: cubic-bezier(0, 0, 0, 1);
+  --ease-emphasized-decelerate: cubic-bezier(0.05, 0.7, 0.1, 1);
+  --ease-accelerate: cubic-bezier(0.3, 0, 1, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-seal: 150ms;
+    --dur-scan: 0ms;
+    --dur-tick: 0ms;
+    --dur-sheet-in: 120ms;
+    --dur-sheet-out: 120ms;
+    --dur-sync: 0ms;
+    --dur-number: 0ms;
+    --dur-press: 0ms;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--board);
+  color: var(--ink);
+  font-family: var(--font-family);
+  font-size: var(--text-md);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.5;
+}
+
+::selection {
+  background: var(--scrub-2);
+  color: #fff;
+}
+
+:focus-visible {
+  outline: 3px solid var(--marker);
+  outline-offset: 2px;
+}
