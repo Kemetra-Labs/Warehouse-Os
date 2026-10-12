@@ -1,0 +1,92 @@
+.seal {
+  --seal-tilt: -14deg;
+  inline-size: 92px;
+  block-size: 92px;
+  transform: rotate(var(--seal-tilt));
+  font-family: var(--font-family);
+  direction: rtl;
+}
+
+.posted {
+  color: var(--seal);
+}
+
+.cancelled {
+  color: var(--miss);
+}
+
+.ringOuter,
+.ringInner {
+  fill: none;
+  stroke: currentColor;
+}
+
+.ringOuter {
+  stroke-width: 3;
+}
+
+.ringInner {
+  stroke-width: 1.5;
+}
+
+.title {
+  fill: currentColor;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.meta {
+  fill: currentColor;
+  font-size: 12px;
+}
+
+/* Stamp: scale 1.35 -> 1, fade in, 3deg settle (motion table). transform + opacity only. */
+.animate {
+  animation: stamp var(--dur-seal) var(--ease-emphasized-decelerate) both;
+}
+
+.animate .ringOuter {
+  animation: flash calc(var(--dur-seal) + 80ms) var(--ease-standard) both;
+}
+
+@keyframes stamp {
+  from {
+    opacity: 0;
+    transform: scale(1.35) rotate(calc(var(--seal-tilt) - 3deg));
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(var(--seal-tilt));
+  }
+}
+
+@keyframes flash {
+  0% {
+    opacity: 0.4;
+  }
+  80% {
+    opacity: 0.4;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate {
+    animation-name: fade;
+  }
+
+  .animate .ringOuter {
+    animation: none;
+  }
+}

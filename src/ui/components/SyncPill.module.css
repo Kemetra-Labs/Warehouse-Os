@@ -1,0 +1,56 @@
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-block-size: 28px;
+  padding: var(--space-1) var(--space-2);
+  border: 1.5px dashed var(--scrub-line);
+  border-radius: 99px;
+  background: transparent;
+  color: var(--on-scrub);
+  font-family: inherit;
+  font-size: var(--text-xs);
+  white-space: nowrap;
+  transition:
+    border-color var(--dur-sync) var(--ease-standard),
+    color var(--dur-sync) var(--ease-standard);
+}
+
+.synced {
+  border-style: solid;
+}
+
+.failed {
+  border-color: var(--miss);
+  background: var(--tint-miss);
+  color: var(--miss);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+button.pill {
+  min-block-size: var(--tap-min);
+}
+
+.glyph {
+  inline-size: 16px;
+  block-size: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+
+/* The count cross-fades when the label changes (keyed element remounts). */
+.label {
+  animation: label-in var(--dur-sync) var(--ease-standard) both;
+}
+
+@keyframes label-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

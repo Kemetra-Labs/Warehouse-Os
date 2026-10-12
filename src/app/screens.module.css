@@ -1,0 +1,54 @@
+.panel {
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-xl);
+  font-weight: 800;
+}
+
+.note {
+  margin: 0;
+  color: var(--muted);
+}
+
+.tally {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin-block-start: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.tally > div {
+  display: grid;
+  padding: var(--space-3) var(--space-2);
+  text-align: center;
+}
+
+.tally > div + div {
+  border-inline-start: 1px solid var(--line);
+}
+
+.tally b {
+  font-size: var(--text-xl);
+}
+
+.tally span {
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.lit {
+  background: var(--tint-miss);
+}
+
+.lit b {
+  color: var(--miss);
+}
