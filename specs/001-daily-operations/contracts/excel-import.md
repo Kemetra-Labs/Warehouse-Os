@@ -25,7 +25,7 @@
 | I | الرصيد الافتتاحي (ثابت) | **not imported as a movement** (FR-002); kept only in the parity report |
 | K | سعر القطعة (ج) | `priceMinor = round(K × 100)` |
 | M | الشركة الموردة | `supplier` |
-| N | GTIN | `gtins = [N]` when it is 13 digits, else `[]` |
+| N | GTIN | `gtins = [N]` when it is 8 or 13 digits, else `[]` |
 | P | حالة الصنف | `active = (P != 'موقوف')` |
 | R | حد الطلب (يدوي) | `reorderManual` (empty → null) |
 

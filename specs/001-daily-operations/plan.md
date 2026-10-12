@@ -116,11 +116,15 @@ src/
 │   ├── search.ts            # classify(input) → gtin | page | code | name; Arabic digit normalisation
 │   ├── receipt.ts           # draft validation + toMovements() on post
 │   ├── issue.ts             # aggregate requested, coverage check, toMovements() on post
+│   ├── items.ts             # item validation (unique code/page, GTIN format and uniqueness)
+│   ├── settings.ts          # settings validation (coverage months, default reorder point)
 │   └── money.ts             # piastres helpers, formatting (Western digits)
 ├── data/                    # Firebase adapters (repository pattern)
 │   ├── firebase.ts          # app init, persistentLocalCache, emulator switch
 │   ├── auth.ts              # Google sign-in, owner check
 │   ├── repos/               # items.ts, movements.ts, receipts.ts, issues.ts, settings.ts
+│   ├── importWriter.ts      # batched, resumable import writes (contracts/excel-import.md)
+│   ├── useLedger.ts         # derived balances, statuses, pending settlements, changed-since-seen
 │   ├── sync.ts              # pending-writes / synced state from snapshot metadata
 │   └── outbox.ts            # IndexedDB copy of each post/cancel batch until server ack (R12)
 ├── excel/
@@ -135,9 +139,9 @@ src/
 │   └── detector.ts          # barcode-detector ponyfill wrapper
 ├── ui/
 │   ├── tokens.css           # palette, type, spacing, motion tokens (docs/design/ui-inspiration.md)
-│   ├── components/          # SyncPill, SearchBox, CountTable, Seal, BottomSheet, StatusDot, Bdi …
+│   ├── components/          # SyncPill, SearchBox, CountTable, Seal, BottomSheet, StatusDot, Bdi, ItemRow …
 │   └── screens/             # Home, Receive, ReceiptReview, Issue, SubstituteSheet, Items, ItemCard,
-│                            # Movements, Adjust, Import+Parity, Exports, SignIn
+│                            # ItemEdit, Movements, Adjust, ImportParity, Exports, Unsent, Settings, SignIn
 ├── app/                     # routes, providers, PWA update prompt
 └── main.tsx
 
@@ -218,4 +222,6 @@ dependencies.
 
 ## Complexity Tracking
 
-No constitution violations. Nothing to justify.
+| Violation | Why Needed | Simpler Alternative Rejected Because |
+|-----------|------------|-------------------------------------|
+| Principle II, partially: imported history (237 movements) stores the item's price **at import time**, not a true historical price | The workbook keeps one price per item (column K) and no price per movement, so no historical price exists to import. The workbook's own value columns use that same single price, so imported values match the workbook exactly (parity, Principle III). Every movement posted in the app stores its real price at posting. | Leaving `priceMinor` empty on imported rows would break value totals and the backup. Inventing past prices would fabricate custody data. |

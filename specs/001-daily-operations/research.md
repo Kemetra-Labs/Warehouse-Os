@@ -87,7 +87,8 @@ current npm releases checked on 2026-10-12. Implementation pins exact versions i
   - Formats limited to `ean_13`, `ean_8`, `code_128`, `data_matrix`, so GS1 DataMatrix works if
     suppliers adopt it later.
 - **Fallback**: the single search input (FR-020) is always visible. It is classified by shape:
-  `^\d{13}$` → GTIN; `^\d{1,4}$` → page number; `^[A-Z]{3}-\d{2}$` (case-insensitive) → code;
+  `^\d{8}$` or `^\d{13}$` → GTIN (EAN-8 / EAN-13, matching the scanner formats); `^\d{1,4}$` → page
+  number; `^[A-Z]{3}-\d{2,3}$` (case-insensitive) → code;
   anything else → name search. Arabic-Indic digits (٠-٩) are normalised to ASCII first.
 
 ## R6. Reading the workbook (FR-001…FR-005)

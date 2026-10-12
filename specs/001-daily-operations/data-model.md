@@ -28,13 +28,13 @@ The document ID is the item code (e.g. `SCR-01`).
 
 | Field | Type | Rules |
 |---|---|---|
-| `code` | string | equals the doc ID; pattern `^[A-Z]{3}-\d{2,3}$` |
+| `code` | string | equals the doc ID; pattern `^[A-Z]{3}-\d{2,3}$` (same pattern as the search classifier, research R5) |
 | `page` | int | unique, ≥ 1 (رقم الصفحة; workbook column م) |
 | `category` | string | one of the 7 workbook categories, or a new one the user adds |
 | `nameAr` / `nameEn` | string | required / optional |
 | `material`, `size`, `unit` | string | `unit` defaults to `قطعة` |
 | `supplier` | string | optional |
-| `gtins` | string[] | each `^\d{13}$` (EAN-8/other formats allowed as raw strings); globally unique, checked on the client before linking (FR-033) |
+| `gtins` | string[] | each `^\d{8}$` or `^\d{13}$` (EAN-8 / EAN-13); globally unique, checked on the client before linking (FR-033) |
 | `priceMinor` | int | latest purchase price; updated when a receipt is posted (FR-034) |
 | `reorderManual` | int \| null | the manual reorder point (workbook column R) |
 | `active` | bool | default true |
