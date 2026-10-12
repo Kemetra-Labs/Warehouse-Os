@@ -62,8 +62,13 @@ Other imported fields:
   documented as a known limitation for imported history.
 - `postedAt = request.time`.
 
-Expected on the current workbook: **237 movements** (148 إضافة, 89 صرف). Of these, 94 have the
-note "رصيد افتتاحي" and 35 the note "تسوية عجز الجرد" (they stay صرف).
+A row whose quantity is **0** is skipped with a warning: it has no balance effect, and the rules
+reject `qty = 0`. Any other non-integer or negative (non-تسوية) quantity aborts the import.
+
+Expected on the current workbook: **237 ledger rows**, of which **5** are opening-balance rows
+with quantity 0 (rows 94–98: FIX-03, FIX-04, FIX-05, PLG-20, PLA-31), so **232 movements** are
+imported (143 إضافة, 89 صرف). Of these, 89 have the note "رصيد افتتاحي" and 35 the note
+"تسوية عجز الجرد" (they stay صرف). Verified by the parity suite on 2026-10-12.
 
 The import writes in batches of at most 450 operations. The items batch commits first.
 
