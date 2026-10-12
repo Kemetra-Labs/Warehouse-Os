@@ -6,7 +6,9 @@
 ## Preconditions (the import aborts with a named message if any fails, and writes nothing)
 
 - The sheets "القائمة الاساسية", "سجل الحركات" and "الأرصدة اللحظية" exist.
-- Table "الحركات" exists on "سجل الحركات" with the 18 headers below, in order.
+- Row 4 of "سجل الحركات" holds the 18 headers below, in order (A4:R4). This is checked by
+  header text, because SheetJS CE does not expose Excel table definitions. The data rows are
+  5–595, the extent of the workbook's "الحركات" table.
 - `settings/app.workbookImport` is null (FR-004). Otherwise the user sees "اتستورد قبل كده بتاريخ …"
   and no write happens.
 
@@ -25,7 +27,7 @@
 | I | الرصيد الافتتاحي (ثابت) | **not imported as a movement** (FR-002); kept only in the parity report |
 | K | سعر القطعة (ج) | `priceMinor = round(K × 100)` |
 | M | الشركة الموردة | `supplier` |
-| N | GTIN | `gtins = [N]` when it is 8 or 13 digits, else `[]` |
+| N | GTIN | `gtins = [String(N)]` when it is 8 or 13 digits, else `[]`. A numeric cell is converted with no loss (13 digits < 2^53). The import asserts the count it found (47 on the current workbook) and lists rejected values. |
 | P | حالة الصنف | `active = (P != 'موقوف')` |
 | R | حد الطلب (يدوي) | `reorderManual` (empty → null) |
 
@@ -37,7 +39,7 @@ Expected on the current workbook: **97 items**, of which 47 have a GTIN.
 |---|---|---|---|
 | A | م | formula | — |
 | B | مسلسل الصنف | formula | — |
-| C | التاريخ | input | `businessDate` (local date; **2026-01-08 → 2026-08-01**, FR-005) |
+| C | التاريخ | input | `businessDate`, computed from the raw Excel date **serial** (read with `cellDates: false`) by integer arithmetic, so no time zone is involved; **2026-01-08 → 2026-08-01**, FR-005 |
 | D | نوع الحركة | input | `type` (must be one of the 4 types) |
 | E | الكود | input | `itemCode` (must exist in items) |
 | F | الصنف | formula | — (cross-checked: must equal the item's `nameAr`; a mismatch is a warning) |

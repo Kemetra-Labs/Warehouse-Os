@@ -93,7 +93,7 @@ violations, so Complexity Tracking stays empty.
 ```text
 specs/001-daily-operations/
 ├── plan.md              # this file
-├── research.md          # Phase 0: decisions R1–R11
+├── research.md          # Phase 0: decisions R1–R12
 ├── data-model.md        # Phase 1: collections, derived state
 ├── quickstart.md        # Phase 1: run, test, accept, deploy
 ├── contracts/
@@ -101,7 +101,7 @@ specs/001-daily-operations/
 │   ├── excel-import.md      # workbook → items/movements mapping + parity
 │   └── excel-exports.md     # receipt/issue prints, ledger rows, backup
 ├── checklists/requirements.md
-└── tasks.md             # Phase 2 (/speckit-tasks, not created here)
+└── tasks.md             # Phase 2 (/speckit-tasks): 95 tasks
 ```
 
 ### Source Code (repository root)
@@ -206,13 +206,13 @@ dependencies.
    `.gitattributes` (LF for `*.sh`), tokens and fonts, auth with owner gate, sync pill. Rules
    contract tests 1–2 and 9.
 2. **Domain core**: `ledger`, `status`, `search`, `substitutes`, `money`, with unit tests (TDD).
-3. **Import + parity** (US1): `importWorkbook`, the parity screen, the parity suite (real + fixture), rules tests 3–6.
+3. **Import + parity** (US1): `importWorkbook`, the parity screen, the parity suite (real + fixture). (Rules tests 1–4, 6, 9 and 10 land in the foundation; see tasks.md.)
 4. **Items + item card** (US4).
 5. **Receiving** (US2): the scanner, receipt draft/review/post, GTIN linking, price update, rules
    test 7.
 6. **Issuing** (US3): the batch, aggregation, the substitute sheet, negative issue with reason,
    seal.
-7. **Reversal / return / adjust** (US5): rules tests 5 and 8.
+7. **Reversal / return / adjust** (US5): rules test 5. (Tests 7 and 8 land with receiving, T045.)
 8. **Outputs** (US6): print receipt and issue, ledger rows (with the R8 paste spike on a workbook
    copy), backup and reminder.
 9. **Offline hardening** (US7): E2E offline on two browser contexts, post-sync negative flag,

@@ -56,7 +56,7 @@ ID schemes:
 | `type` | `"إضافة" \| "صرف" \| "مرتجع" \| "تسوية"` | |
 | `itemCode` | string | must exist when the movement is created (checked on the client; rules cannot afford a per-movement lookup, research R2) |
 | `qty` | int | > 0 for إضافة/صرف/مرتجع; ≠ 0 (signed) for تسوية |
-| `businessDate` | string | `YYYY-MM-DD`, not in the future |
+| `businessDate` | string | `YYYY-MM-DD`. "Not in the future" is checked **on the client only**, against the Africa/Cairo calendar day. The rules do not check it, because comparing with `request.time` (UTC) would reject valid posts made between local midnight and UTC midnight. |
 | `postedAt` | timestamp | `request.time` (enforced by rules) |
 | `priceMinor` | int | the unit price snapshot at posting (constitution II) |
 | `batchNo` / `expiry` | string \| null | `expiry` is `YYYY-MM` or `YYYY-MM-DD` |
@@ -91,7 +91,9 @@ ID schemes:
 **Post rule** (client, one atomic batched write):
 1. Every line resolves to an item.
 2. Lines where `countedQty ≠ invoicedQty` need a `diffReason`.
-3. Then write movement `{id}-L{n}` (type إضافة, `qty = countedQty`).
+3. Then write movement `{id}-L{n}` (type إضافة, `qty = countedQty`) for every line with
+   `countedQty > 0`. A line with `countedQty == 0` (nothing arrived) writes **no movement**; its
+   invoiced quantity and difference reason stay on the receipt document.
 4. Then update item `priceMinor` and append the GTIN.
 5. Then set `status = posted`.
 
@@ -110,14 +112,18 @@ ID schemes:
 | `status` | `draft \| posted \| cancelled` | |
 | `rep`, `businessDate` | string | rep = name of the مندوب |
 | `permits` | string[] | patient permit **numbers only** (no names) |
-| `requested[]` | `{itemCode, qty}` | aggregated by item (FR-041) |
+| `requested[]` | `{itemCode, qty, priceMinor}` | aggregated by item (FR-041). `priceMinor` is snapshotted at draft → posted, so reprints never drift (constitution II) |
+| `requestedValueMinor` / `issuedValueMinor` | int | written at posting from the snapshotted prices; prints and the summary read these, never live item prices |
 | `issued[]` | `{n, itemCode, qty, batchNo, expiry, forItemCode \| null, negativeReason \| null}` | `forItemCode` set when this line substitutes a requested item |
 | totals | derived | requested value, issued value and difference come from item prices at posting (FR-045) |
 
 **Post rule**:
 1. Every requested quantity is covered by issued lines for the same item or substitutes
    (`forItemCode`), or reduced.
-2. Issued quantity beyond the current balance needs `negativeReason`.
+2. Issued quantity is **summed per item, and per batch**, across all issued lines of the batch.
+   When a sum exceeds the current balance, the batch needs `negativeReason` (FR-044). A per-line
+   check is not enough: a substitute that serves two requested items, or a split across batches,
+   can pass line by line and still go negative.
 3. Then write movement `{id}-L{n}` (type صرف, `substituteFor` from `forItemCode`,
    `reference = "دفعة {number}"`).
 4. Then set `status = posted`.
@@ -129,7 +135,7 @@ ID schemes:
 | `coverageMonths` | 1.5 |
 | `defaultReorder` | 5 |
 | `lastBackupAt` | null |
-| `lastLedgerExportAt` / `lastLedgerExportedIds` | null / [] |
+| `lastLedgerExportAt` / `lastLedgerExportedIds` | null / []. IDs are added with `arrayUnion`, never by rewriting the whole array, so two devices cannot overwrite each other. Imported movements (`source.kind == 'import'`) are never exported, because they are already in the workbook. |
 | `workbookImport` | `{importedAt, movementCount, fileName} \| null` (FR-004 guard) |
 
 ## Derived state (client only)

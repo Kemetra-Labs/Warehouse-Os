@@ -25,7 +25,7 @@ placeholder is replaced at deploy time (research R3).
 | Op | Allowed when |
 |---|---|
 | read | OWNER |
-| create | OWNER **and** the schema is valid (data-model) **and** `postedAt == request.time` **and** `createdBy == request.auth.uid` **and** the type/qty sign rule holds (`qty > 0` unless type is تسوية, where `qty != 0`) **and**, if `id` starts with `rev-`, `reverses == id[4:]` **and** `reason` is non-empty. **No `exists()`/`get()` calls.** Item existence and original existence are checked on the client (research R2, access-call budget). |
+| create | OWNER **and** the schema is valid (data-model; the "not in the future" date check is **client-only**, see data-model) **and** `postedAt == request.time` **and** `createdBy == request.auth.uid` **and** the type/qty sign rule holds (`qty > 0` unless type is تسوية, where `qty != 0`) **and**, if `id` starts with `rev-`, `reverses == id[4:]` **and** `reason` is non-empty. **No `exists()`/`get()` calls.** Item existence and original existence are checked on the client (research R2, access-call budget). |
 | update | **never** |
 | delete | **never** |
 
@@ -37,7 +37,8 @@ placeholder is replaced at deploy time (research R3).
 | create | OWNER and `status == 'draft'` |
 | update while draft | OWNER, `resource.data.status == 'draft'`, and new `status` is `draft` or `posted` |
 | draft → posted | as above, plus `postedAt == request.time` |
-| posted → cancelled | OWNER, `resource.data.status == 'posted'`, `request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','cancelledAt','cancelReason'])`, `cancelReason` is non-empty |
+| posted → cancelled | OWNER, `resource.data.status == 'posted'`, **`request.resource.data.status == 'cancelled'`**, **`request.resource.data.cancelledAt == request.time`**, `request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','cancelledAt','cancelReason'])`, `cancelReason` is non-empty |
+| posted → anything else (draft, posted with new keys) | never |
 | any change after cancelled | never |
 | delete | OWNER **only** while `status == 'draft'` (discarding a draft) |
 
@@ -59,7 +60,10 @@ placeholder is replaced at deploy time (research R3).
 6. A movement with `qty = 0`, a negative qty on صرف, a missing required field, or a `postedAt` that is not
    the request time is rejected.
 7. A posted receipt cannot change its lines. A posted receipt can become cancelled only by
-   touching the three allowed keys. A cancelled receipt cannot change.
+   touching the three allowed keys, with `status == 'cancelled'` and `cancelledAt` equal to the
+   request time. **Posted → draft is rejected, posted → posted with a new `cancelReason` is
+   rejected, and a delete after an attempted downgrade is rejected.** A cancelled receipt cannot
+   change.
 8. A draft can be deleted. Posted and cancelled documents cannot be deleted.
 9. An item cannot be deleted, and its code cannot be changed.
 10. **Budget**: one batched write of 450 valid movement creates (the import shape) succeeds, and

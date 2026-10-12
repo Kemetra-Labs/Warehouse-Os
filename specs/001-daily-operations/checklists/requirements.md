@@ -36,5 +36,5 @@
 - FR-051 states the outcome (immutability enforced outside the interface). The mechanism belongs
   in plan.md.
 - Facts verified against the workbook on 2026-10-12: 97 items, 237 movements (148 إضافة, 89 صرف),
-  94 opening movements dated 2026-08-01; 6 movements (rows 232–243) dated 2026-01-08, which makes the workbook's months-of-consumption 9; no duplicate names or codes,
+  94 opening movements dated 2026-08-01; 6 movements (rows 232, 237 and 240–243) dated 2026-01-08, which makes the workbook's months-of-consumption 9; no duplicate names or codes,
   manual reorder column empty for all items, cached balances present for all 97 items.

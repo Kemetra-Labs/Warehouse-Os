@@ -33,7 +33,11 @@ current npm releases checked on 2026-10-12. Implementation pins exact versions i
     (FR-004).
   - A reversal of movement `X`: `rev-{X}`. A second reversal is rejected (FR-052, "reversed only
     once").
-  - Posted lines: `{docId}-L{n}`. Retrying a post is idempotent.
+  - Posted lines: `{docId}-L{n}`.
+  - **Retrying a post is NOT a no-op.** A `set()` on an existing document is evaluated as an
+    update, which the rules deny for movements and posted documents. So a resend of a post the
+    server already applied is rejected. The outbox (R12) handles this by checking server state
+    before reporting a failure.
 - **Access-call budget**: Firestore rules allow about 10 `exists()`/`get()` calls per
   operation and about 20 per batched write; repeat calls on the same document are cached. So
   movement rules **must not** call `exists()` per movement. The rules validate shape, sign,
@@ -84,11 +88,16 @@ current npm releases checked on 2026-10-12. Implementation pins exact versions i
     ZXing WASM elsewhere.
   - The WASM file is precached by the service worker, so scanning works offline.
   - Camera via `getUserMedia({ video: { facingMode: 'environment' } })`.
-  - Formats limited to `ean_13`, `ean_8`, `code_128`, `data_matrix`, so GS1 DataMatrix works if
-    suppliers adopt it later.
+  - Formats: `ean_13`, `ean_8`, `upc_a`, `code_128`, `data_matrix`.
+  - **GS1 element strings** (GS1-128 or GS1 DataMatrix, e.g. `01…17…10…`) are parsed: AI 01 →
+    GTIN-14, AI 17 → expiry (YYMMDD), AI 10 → batch. The parsed batch and expiry prefill the
+    receipt line.
+  - **Normalisation**: a GTIN-14 with a leading 0 becomes GTIN-13, and a 12-digit UPC-A gets a
+    leading 0 to become GTIN-13.
 - **Fallback**: the single search input (FR-020) is always visible. It is classified by shape:
-  `^\d{8}$` or `^\d{13}$` → GTIN (EAN-8 / EAN-13, matching the scanner formats); `^\d{1,4}$` → page
-  number; `^[A-Z]{3}-\d{2,3}$` (case-insensitive) → code;
+  a GS1 element string → parsed as above; `^\d{8}$`, `^\d{12}$`, `^\d{13}$` or `^\d{14}$` →
+  GTIN (normalised as above); `^\d{1,4}$` → page number; `^[A-Z]{3}-\d{2,3}$`
+  (case-insensitive) → code;
   anything else → name search. Arabic-Indic digits (٠-٩) are normalised to ASCII first.
 
 ## R6. Reading the workbook (FR-001…FR-005)
@@ -102,12 +111,13 @@ current npm releases checked on 2026-10-12. Implementation pins exact versions i
   - **ExcelJS 4.4 failed to open the workbook**, with `Cannot set properties of undefined
     (setting 'filterButton')`. Its table parser breaks on this file's tables. So ExcelJS is used
     **only to write** new files (R7) and never to read the user's workbook.
-- Dates come back as JS `Date` at UTC midnight (`2026-08-01T00:00:00Z`). The business date is
-  taken from the **UTC** year, month and day, never local time, so no time zone can shift a day.
+- **Dates**: the workbook is read with `cellDates: false`, so date cells come back as Excel
+  serial numbers. The business date is computed from the serial by integer arithmetic
+  (serial 1 = 1900-01-01, with Excel's 1900 leap-year quirk), so no time zone is involved. The
+  import tests run under `TZ=Africa/Cairo` as well as UTC to prove it.
   - Sheets: "القائمة الاساسية" (items, header row 4, data from row 5), table "الحركات" on
     "سجل الحركات" (header row 4), and "الأرصدة اللحظية" (cached balance column L, status
     column N).
-  - Business dates are converted to `YYYY-MM-DD` in the local time zone (Africa/Cairo).
   - The 6 rows dated 2026-01-08 are remapped to 2026-08-01 (FR-005, confirmed by the user).
 - **Verified facts** (workbook inspection, 2026-10-12):
   - 97 items; codes and names unique; cached balances present for all 97.
@@ -194,7 +204,12 @@ current npm releases checked on 2026-10-12. Implementation pins exact versions i
   - Before a post or cancel batch is committed, its full payload is stored in the outbox under
     its document ID.
   - The entry is removed only when the batch's `commit()` promise resolves, which means the
-    server acknowledged it. Pending promises are re-attached on app start through
+    server acknowledged it.
+  - **On a rejection, the outbox first reads server state** for that document ID: status
+    `posted` (or `cancelled`) and the `{id}-L*` movements present. A match means an earlier send
+    already succeeded, so the entry is cleared as success. Only a real mismatch is marked
+    `failed`. This prevents a lost acknowledgement from turning into a false failure and then a
+    double post. Pending promises are re-attached on app start through
     `waitForPendingWrites()` plus a per-entry check of server state.
   - If the promise rejects, the entry is marked `failed`, the sync pill turns red ("فشل الإرسال"),
     and a "مستندات لم تُرسل" (unsent documents) screen shows the payload. From there the user can

@@ -36,7 +36,7 @@ Signatures: أمين المخزن / المندوب.
 
 | Col | Value |
 |---|---|
-| C | business date as an Excel date (not text) |
+| C | business date as an Excel date (not text), built from the `YYYY-MM-DD` parts as a UTC-midnight date so no time zone can shift the day |
 | D | type, as the workbook expects it (see the note below) |
 | E | code |
 | I | quantity, as the workbook expects it (see the note below) |
@@ -49,18 +49,24 @@ Signatures: أمين المخزن / المندوب.
 
 Notes on columns D and I:
 - Most movements export their type and quantity as they are.
-- A **تسوية with negative qty** exports as type تسوية with a negative quantity. The workbook's K
-  column sums it as signed, so the result is correct.
+- A **تسوية with negative qty** exports as type تسوية with a negative quantity. The workbook's
+  "تسويات" column (K on "الأرصدة اللحظية") is `SUMIFS(الكمية, نوع الحركة, "تسوية", …)` and the
+  balance is `H − I + J + K`, so a signed تسوية is summed correctly (formula read on 2026-10-12).
+  مرتجع is summed in J and adds. The current workbook has no تسوية or مرتجع rows yet, so the
+  spike below must prove both.
 - **Reversals** export as their تسوية row.
 
 Rules:
 - Rows are ordered by business date, then by posting time.
-- The export includes only movements not in `lastLedgerExportedIds`. After the user confirms "تم
-  اللصق" (pasted), those IDs are recorded.
+- The export includes only movements that are **not imported** (`source.kind != 'import'`) and not
+  in `lastLedgerExportedIds`. The first export after an import is therefore empty. After the user
+  confirms "تم اللصق" (pasted), the exported IDs are added with `arrayUnion`.
 - A first-sheet note explains the steps: open this file → select rows (A:R) → copy → in the
   workbook select column A of the first empty row of the table → Paste Special → Skip blanks.
-- **Spike acceptance**: on a copy of the real workbook, after pasting, every touched item's
-  balance in "الأرصدة اللحظية" equals the app.
+- **Spike acceptance**: on a copy of the real workbook, paste a set that includes at least one
+  إضافة, one صرف, one positive تسوية, one negative تسوية, one مرتجع, and one reversal pair. After
+  pasting, every touched item's balance in "الأرصدة اللحظية" equals the app. Column D's data
+  validation must accept تسوية and مرتجع.
 - Capacity: if `usedRows + newRows > 591` (data rows 5–595), show a warning to extend the table
   first.
 

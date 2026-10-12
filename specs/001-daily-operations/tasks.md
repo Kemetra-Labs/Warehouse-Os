@@ -31,7 +31,7 @@ US1 → US2 → US3 → US7. P2 stories follow: US4 → US5 → US6.
 - [ ] T003 [P] Configure Vitest with coverage thresholds of 80% for `src/domain`, `src/data` and `src/excel` in `vitest.config.ts`
 - [ ] T004 [P] Configure Playwright (Android Chrome viewport, emulator base URL, fake-camera launch flags) in `playwright.config.ts`
 - [ ] T005 [P] Add Firebase project files: `firebase.json` (hosting, firestore, Auth and Firestore emulators), `.firebaserc` (placeholder project), `firestore.indexes.json`
-- [ ] T006 [P] Add `.env.example` (`VITE_FIREBASE_*`, `VITE_USE_EMULATORS`, `OWNER_UID`), and gitignore `.env.local` and the rendered `firestore.rules`
+- [ ] T006 [P] Add `.env.example` (`VITE_FIREBASE_*`, `VITE_USE_EMULATORS`, `OWNER_UID`). (`.gitignore` already covers `.env*.local`, `firestore.rules`, `*.xlsx` except the fixture, and `node_modules/`.)
 - [ ] T007 [P] Write `scripts/render-rules.mjs`, which renders `firestore.rules.template` to `firestore.rules` with `OWNER_UID` from the environment (research R3)
 - [ ] T008 Add npm scripts `dev`, `dev:https`, `emulators`, `test:unit`, `test:rules`, `test:e2e`, `test:parity`, `build` and `deploy` in `package.json`
 - [ ] T009 [P] Install pinned dependencies in `package.json`: `firebase` 13, `exceljs` 4.4, `barcode-detector` 3, `zod` 4, `react-router` 8, `vite-plugin-pwa` 2. Add SheetJS CE 0.20.3 from the vendor tarball `https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz` (research R6)
@@ -54,7 +54,7 @@ US1 → US2 → US3 → US7. P2 stories follow: US4 → US5 → US6.
 - [ ] T017 [P] Unit tests for piastre conversion, rounding, and formatting with Western digits in `tests/unit/domain/money.test.ts`
 - [ ] T018 [P] Rules tests 1, 2 and 9 (signed out, non-owner, items not deletable and code immutable) in `tests/rules/access.test.ts`
 - [ ] T019 [P] Rules tests 3, 4, 6 and 10 (movements create-only, deterministic-ID duplicates rejected, validation, 450-op and 30-line batch budget) in `tests/rules/movements.test.ts`
-- [ ] T020 [P] Unit tests for the outbox (store before commit, delete on ack, mark failed on reject, survive reload) using `fake-indexeddb` in `tests/unit/data/outbox.test.ts`
+- [ ] T020 [P] Unit tests for the outbox (store before commit, delete on ack, mark failed on reject, survive reload, **a rejected resend whose document is already posted on the server is cleared as success**) using `fake-indexeddb` in `tests/unit/data/outbox.test.ts`
 
 ### Implementation
 
@@ -86,7 +86,7 @@ US1 → US2 → US3 → US7. P2 stories follow: US4 → US5 → US6.
 ### Tests for User Story 1
 
 - [ ] T035 [P] [US1] Write the fixture generator `scripts/make-fixture.mjs` that produces `tests/fixtures/mini-workbook.xlsx`. It must have the same three sheets, a table named "الحركات" spanning A4:R595, cached L and N values, fake items, opening rows dated 2026-08-01, and a row dated 2026-01-08
-- [ ] T036 [P] [US1] Unit tests for the import mapping per `contracts/excel-import.md`: item columns; movement input columns; formula columns ignored; UTC date parts; 2026-01-08 → 2026-08-01 (FR-005); no opening movement from column I (FR-002); named precondition errors. File: `tests/unit/excel/importWorkbook.test.ts`
+- [ ] T036 [P] [US1] Unit tests for the import mapping per `contracts/excel-import.md`: item columns; movement input columns; formula columns ignored; dates from Excel serials, with the suite run under both `TZ=UTC` and `TZ=Africa/Cairo`; GTIN count asserted; 2026-01-08 → 2026-08-01 (FR-005); no opening movement from column I (FR-002); named precondition errors. File: `tests/unit/excel/importWorkbook.test.ts`
 - [ ] T037 [P] [US1] Parity tests against the fixture (always run) and the real workbook from `WORKBOOK_PATH` (skipped when unset; mandatory before release) in `tests/parity/parity.test.ts`
 - [ ] T038 [P] [US1] Unit tests for the import writer (batches of at most 450, resume skips existing `imp-r*` IDs, `workbookImport` written only after the last batch) in `tests/unit/data/importWriter.test.ts`
 
@@ -115,8 +115,9 @@ US1 → US2 → US3 → US7. P2 stories follow: US4 → US5 → US6.
   - `toMovements()` uses the counted quantity, IDs `{id}-L{n}` and the price snapshot;
   - `priceUpdates`; a warning when a GTIN is already linked to another item;
   - an expiry before the business date needs a reason (edge case);
-  - a business date in the future is rejected (edge case).
-- [ ] T045 [P] [US2] Rules tests 7 and 8 for documents (draft editable, posted frozen, posted → cancelled limited to three keys, drafts deletable) in `tests/rules/documents.test.ts`
+  - a business date in the future is rejected (edge case);
+  - a line with counted quantity 0 writes no movement and keeps its difference on the receipt.
+- [ ] T045 [P] [US2] Rules tests 7 and 8 for documents (draft editable, posted frozen, posted → cancelled limited to three keys with `status == 'cancelled'` and `cancelledAt == request.time`, **posted → draft rejected, posted → posted rejected, delete after an attempted downgrade rejected**, drafts deletable) in `tests/rules/documents.test.ts`
 
 ### Implementation for User Story 2
 
@@ -172,7 +173,8 @@ US1 → US2 → US3 → US7. P2 stories follow: US4 → US5 → US6.
   - a negative issue needs a reason;
   - FEFO batch default;
   - `toMovements()` sets `substituteFor` and `reference = "دفعة {n}"`;
-  - requested, issued and difference totals;
+  - requested, issued and difference totals from prices snapshotted at posting, **unchanged after a later receipt changes a price**;
+  - the negative check sums issued quantity per item and per batch (two lines within balance whose sum is not need a reason);
   - local sequential numbering;
   - a business date in the future is rejected.
 
@@ -272,7 +274,8 @@ US1 → US2 → US3 → US7. P2 stories follow: US4 → US5 → US6.
   - formula columns empty;
   - signed تسوية;
   - ordering;
-  - only movements not yet exported;
+  - only movements not yet exported; **imported movements are never exported, so the first export after an import is empty**; exported IDs are added with `arrayUnion`;
+  - dates written correctly under `TZ=Africa/Cairo`;
   - the capacity warning beyond row 595.
 - [ ] T082 [P] [US6] Unit tests for the print files (official header rows, RTL view, A4, fit width, totals, signature block, the ملغي banner) in `tests/unit/excel/prints.test.ts`
 - [ ] T083 [P] [US6] Unit tests for the backup workbook (three sheets with all fields) and the 7-day reminder in `tests/unit/excel/backup.test.ts`
@@ -281,7 +284,7 @@ US1 → US2 → US3 → US7. P2 stories follow: US4 → US5 → US6.
 - [ ] T086 [US6] Implement `src/excel/backup.ts` and the reminder banner so T083 passes
 - [ ] T087 [US6] Build the exports screen (print, ledger rows with steps, backup) in `src/ui/screens/Exports.tsx`
 - [ ] T088 [US6] **Spike R8, with the user, on a COPY of the workbook**:
-  1. Paste 10 exported rows with Paste Special → Skip blanks.
+  1. Paste exported rows with Paste Special → Skip blanks. The set must include at least one إضافة, one صرف, one positive تسوية, one negative تسوية, one مرتجع and one reversal pair, and column D's validation must accept them.
   2. Check that the formula columns still calculate and that the touched items' balances equal the app.
   3. Record the outcome in `specs/001-daily-operations/research.md`.
   4. Switch to the two-block fallback if it fails.

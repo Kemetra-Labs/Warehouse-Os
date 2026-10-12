@@ -163,12 +163,12 @@
 - **FR-002**: System MUST NOT add a separate opening-balance movement from the item sheet's "الرصيد الافتتاحي" column, because opening balances already exist in the ledger as إضافة movements noted "رصيد افتتاحي".
 - **FR-003**: System MUST show a parity screen comparing each item's balance with the cached "الرصيد الحالي" value of sheet "الأرصدة اللحظية", with a count of matching items.
 - **FR-004**: System MUST prevent importing the same workbook history twice.
-- **FR-005**: The 6 movements dated 2026-01-08 in the workbook (ledger rows 232–243: 2 إضافة, 4 صرف) MUST be imported with the date 2026-08-01. The user confirmed on 2026-10-12 that the workbook date is a day/month entry error. With the corrected date, months of consumption becomes 2 instead of 9.
+- **FR-005**: The 6 movements dated 2026-01-08 in the workbook (ledger rows 232, 237 and 240–243: 2 إضافة, 4 صرف) MUST be imported with the date 2026-08-01. The user confirmed on 2026-10-12 that the workbook date is a day/month entry error. With the corrected date, months of consumption becomes 2 instead of 9.
 
 **الأصناف والأرصدة**
 - **FR-010**: System MUST compute each item's balance as إضافة − صرف + مرتجع + تسوية (تسوية is signed), exactly as the workbook does.
 - **FR-011**: System MUST compute each item's status with the workbook's thresholds: balance < 0 → "تجاوز — رصيد سالب"; = 0 → "نافد"; ≤ reorder point → "يحتاج طلب"; otherwise "متاح".
-- **FR-012**: System MUST compute the reorder point as in the workbook: the manual value if set; else, if the item has issues, max(1, round up(total issued ÷ months of consumption × 1.5)); else the default 5. Months of consumption = max(1, round((latest movement date − earliest movement date) ÷ 30)). The coverage (1.5 months) and the default (5) MUST be editable settings.
+- **FR-012**: System MUST compute the reorder point as in the workbook: the manual value if set and greater than 0 (the workbook tests `N(R) > 0`); else, if the item has issues, max(1, round up(total issued ÷ months of consumption × 1.5)); else the default 5. Months of consumption = max(1, round((latest movement date − earliest movement date) ÷ 30)). The coverage (1.5 months) and the default (5) MUST be editable settings.
 - **FR-013**: System MUST keep a balance per batch (item + batch + expiry). Imported movements without a batch go to an "unspecified batch".
 - **FR-014**: Users MUST be able to add an item and edit item master data; codes and page numbers MUST be unique. Item edits MUST NOT change prices stored on past movements.
 - **FR-015**: An item MUST be able to hold more than one GTIN.
