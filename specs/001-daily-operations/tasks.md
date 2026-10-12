@@ -85,18 +85,18 @@ US1 → US2 → US3 → US7. P2 stories follow: US4 → US5 → US6.
 
 ### Tests for User Story 1
 
-- [ ] T035 [P] [US1] Write the fixture generator `scripts/make-fixture.mjs` that produces `tests/fixtures/mini-workbook.xlsx`. It must have the same three sheets, a table named "الحركات" spanning A4:R595, cached L and N values, fake items, opening rows dated 2026-08-01, and a row dated 2026-01-08
-- [ ] T036 [P] [US1] Unit tests for the import mapping per `contracts/excel-import.md`: item columns; movement input columns; formula columns ignored; dates from Excel serials, with the suite run under both `TZ=UTC` and `TZ=Africa/Cairo`; GTIN count asserted; 2026-01-08 → 2026-08-01 (FR-005); no opening movement from column I (FR-002); named precondition errors. File: `tests/unit/excel/importWorkbook.test.ts`
-- [ ] T037 [P] [US1] Parity tests against the fixture (always run) and the real workbook from `WORKBOOK_PATH` (skipped when unset; mandatory before release) in `tests/parity/parity.test.ts`
-- [ ] T038 [P] [US1] Unit tests for the import writer (batches of at most 450, resume skips existing `imp-r*` IDs, `workbookImport` written only after the last batch) in `tests/unit/data/importWriter.test.ts`
+- [X] T035 [P] [US1] Write the fixture generator `scripts/make-fixture.mjs` that produces `tests/fixtures/mini-workbook.xlsx`. It must have the same three sheets, a table named "الحركات" spanning A4:R595, cached L and N values, fake items, opening rows dated 2026-08-01, and a row dated 2026-01-08
+- [X] T036 [P] [US1] Unit tests for the import mapping per `contracts/excel-import.md`: item columns; movement input columns; formula columns ignored; dates from Excel serials, with the suite run under both `TZ=UTC` and `TZ=Africa/Cairo`; GTIN count asserted; 2026-01-08 → 2026-08-01 (FR-005); no opening movement from column I (FR-002); named precondition errors. File: `tests/unit/excel/importWorkbook.test.ts`
+- [X] T037 [P] [US1] Parity tests against the fixture (always run) and the real workbook from `WORKBOOK_PATH` (skipped when unset; mandatory before release) in `tests/parity/parity.test.ts`
+- [X] T038 [P] [US1] Unit tests for the import writer (batches of at most 450, resume skips existing `imp-r*` IDs, `workbookImport` written only after the last batch) in `tests/unit/data/importWriter.test.ts`
 
 ### Implementation for User Story 1
 
-- [ ] T039 [US1] Implement `src/excel/importWorkbook.ts` with SheetJS (preconditions, mapping, date remap) so T036 passes
-- [ ] T040 [US1] Implement `src/excel/parity.ts` (balances against cached L, statuses against N, the "سبب محتمل" note) so T037 passes
-- [ ] T041 [US1] Implement `src/data/importWriter.ts` so T038 passes
-- [ ] T042 [US1] Build the import and parity screen (file picker, progress, the 97/97 counter, per-item differences) in `src/ui/screens/ImportParity.tsx`
-- [ ] T043 [US1] Write an E2E test that imports the fixture, checks parity, and confirms re-import is refused, in `tests/e2e/import.spec.ts`
+- [X] T039 [US1] Implement `src/excel/importWorkbook.ts` with SheetJS (preconditions, mapping, date remap) so T036 passes
+- [X] T040 [US1] Implement `src/excel/parity.ts` (balances against cached L, statuses against N, the "سبب محتمل" note) so T037 passes
+- [X] T041 [US1] Implement `src/data/importWriter.ts` so T038 passes
+- [X] T042 [US1] Build the import and parity screen (file picker, progress, the 97/97 counter, per-item differences) in `src/ui/screens/ImportParity.tsx`
+- [X] T043 [US1] Write an E2E test that imports the fixture, checks parity, and confirms re-import is refused, in `tests/e2e/import.spec.ts`
 
 **Checkpoint**: real-workbook parity is 97/97 locally, and fixture parity passes in CI.
 

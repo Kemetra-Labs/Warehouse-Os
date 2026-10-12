@@ -1,0 +1,218 @@
+.screen {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--text-xl);
+  font-weight: 800;
+  color: var(--scrub);
+}
+
+.note,
+.summary,
+.sub {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.summary {
+  color: var(--ink);
+}
+
+.refusal {
+  margin: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--tint-marker);
+  color: var(--marker);
+  font-weight: 800;
+}
+
+.pick {
+  display: grid;
+  place-items: center;
+  min-block-size: var(--tap-min);
+  padding-inline: var(--space-4);
+  border: 1px solid var(--scrub);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--scrub);
+  font-size: var(--text-md);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.pick:focus-within {
+  outline: 2px solid var(--marker);
+  outline-offset: 2px;
+}
+
+.disabled {
+  border-color: var(--disabled-bg);
+  color: var(--disabled-ink);
+  cursor: default;
+}
+
+/* Visually hidden but focusable, so keyboards and tests can reach the real input. */
+.file {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.go {
+  min-block-size: var(--tap-min);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--scrub);
+  color: var(--on-scrub);
+  font-family: inherit;
+  font-size: var(--text-md);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.go:disabled {
+  background: var(--disabled-bg);
+  color: var(--disabled-ink);
+  cursor: default;
+}
+
+.error {
+  margin: 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--tint-miss);
+  color: var(--miss);
+  font-size: var(--text-sm);
+  font-weight: 800;
+}
+
+.done {
+  margin: 0;
+  color: var(--match);
+  font-weight: 800;
+}
+
+.progress {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--space-2);
+  align-items: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.progress progress {
+  inline-size: 100%;
+  accent-color: var(--marker);
+}
+
+.warnings {
+  color: var(--amber);
+  font-size: var(--text-sm);
+}
+
+.warnings ul {
+  margin: var(--space-2) 0 0;
+  padding-inline-start: var(--space-4);
+}
+
+.result {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.counter {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-1);
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  font-variant-numeric: tabular-nums;
+}
+
+.ok {
+  background: var(--surface);
+}
+
+.ok .big {
+  color: var(--match);
+}
+
+.bad {
+  background: var(--tint-miss);
+}
+
+.bad .big {
+  color: var(--miss);
+}
+
+.big {
+  font-size: var(--text-2xl);
+  font-weight: 800;
+}
+
+.caption {
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.diffs {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.diff {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.diff + .diff {
+  border-block-start: 1px solid var(--hairline);
+}
+
+.diffHead {
+  display: flex;
+  gap: var(--space-2);
+  align-items: baseline;
+  justify-content: space-between;
+  font-weight: 800;
+}
+
+.kind {
+  color: var(--miss);
+  font-size: var(--text-xs);
+}
+
+.values {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  color: var(--marker);
+  font-variant-numeric: tabular-nums;
+}
+
+.reason {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-xs);
+}

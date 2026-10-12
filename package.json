@@ -51,6 +51,7 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "fixture": "node scripts/make-fixture.mjs",
     "test:unit": "vitest run",
     "test:rules": "node scripts/render-rules.mjs --test-uid && firebase emulators:exec --only firestore \"vitest run --config vitest.rules.config.ts\"",
     "test:e2e": "playwright test",
