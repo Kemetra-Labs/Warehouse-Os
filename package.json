@@ -19,6 +19,7 @@
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
+    "@firebase/rules-unit-testing": "6.0.0",
     "@playwright/test": "1.64.0",
     "@types/node": "26.6.5",
     "@types/react": "19.3.0",
@@ -51,7 +52,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test:unit": "vitest run",
-    "test:rules": "node scripts/render-rules.mjs --test-uid && firebase emulators:exec --only firestore \"vitest run tests/rules\"",
+    "test:rules": "node scripts/render-rules.mjs --test-uid && firebase emulators:exec --only firestore \"vitest run --config vitest.rules.config.ts\"",
     "test:e2e": "playwright test",
     "test:parity": "vitest run tests/parity",
     "emulators": "node scripts/render-rules.mjs --test-uid && firebase emulators:start --only auth,firestore,ui",

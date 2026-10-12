@@ -48,22 +48,22 @@ US1 → US2 → US3 → US7. P2 stories follow: US4 → US5 → US6.
 
 ### Tests first
 
-- [ ] T014 [P] Unit tests for the movement effect (إضافة +, صرف −, مرتجع +, signed تسوية), item and batch balances, the "unspecified batch" bucket, and the reversal builder in `tests/unit/domain/ledger.test.ts`
-- [ ] T015 [P] Unit tests for `monthsOfConsumption`, `reorderPoint` (manual, computed, default 5, coverage 1.5) and status thresholds, including the exact label "تجاوز — رصيد سالب", in `tests/unit/domain/status.test.ts`
-- [ ] T016 [P] Unit tests for search classification (8 or 13 digits → GTIN, 1–4 digits → page, `SCR-01` or `PLA-123` in any case → code, 5–7 or 9–12 digits → name search, otherwise name; Arabic-Indic digits normalised) and multi-match behaviour in `tests/unit/domain/search.test.ts`
-- [ ] T017 [P] Unit tests for piastre conversion, rounding, and formatting with Western digits in `tests/unit/domain/money.test.ts`
-- [ ] T018 [P] Rules tests 1, 2 and 9 (signed out, non-owner, items not deletable and code immutable) in `tests/rules/access.test.ts`
-- [ ] T019 [P] Rules tests 3, 4, 6 and 10 (movements create-only, deterministic-ID duplicates rejected, validation, 450-op and 30-line batch budget) in `tests/rules/movements.test.ts`
+- [X] T014 [P] Unit tests for the movement effect (إضافة +, صرف −, مرتجع +, signed تسوية), item and batch balances, the "unspecified batch" bucket, and the reversal builder in `tests/unit/domain/ledger.test.ts`
+- [X] T015 [P] Unit tests for `monthsOfConsumption`, `reorderPoint` (manual, computed, default 5, coverage 1.5) and status thresholds, including the exact label "تجاوز — رصيد سالب", in `tests/unit/domain/status.test.ts`
+- [X] T016 [P] Unit tests for search classification (GS1 element strings parsed; 8, 12, 13 or 14 digits → GTIN normalised to 13 per research R5; 1–4 digits → page; `SCR-01` or `PLA-123` in any case → code; 5–7 or 9–11 digits → name search; otherwise name; Arabic-Indic digits normalised) and multi-match behaviour in `tests/unit/domain/search.test.ts`
+- [X] T017 [P] Unit tests for piastre conversion, rounding, and formatting with Western digits in `tests/unit/domain/money.test.ts`
+- [X] T018 [P] Rules tests 1, 2 and 9 (signed out, non-owner, items not deletable and code immutable) in `tests/rules/access.test.ts`
+- [X] T019 [P] Rules tests 3, 4, 6 and 10 (movements create-only, deterministic-ID duplicates rejected, validation, 450-op and 30-line batch budget) in `tests/rules/movements.test.ts`
 - [ ] T020 [P] Unit tests for the outbox (store before commit, delete on ack, mark failed on reject, survive reload, **a rejected resend whose document is already posted on the server is cleared as success**) using `fake-indexeddb` in `tests/unit/data/outbox.test.ts`
 
 ### Implementation
 
-- [ ] T021 Define zod schemas and types for Item, Movement, Receipt, IssueBatch and Settings in `src/domain/types.ts` (data-model.md)
-- [ ] T022 [P] Implement `src/domain/ledger.ts` so T014 passes
-- [ ] T023 [P] Implement `src/domain/status.ts` so T015 passes
-- [ ] T024 [P] Implement `src/domain/search.ts` so T016 passes
-- [ ] T025 [P] Implement `src/domain/money.ts` so T017 passes
-- [ ] T026 Write `firestore.rules.template` for items, movements and settings per `contracts/firestore-rules.md` (no `exists()` in movement rules) so T018 and T019 pass
+- [X] T021 Define zod schemas and types for Item, Movement, Receipt, IssueBatch and Settings in `src/domain/types.ts` (data-model.md)
+- [X] T022 [P] Implement `src/domain/ledger.ts` so T014 passes
+- [X] T023 [P] Implement `src/domain/status.ts` so T015 passes
+- [X] T024 [P] Implement `src/domain/search.ts` so T016 passes
+- [X] T025 [P] Implement `src/domain/money.ts` so T017 passes
+- [X] T026 Write `firestore.rules.template` for items, movements and settings per `contracts/firestore-rules.md` (no `exists()` in movement rules) so T018 and T019 pass
 - [ ] T027 Initialise Firebase with `persistentLocalCache` and `persistentMultipleTabManager`, plus the emulator switch, in `src/data/firebase.ts`
 - [ ] T028 Implement Google sign-in, persisted session and owner gate in `src/data/auth.ts`, and the sign-in screen in `src/ui/screens/SignIn.tsx`
 - [ ] T029 [P] Implement live repositories for items, movements and settings in `src/data/repos/items.ts`, `src/data/repos/movements.ts` and `src/data/repos/settings.ts`
