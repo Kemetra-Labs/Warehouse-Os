@@ -1,13 +1,103 @@
 rules_version = '2';
 
-// Placeholder only. Real rules are task T026 (contracts/firestore-rules.md).
+// Implements specs/001-daily-operations/contracts/firestore-rules.md.
 // __OWNER_UID__ is substituted by scripts/render-rules.mjs; never commit the rendered file.
+// Movement rules make NO exists()/get() calls (research R2, access-call budget).
 service cloud.firestore {
   match /databases/{database}/documents {
+
     function isOwner() {
       return request.auth != null && request.auth.uid == '__OWNER_UID__';
     }
 
+    // A field that is absent, null, or a string.
+    function optString(d, k) {
+      return d.get(k, null) == null || d.get(k, null) is string;
+    }
+
+    // ---------- items/{code} ----------
+    function validItem(d) {
+      return d.keys().hasAll(['code', 'page', 'category', 'nameAr', 'unit', 'gtins', 'priceMinor', 'active', 'updatedAt'])
+        && d.keys().hasOnly(['code', 'page', 'category', 'nameAr', 'nameEn', 'material', 'size',
+                             'unit', 'supplier', 'gtins', 'priceMinor', 'reorderManual', 'active', 'updatedAt'])
+        && d.code is string
+        && d.page is int && d.page >= 1
+        && d.category is string
+        && d.nameAr is string && d.nameAr.size() > 0
+        && d.unit is string
+        && d.gtins is list
+        && d.priceMinor is int && d.priceMinor >= 0
+        && d.active is bool
+        && d.updatedAt is timestamp
+        && optString(d, 'nameEn') && optString(d, 'material') && optString(d, 'size')
+        && optString(d, 'supplier')
+        && (d.get('reorderManual', null) == null || d.get('reorderManual', null) is int);
+    }
+
+    match /items/{code} {
+      allow read: if isOwner();
+      allow create: if isOwner() && validItem(request.resource.data) && request.resource.data.code == code;
+      allow update: if isOwner() && validItem(request.resource.data)
+        && request.resource.data.code == resource.data.code;
+      allow delete: if false;
+    }
+
+    // ---------- movements/{id} (create-only) ----------
+    // rev-{X}: a تسوية that names X in `reverses` and carries a non-empty reason.
+    function validReversal(d, id) {
+      return !id.matches('rev-.+')
+        || (d.type == 'تسوية'
+            && d.get('reverses', null) is string
+            && ('rev-' + d.get('reverses', null)) == id
+            && d.get('reason', null) is string
+            && d.get('reason', null).size() > 0);
+    }
+
+    function validMovement(d, id) {
+      return d.keys().hasAll(['type', 'itemCode', 'qty', 'businessDate', 'postedAt', 'priceMinor',
+                              'source', 'deviceId', 'createdBy'])
+        && d.keys().hasOnly(['type', 'itemCode', 'qty', 'businessDate', 'postedAt', 'priceMinor',
+                             'batchNo', 'expiry', 'docNumber', 'reference', 'note', 'supplier',
+                             'source', 'substituteFor', 'reverses', 'reason', 'deviceId', 'createdBy'])
+        && d.type in ['إضافة', 'صرف', 'مرتجع', 'تسوية']
+        && d.itemCode is string && d.itemCode.size() > 0
+        && d.qty is int && d.qty != 0
+        && (d.type == 'تسوية' || d.qty > 0)
+        && d.businessDate is string && d.businessDate.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && d.postedAt == request.time
+        && d.priceMinor is int && d.priceMinor >= 0
+        && d.source is map && d.source.kind in ['import', 'receipt', 'issue', 'manual']
+        && d.deviceId is string && d.deviceId.size() > 0
+        && d.createdBy == request.auth.uid
+        && optString(d, 'batchNo') && optString(d, 'expiry') && optString(d, 'docNumber')
+        && optString(d, 'reference') && optString(d, 'note') && optString(d, 'supplier')
+        && optString(d, 'reverses') && optString(d, 'reason')
+        && (d.get('substituteFor', null) == null || d.get('substituteFor', null) is map)
+        && validReversal(d, id);
+    }
+
+    match /movements/{id} {
+      allow read: if isOwner();
+      allow create: if isOwner() && validMovement(request.resource.data, id);
+      allow update, delete: if false;
+    }
+
+    // ---------- receipts / issueBatches: deny-all placeholders until task T047 ----------
+    match /receipts/{id} {
+      allow read, write: if false;
+    }
+
+    match /issueBatches/{id} {
+      allow read, write: if false;
+    }
+
+    // ---------- settings/app ----------
+    match /settings/{doc} {
+      allow read, create, update: if isOwner() && doc == 'app';
+      allow delete: if false;
+    }
+
+    // Everything else is denied.
     match /{document=**} {
       allow read, write: if false;
     }

@@ -16,7 +16,7 @@ placeholder is replaced at deploy time (research R3).
 | Op | Allowed when |
 |---|---|
 | read | OWNER |
-| create | OWNER, `code == id`, required fields present and typed, `page` is an int ≥ 1, `priceMinor` is an int ≥ 0 |
+| create | OWNER, `code == id`, required fields present and typed, `page` is an int ≥ 1, `priceMinor` is an int ≥ 0, optional `authorityCode` is a string or null |
 | update | OWNER, `code` unchanged, field types valid |
 | delete | never (deactivate with `active = false`) |
 

@@ -37,6 +37,7 @@ The document ID is the item code (e.g. `SCR-01`).
 | `gtins` | string[] | each `^\d{8}$` or `^\d{13}$` (EAN-8 / EAN-13); globally unique, checked on the client before linking (FR-033) |
 | `priceMinor` | int | latest purchase price; updated when a receipt is posted (FR-034) |
 | `reorderManual` | int \| null | the manual reorder point (workbook column R) |
+| `authorityCode` | string \| null | كود الهيئة, `^\d{8,9}$`; unique across items, checked on the client (FR-016) |
 | `active` | bool | default true |
 | `updatedAt` | timestamp | server time |
 
@@ -83,8 +84,9 @@ ID schemes:
 | Field | Type | Notes |
 |---|---|---|
 | `status` | `draft \| posted \| cancelled` | transitions in [contracts/firestore-rules.md](./contracts/firestore-rules.md) |
-| `supplier`, `deliveryNo`, `invoiceNo`, `businessDate` | string | `deliveryNo` is the delivery-note number from the supplier |
-| `lines[]` | `{n, itemCode \| null, scannedGtin \| null, batchNo, expiry, invoicedQty, countedQty, priceMinor, prevPriceMinor, diffReason}` | `itemCode` is null while a GTIN is unresolved |
+| `supplier`, `deliveryNo`, `invoiceNo`, `businessDate` | string | `deliveryNo` is the delivery-note number (رقم الإذن) |
+| `invoiceDate`, `supplyRequestNo`, `supplyOrderNo` | string \| null | تاريخ الفاتورة, طلب إمداد, أمر توريد, as printed on the note (FR-030) |
+| `lines[]` | `{n, itemCode \| null, scannedGtin \| null, authorityCode \| null, batchNo, mfgDate \| null, expiry, invoicedQty, countedQty, priceMinor, prevPriceMinor, diffReason}` | `itemCode` is null while a GTIN or authority code is unresolved. `priceMinor` is the unit price **after** the purchase fee (FR-030a) |
 | `postedAt`, `cancelledAt`, `cancelReason` | | set at the transitions |
 | `priceUpdates[]` | `{itemCode, fromMinor, toMinor}` | written at posting; used on cancel |
 

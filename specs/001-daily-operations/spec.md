@@ -172,13 +172,16 @@
 - **FR-013**: System MUST keep a balance per batch (item + batch + expiry). Imported movements without a batch go to an "unspecified batch".
 - **FR-014**: Users MUST be able to add an item and edit item master data; codes and page numbers MUST be unique. Item edits MUST NOT change prices stored on past movements.
 - **FR-015**: An item MUST be able to hold more than one GTIN.
+- **FR-016**: An item MUST be able to hold its authority code (كود الهيئة, the 8–9 digit item code printed on the Unified Procurement Authority's delivery note, e.g. `70000409`). Authority codes are unique across items.
+- **FR-017**: Users MUST be able to load authority codes for existing items from an owner-reviewed mapping file (item code → authority code). The file is prepared from the supplier's authority contract list and confirmed by the owner before import; unconfirmed rows are skipped.
 
 **البحث**
-- **FR-020**: One search input MUST accept a camera barcode scan or typed text, and resolve it by its shape: 8 or 13 digits → GTIN; a number of 1–4 digits → page number; three letters, a dash and 2–3 digits → item code; anything else → name search (Arabic or English).
+- **FR-020**: One search input MUST accept a camera barcode scan or typed text, and resolve it by its shape: a number of 8–9 digits is looked up as **both** a GTIN and an authority code (if it matches two different items, the user chooses); 12–14 digits → GTIN; a number of 1–4 digits → page number; three letters, a dash and 2–3 digits → item code; anything else → name search (Arabic or English).
 - **FR-021**: Name search with more than one match MUST show a list; the system MUST NOT pick automatically.
 
 **الاستلام**
-- **FR-030**: A receipt MUST carry supplier, delivery-note number, invoice number, business date, and lines (item, batch, expiry, invoiced quantity, counted quantity, unit price, difference reason).
+- **FR-030**: A receipt MUST carry supplier, delivery-note number (رقم الإذن), invoice number and invoice date, supply request number (طلب إمداد) and supply order number (أمر توريد) when present, business date, and lines (item, authority code as printed, batch, manufacture date (optional), expiry, invoiced quantity, counted quantity, unit price, difference reason).
+- **FR-030a**: The unit price recorded for a receipt line, and therefore the item's current price, MUST be the price **after** the purchase fee (سعر الوحدة بعد رسم الشراء), as printed on the delivery note.
 - **FR-031**: Unit price MUST prefill with the item's latest purchase price; a different price MUST be visibly flagged with the previous price shown.
 - **FR-032**: A line whose counted quantity differs from the invoiced quantity MUST require a reason before posting. Stock increases by the counted quantity.
 - **FR-033**: An unknown GTIN MUST prompt the user to choose an item; on posting, the GTIN is linked to that item. Linking a GTIN already held by another item MUST warn first.
@@ -215,9 +218,9 @@
 
 ### Key Entities *(include if feature involves data)*
 
-- **الصنف (Item)**: كود، رقم صفحة، فئة، اسم عربي، اسم إنجليزي، خامة، مقاس، وحدة، شركة موردة، GTIN (واحد أو أكتر)، سعر حالي (آخر سعر شراء)، حد طلب يدوي (اختياري)، حالة نشاط.
+- **الصنف (Item)**: كود، رقم صفحة، فئة، اسم عربي، اسم إنجليزي، خامة، مقاس، وحدة، شركة موردة، GTIN (واحد أو أكتر)، كود الهيئة (اختياري)، سعر حالي (آخر سعر شراء)، حد طلب يدوي (اختياري)، حالة نشاط.
 - **الحركة (Movement)**: النوع (إضافة، صرف، مرتجع، تسوية)، الصنف، الكمية، تاريخ الحركة، وقت الاعتماد، السعر وقتها، التشغيلة، الصلاحية، رقم الإذن أو الفاتورة، المرجع، الملاحظات، المستند اللي جاية منه، "بدل صنف" (اختياري)، "عكس حركة" (اختياري). متتعدلش بعد الاعتماد.
-- **إذن الاستلام (Receipt)**: الشركة، رقم إذن التسليم، رقم الفاتورة، التاريخ، الحالة (مسودة، معتمد، ملغي)، السطور (الصنف، التشغيلة، الصلاحية، الكمية في الفاتورة، الكمية المعدودة، السعر، سبب الفرق).
+- **إذن الاستلام (Receipt)**: الشركة، رقم إذن التسليم، رقم الفاتورة وتاريخها، طلب الإمداد، أمر التوريد، التاريخ، الحالة (مسودة، معتمد، ملغي)، السطور (الصنف، التشغيلة، الصلاحية، الكمية في الفاتورة، الكمية المعدودة، السعر، سبب الفرق).
 - **دفعة الصرف (Issue Batch)**: رقم الدفعة، اسم المندوب، التاريخ، أرقام أذون المرضى، الحالة، السطور المطلوبة، السطور المصروفة (مع البديل لو موجود).
 - **التشغيلة (Batch)**: الصنف، رقم التشغيلة، الصلاحية. رصيدها بيتحسب من الحركات.
 - **الإعدادات (Settings)**: مدة التغطية لحد الطلب (1.5 شهر)، والحد الافتراضي (5)، وتاريخ آخر نسخة احتياطية، وتاريخ آخر تصدير لسجل الحركات.
@@ -248,4 +251,6 @@
 - "نفس الفئة" معناها نفس قيمة عمود "الفئة" في القائمة الأساسية. شيت "بدائل محتملة" بيأكد إن البدائل غالباً من نفس الفئة (كلهم ماعدا طقم DHS)، وعشان كده "كل الفئات" اختيار يدوي مش افتراضي.
 - مطبوعات إذن الاستلام وإذن الصرف مالهاش نموذج حكومي متاح، فهتتصمم من بيانات الإذن بالهيدر الرسمي. لو المستخدم جاب نموذج رسمي بعدين، هيتطابق عليه.
 - الكشف الشهري وكروت التعريف (المرحلة 2) والجرد والعجوزات والزيادات (المرحلة 3) برّه نطاق المرحلة دي. وفي فترة التجربة هيطلعوا من الإكسيل.
+- أسعار الأصناف في الإكسيل مش متسقة: في أصناف سعرها بعد رسم الشراء 5% (زي 4,121.34 = 3,925.09 × 1.05)، وأصناف بسعر العقد من غير رسم. البرنامج بيستورد السعر زي ما هو عشان المطابقة، وكل استلام جديد بيحدّث السعر للسعر بعد الرسم (FR-030a)، فالأسعار هتتظبط مع الطلبيات الجديدة.
+- إذن التسليم الحقيقي (مثال: إذن 19808953 من الهيئة المصرية للشراء الموحد، المورد المركز الدولي) فيه: كود الصنف (كود الهيئة)، والـ GTIN، والتشغيلة، وتاريخ الصنع والانتهاء، والكمية، والسعر قبل وبعد رسم الشراء، ورقم الفاتورة وتاريخها، وطلب الإمداد، وأمر التوريد، وQR كود لسه محتواه مش معروف.
 - سطور سجل الحركات هتتسلّم في ملف إكسيل صغير، لأن نسخ نص من المتصفح ولزقه ممكن يكتب فوق أعمدة المعادلات. الطريقة المظبوطة للصق هتتحدد في الخطة بتجربة على نسخة من الملف.

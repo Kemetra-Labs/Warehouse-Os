@@ -5,7 +5,7 @@ export default defineConfig({
     environment: 'jsdom',
     passWithNoTests: true,
     include: ['tests/**/*.test.{ts,tsx}'],
-    exclude: ['tests/e2e/**', 'node_modules/**'],
+    exclude: ['tests/e2e/**', 'tests/rules/**', 'node_modules/**'],
     coverage: {
       provider: 'v8',
       include: ['src/domain/**', 'src/data/**', 'src/excel/**'],
