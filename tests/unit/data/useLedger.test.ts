@@ -1,7 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { DEFAULT_SETTINGS } from '../../../src/data/convert'
 import { deriveLedger, type MovementDoc } from '../../../src/data/deriveLedger'
 import {
+  createSeenStore,
   emptySeen,
   loadSeen,
   markSeen,
@@ -146,6 +147,42 @@ describe('deriveLedger', () => {
   })
 })
 
+describe('changedSinceSeen ignores what this device posted itself', () => {
+  const items = [item('AAA-01'), item('BBB-02')]
+  const movements = [
+    mov('AAA-01', 'إضافة', 5, '2026-01-01', 50, { deviceId: 'me' }),
+    mov('BBB-02', 'إضافة', 5, '2026-01-01', 60, { deviceId: 'other' }),
+    mov('BBB-02', 'صرف', 9, '2026-01-02', 70, { deviceId: 'me' }), // goes negative after sync
+  ]
+  const base = { items, movements, settings: DEFAULT_SETTINGS, seen: seen0 }
+
+  it('counts only movements from other devices when the device id is given', () => {
+    const v = deriveLedger({ ...base, ownDeviceId: 'me' })
+    expect(v.changedCodes).toEqual(['BBB-02'])
+    expect(v.byCode.get('BBB-02')?.pendingSettlement).toBe(true)
+    expect(v.byCode.get('AAA-01')?.lastPostedAt).toBe(50)
+  })
+
+  it('counts everything when no device id is given', () => {
+    expect(deriveLedger(base).changedCodes).toEqual(['AAA-01', 'BBB-02'])
+  })
+
+  it('clears the highlight once the item is opened, and a newer change lights it again', () => {
+    const seen = { baseline: 0, byItem: { 'BBB-02': 100 } }
+    const opened = deriveLedger({ ...base, ownDeviceId: 'me', seen })
+    expect(opened.changedCodes).toEqual([])
+    expect(opened.byCode.get('BBB-02')?.pendingSettlement).toBe(true)
+    const later = mov('BBB-02', 'إضافة', 1, '2026-01-03', 120, { deviceId: 'other' })
+    const again = deriveLedger({
+      ...base,
+      movements: [...movements, later],
+      ownDeviceId: 'me',
+      seen,
+    })
+    expect(again.changedCodes).toEqual(['BBB-02'])
+  })
+})
+
 function memoryStorage(initial: Record<string, string> = {}): Storage {
   const m = new Map(Object.entries(initial))
   return {
@@ -188,5 +225,28 @@ describe('seenStore', () => {
     expect(loadSeen(blocked, () => 3)).toEqual({ baseline: 3, byItem: {} })
     expect(() => saveSeen(emptySeen(1), blocked)).not.toThrow()
     expect(markSeen(emptySeen(1), 'A', 2, blocked).byItem['A']).toBe(2)
+  })
+})
+
+describe('createSeenStore', () => {
+  it('shares one state: marking an item notifies every subscriber and persists', () => {
+    const st = memoryStorage()
+    let t = 10
+    const store = createSeenStore(st, () => t)
+    const a = vi.fn()
+    const b = vi.fn()
+    store.subscribe(a)
+    const offB = store.subscribe(b)
+    const before = store.getState()
+    t = 99
+    store.markSeen('AAA-01')
+    expect(a).toHaveBeenCalledOnce()
+    expect(b).toHaveBeenCalledOnce()
+    expect(store.getState()).not.toBe(before)
+    expect(store.getState().byItem['AAA-01']).toBe(99)
+    expect(loadSeen(st, () => 0).byItem['AAA-01']).toBe(99)
+    offB()
+    store.markSeen('BBB-02')
+    expect(b).toHaveBeenCalledOnce()
   })
 })

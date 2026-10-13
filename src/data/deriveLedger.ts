@@ -11,6 +11,11 @@ export interface LedgerInput {
   readonly movements: readonly MovementDoc[]
   readonly settings: Settings
   readonly seen: SeenState
+  /**
+   * This device's id. When given, movements it posted itself never count as "changed since
+   * seen": the highlight is for what arrived from another device (FR-072).
+   */
+  readonly ownDeviceId?: string
 }
 
 export interface ItemRow {
@@ -40,9 +45,13 @@ export interface LedgerView {
   batchBalancesFor(itemCode: string): BatchBalance[]
 }
 
-function latestPostedAt(movements: readonly MovementDoc[]): Map<string, number> {
+function latestPostedAt(
+  movements: readonly MovementDoc[],
+  skipDeviceId?: string,
+): Map<string, number> {
   const out = new Map<string, number>()
   for (const m of movements) {
+    if (skipDeviceId !== undefined && m.deviceId === skipDeviceId) continue
     const ms = toMillis(m.postedAt)
     if (ms > (out.get(m.itemCode) ?? 0)) out.set(m.itemCode, ms)
   }
@@ -64,10 +73,11 @@ function tallyOf(rows: readonly ItemRow[]): LedgerTally {
 
 /** Pure combiner: items + movements + settings (+ device seen state) -> derived view. */
 export function deriveLedger(input: LedgerInput): LedgerView {
-  const { items, movements, settings, seen } = input
+  const { items, movements, settings, seen, ownDeviceId } = input
   const balances = itemBalances(movements)
   const issued = issuedTotals(movements)
   const latest = latestPostedAt(movements)
+  const latestForeign = ownDeviceId === undefined ? latest : latestPostedAt(movements, ownDeviceId)
   const months = monthsOfConsumption(movements.map((m) => m.businessDate))
 
   const rows = items.map((item): ItemRow => {
@@ -79,6 +89,7 @@ export function deriveLedger(input: LedgerInput): LedgerView {
       months,
     )
     const last = latest.get(item.code) ?? null
+    const foreign = latestForeign.get(item.code) ?? null
     const seenAt = seen.byItem[item.code] ?? seen.baseline
     return {
       item,
@@ -88,7 +99,7 @@ export function deriveLedger(input: LedgerInput): LedgerView {
       status: itemStatus(balance, reorder),
       pendingSettlement: pendingSettlement(balance),
       lastPostedAt: last,
-      changedSinceSeen: last !== null && last > seenAt,
+      changedSinceSeen: foreign !== null && foreign > seenAt,
     }
   })
 

@@ -1,6 +1,8 @@
 import { Link } from 'react-router'
 import { useLedger } from '../../data/useLedger'
 import styles from './Home.module.css'
+import { DuplicateNumbers } from './DuplicateNumbers'
+import { NeedsAttention } from './NeedsAttention'
 import { OpenBatches, OpenDrafts } from './OpenDrafts'
 
 interface CellProps {
@@ -24,6 +26,7 @@ export function Home() {
   return (
     <div className={styles.screen}>
       <h1 className={styles.title}>الرئيسية</h1>
+      <DuplicateNumbers />
       <OpenBatches />
       <nav className={styles.actions} aria-label="العمليات">
         <Link to="/receive" className={`${styles.action} ${styles.receive}`}>
@@ -47,6 +50,7 @@ export function Home() {
           lit={tally.pendingSettlements > 0}
         />
       </section>
+      <NeedsAttention />
       <OpenDrafts />
     </div>
   )

@@ -205,6 +205,12 @@ export async function getDocFields(
   return ((await res.json()) as FirestoreDoc).fields
 }
 
+/** Deletes a document as the emulator's admin (the rules forbid deleting movements). */
+export async function deleteDocAdmin(request: APIRequestContext, path: string): Promise<void> {
+  const res = await request.delete(`${docsUrl()}/${path}`, { headers: ADMIN })
+  if (!res.ok()) throw new Error(`deleting ${path} failed: ${res.status()} ${await res.text()}`)
+}
+
 export const idOf = (doc: FirestoreDoc): string => doc.name.split('/').pop() ?? ''
 export const intOf = (v: FieldValue | undefined): number => Number(v?.integerValue ?? Number.NaN)
 export const stringsOf = (v: FieldValue | undefined): string[] =>

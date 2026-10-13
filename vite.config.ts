@@ -4,6 +4,9 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig(({ mode }) => ({
+  // exceljs loads only when the unsent screen exports; pre-bundling it keeps the dev server from
+  // re-optimizing (and reloading the page) the first time someone taps export.
+  optimizeDeps: { include: ['exceljs'] },
   plugins: [
     ...(mode === 'https' ? [basicSsl()] : []),
     react(),

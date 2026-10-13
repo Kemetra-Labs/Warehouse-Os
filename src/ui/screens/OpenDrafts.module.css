@@ -47,3 +47,27 @@
   font-size: var(--text-xs);
   font-weight: 400;
 }
+
+.warning {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--amber-line);
+  border-radius: var(--radius-md);
+  background: var(--tint-amber);
+  color: var(--amber);
+}
+
+.hint {
+  margin: 0;
+  font-size: var(--text-sm);
+}
+
+.inline {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--tap-min);
+  margin-inline-end: var(--space-3);
+  color: inherit;
+  font-weight: 800;
+}

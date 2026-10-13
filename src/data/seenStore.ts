@@ -51,3 +51,55 @@ export function markSeen(
   saveSeen(next, storage)
   return next
 }
+
+export interface SeenStore {
+  getState(): SeenState
+  markSeen(itemCode: string): void
+  subscribe(listener: () => void): () => void
+}
+
+/**
+ * One shared seen state per device: every screen that lists items reads the same object, so
+ * opening an item clears its highlight everywhere at once.
+ */
+export function createSeenStore(
+  storage: Storage | null = null,
+  now: () => number = Date.now,
+): SeenStore {
+  const backing = storage ?? defaultStorage()
+  let state = backing ? loadSeen(backing, now) : emptySeen(now())
+  const listeners = new Set<() => void>()
+  return {
+    getState: () => state,
+    markSeen(itemCode) {
+      state = backing
+        ? markSeen(state, itemCode, now(), backing)
+        : markSeenInMemory(state, itemCode, now())
+      for (const l of [...listeners]) l()
+    },
+    subscribe(listener) {
+      listeners.add(listener)
+      return () => void listeners.delete(listener)
+    },
+  }
+}
+
+function defaultStorage(): Storage | null {
+  try {
+    return localStorage
+  } catch {
+    return null
+  }
+}
+
+function markSeenInMemory(state: SeenState, itemCode: string, at: number): SeenState {
+  return { ...state, byItem: { ...state.byItem, [itemCode]: at } }
+}
+
+let deviceStore: SeenStore | null = null
+
+/** The app-wide store, created on first use. */
+export function getSeenStore(): SeenStore {
+  deviceStore ??= createSeenStore()
+  return deviceStore
+}

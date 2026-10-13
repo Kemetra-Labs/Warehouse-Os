@@ -10,6 +10,7 @@ import { useLedger } from '../../data/useLedger'
 import { cairoToday } from '../../domain/dates'
 import type { IssueDraft } from '../../domain/issue'
 import { isBlankIssueDraft } from '../../domain/issueEdit'
+import { hasDuplicateNumber } from '../../domain/issueNumbers'
 import { Issue } from './Issue'
 import { useDraftAutosave, type AutosaveAdapter } from './useDraftAutosave'
 import { useIssueLoad, type SealedBatch } from './useIssueLoad'
@@ -65,7 +66,7 @@ function IssueEditor({ id, initial, sealed, isNew }: EditorProps) {
       stock={stock}
       today={cairoToday()}
       sealed={sealed}
-      duplicateNumber={issueBatches.some((b) => b.id !== id && b.number === draft.number)}
+      duplicateNumber={hasDuplicateNumber(issueBatches, id, draft.number)}
       onChange={update}
       onPost={post}
       onFinish={() => void navigate('/')}

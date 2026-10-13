@@ -220,19 +220,24 @@ US1 → US2 → US3 → US7. P2 stories follow: US4 → US5 → US6.
 
 ### Tests for User Story 7
 
-- [ ] T063 [P] [US7] E2E test in `tests/e2e/offline-sync.spec.ts`:
+- [X] T063 [P] [US7] E2E test in `tests/e2e/offline-sync.spec.ts`:
+  - Note: runs only with `E2E_EMULATORS=1`, with two contexts signed in as the owner and `context.setOffline`. Test 1: the phone receives (a typed page number) and issues offline, the pill shows "N مستنية النت", reconnecting ends at "متزامن", and the laptop lists both items with the same balances on home. Test 2: both contexts issue the same item offline (5 in stock, 4 each, so no reason is needed), and after both reconnect the item shows -3 and "تسوية معلّقة" on both, and the two batches with the same local number are called out (T067). The shared screen steps moved to `tests/e2e/flows.ts` (issue.spec and receive.spec now import them).
   - two browser contexts;
   - offline receive and issue on the first;
   - "N مستنية النت", then "متزامن" after reconnect;
   - the same balances on the second context;
   - concurrent offline issues that push an item negative get flagged.
-- [ ] T064 [P] [US7] E2E test in `tests/e2e/outbox-rejected.spec.ts`: an offline post that the rules reject after reconnect turns the pill red, and the payload is kept on the unsent screen (research R12)
+- [X] T064 [P] [US7] E2E test in `tests/e2e/outbox-rejected.spec.ts`: an offline post that the rules reject after reconnect turns the pill red, and the payload is kept on the unsent screen (research R12)
+  - Note: runs only with `E2E_EMULATORS=1`. The rejection is produced by writing `movements/{batchId}-L1` as the emulator admin while the phone is offline and the batch is queued: movements are create-only, so the queued atomic batch is refused after reconnecting while the batch stays a draft on the server (a server-side `posted`/`cancelled` status would make the R12 check clear the entry instead). The test also covers the unsent screen, a reload, the Excel export, a retry that fails again, and a retry that succeeds once the movement is removed.
 
 ### Implementation for User Story 7
 
-- [ ] T065 [US7] Build the unsent-documents screen (list, details, retry, export to Excel) in `src/ui/screens/Unsent.tsx`
-- [ ] T066 [US7] Implement the post-sync negative flag and the "changed since seen" highlight (tint plus marker-blue dot, no side stripe; cleared when opened) in `src/data/useLedger.ts` and `src/ui/components/ItemRow.tsx`
-- [ ] T067 [US7] Add the duplicate batch-number warning after sync (research R10) in `src/data/repos/issues.ts` and `src/ui/screens/Issue.tsx`
+- [X] T065 [US7] Build the unsent-documents screen (list, details, retry, export to Excel) in `src/ui/screens/Unsent.tsx`
+  - Note: also adds `src/data/unsent.ts` (pure: summary, rebuild of the atomic write from the stored payload, retry), `src/data/repos/unsent.ts` (Firestore adapter), `src/data/useOutboxEntries.ts`, and `src/excel/exportUnsent.ts` (exceljs, lazy-loaded; one row per movement, right to left). Retry puts the entry back to pending (its `createdAt` resets) and sends it again; nothing is ever discarded by the app. The sync pill already linked here when something failed.
+- [X] T066 [US7] Implement the post-sync negative flag and the "changed since seen" highlight (tint plus marker-blue dot, no side stripe; cleared when opened) in `src/data/useLedger.ts` and `src/ui/components/ItemRow.tsx`
+  - Note: the flag itself (balance below zero = تسوية معلّقة) is derived, as research R4 says. Two changes make the highlight right: the seen state is one shared store (`seenStore.createSeenStore`), so opening an item clears it on every screen, and `deriveLedger` takes `ownDeviceId` so only changes that came from another device light an item (FR-072: "after sync"). `ItemRow.tsx` is the reusable row (tint plus marker-blue dot, no side stripe). Until the item card (Phase 7), home lists the flagged items ("محتاجة انتباهك", `NeedsAttention.tsx`) and tapping a row counts as opening it.
+- [X] T067 [US7] Add the duplicate batch-number warning after sync (research R10) in `src/data/repos/issues.ts` and `src/ui/screens/Issue.tsx`
+  - Note: the detection is pure and lives in `src/domain/issueNumbers.ts` (`duplicateBatchNumbers`, `hasDuplicateNumber`) so it is unit-tested; `repos/issues.ts` has no new code. Phase 5's amber notice in the open batch now uses it, and home gets "دفعات بنفس الرقم" with a link to each batch. Numbers are never changed (R10).
 
 **Checkpoint**: all P1 stories are done. This is the field-trial build.
 
