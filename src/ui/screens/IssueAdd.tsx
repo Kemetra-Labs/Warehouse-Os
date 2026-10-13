@@ -1,121 +1,107 @@
-import { useState, type FormEvent } from 'react'
-import { parseQtyInput } from '../../domain/fieldInput'
-import { interpretClass } from '../../domain/receiveScan'
-import type { SearchClass } from '../../domain/search'
+import type { OpenRequest } from '../../domain/issueRequest'
 import type { Item } from '../../domain/types'
 import { Bdi } from '../components/Bdi'
 import { Button } from '../components/Button'
 import { ItemPickerSheet } from '../components/ItemPickerSheet'
+import { QtyStepper } from '../components/QtyStepper'
 import { SearchBox } from '../components/SearchBox'
 import styles from './IssueAdd.module.css'
+import type { IssueRequestFlow } from './useIssueRequest'
 
 export interface IssueAddProps {
   readonly items: readonly Item[]
+  readonly flow: IssueRequestFlow
   /** Stock of an item that this batch has not claimed yet. */
   readonly availableOf: (code: string) => number
-  readonly onAdd: (item: Item, qty: number) => void
 }
 
-const notFound = (query: string): string => `مفيش صنف بالرقم أو الاسم ده (${query})`
-
-interface RequestCardProps {
-  readonly item: Item
+interface OpenCardProps {
+  readonly open: OpenRequest
   readonly available: number
-  readonly onAdd: (qty: number) => void
-  readonly onCancel: () => void
+  readonly problem: string | null
+  readonly onQty: (qty: number) => void
+  readonly onQtyValid: (valid: boolean) => void
+  readonly onDiscard: () => void
 }
 
-function RequestCard({ item, available, onAdd, onCancel }: RequestCardProps) {
-  const [text, setText] = useState('1')
-  const qty = parseQtyInput(text)
-  const valid = qty !== null && qty > 0
-
-  const submit = (e: FormEvent<HTMLFormElement>): void => {
-    e.preventDefault()
-    if (valid) onAdd(qty)
-  }
-
+/** The open line: the item, how many the permit asks for (−/+), and what it still needs. */
+function OpenCard({ open, available, problem, onQty, onQtyValid, onDiscard }: OpenCardProps) {
+  const { item, qty } = open
+  const ready = problem === null
+  const short = Math.max(0, qty - available)
   return (
-    <form className={styles.card} data-testid="pending-request" onSubmit={submit}>
-      <div>
-        <div className={styles.name}>{item.nameAr}</div>
-        <div className={styles.meta}>
-          ص {item.page} · <Bdi>{item.code}</Bdi> · الرصيد {available}
-        </div>
+    <section className={styles.card} data-testid="pending-request">
+      <div className={styles.head}>
+        <strong className={styles.name}>{item.nameAr}</strong>
+        <em className={styles.meta}>
+          ص {item.page} · <Bdi>{item.code}</Bdi>
+        </em>
       </div>
-      <label className={styles.field}>
-        <span>الكمية المطلوبة</span>
-        <input
-          className={styles.input}
-          type="text"
-          inputMode="numeric"
-          dir="ltr"
-          autoComplete="off"
-          autoFocus
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-        />
-      </label>
+      <QtyStepper
+        value={qty}
+        label="الكمية المطلوبة"
+        onCommit={onQty}
+        onValidChange={onQtyValid}
+        caption={
+          <>
+            الرصيد {available}
+            {ready && short > 0 ? (
+              <span className={styles.short}> · هيبقى ناقص {short}</span>
+            ) : null}
+          </>
+        }
+      />
+      <p className={ready ? styles.ready : styles.problem} role="status">
+        <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+          <path d={ready ? 'M3.5 8.5l3 3 6-7' : 'M8 3v6M8 12.5v.5'} />
+        </svg>
+        {ready ? 'جاهز: بيتضاف مع الصنف اللي بعده أو مع راجع واعتمد' : problem}
+      </p>
       <div className={styles.actions}>
-        <Button type="submit" variant="primary" disabled={!valid}>
-          إضافة للدفعة
-        </Button>
-        <Button onClick={onCancel}>إلغاء</Button>
+        <Button onClick={onDiscard}>امسح السطر</Button>
       </div>
-    </form>
+    </section>
   )
 }
 
-/** Search for an item, say how many the permit asks for, and add it to the batch. */
-export function IssueAdd({ items, availableOf, onAdd }: IssueAddProps) {
-  const [pending, setPending] = useState<Item | null>(null)
-  const [choices, setChoices] = useState<readonly Item[] | null>(null)
-  const [notice, setNotice] = useState<string | null>(null)
-
-  const pick = (item: Item): void => {
-    if (!item.active) return setNotice('الصنف ده موقوف. مينفعش يتصرف.')
-    setNotice(null)
-    setPending(item)
-  }
-
-  const resolve = (cls: SearchClass): void => {
-    const outcome = interpretClass(items, cls, 'typed')
-    if (outcome.kind === 'item') return pick(outcome.item)
-    if (outcome.kind === 'choose') return setChoices(outcome.items)
-    setNotice(notFound(outcome.kind === 'not-found' ? outcome.query : 'باركود'))
-  }
-
+/** Search for an item, say how many the permit asks for; the line joins the batch by itself. */
+export function IssueAdd({ items, flow, availableOf }: IssueAddProps) {
+  const { open } = flow
   return (
     <>
-      <SearchBox clearOnSubmit onResolve={resolve} suggestFrom={items} onPickItem={pick} />
-      {notice ? (
+      <SearchBox
+        clearOnSubmit
+        onResolve={flow.onSearch}
+        suggestFrom={items}
+        onPickItem={flow.pick}
+      />
+      {flow.notice ? (
         <p className={styles.notice} role="status" data-testid="notice">
-          {notice}
+          {flow.notice}
         </p>
       ) : null}
-      {pending ? (
-        <RequestCard
-          key={pending.code}
-          item={pending}
-          available={availableOf(pending.code)}
-          onAdd={(qty) => {
-            onAdd(pending, qty)
-            setPending(null)
-          }}
-          onCancel={() => setPending(null)}
+      {open ? (
+        <OpenCard
+          key={flow.openKey}
+          open={open}
+          available={availableOf(open.item.code)}
+          problem={flow.problem}
+          onQty={flow.setQty}
+          onQtyValid={flow.setQtyValid}
+          onDiscard={flow.discard}
         />
       ) : null}
       <ItemPickerSheet
-        open={choices !== null}
+        open={flow.choices !== null}
         title="اختار الصنف"
         note="الرقم ده يطابق أكتر من صنف. اختار الصنف الصح."
         items={items}
-        candidates={choices ?? []}
+        candidates={flow.choices ?? []}
         onPick={(item) => {
-          setChoices(null)
-          pick(item)
+          flow.closeChoices()
+          flow.pick(item)
         }}
-        onClose={() => setChoices(null)}
+        onClose={flow.closeChoices}
       />
     </>
   )

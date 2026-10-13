@@ -10,7 +10,6 @@ import {
   type IssueDraft,
 } from '../../domain/issue'
 import {
-  addRequested,
   addSubstitute,
   issueNegative,
   removeRequested,
@@ -36,6 +35,7 @@ import styles from './Issue.module.css'
 import { buildIssueRows, type IssueRowActions } from './issueRows'
 import { SubstituteSheet } from './SubstituteSheet'
 import type { SealInfo } from './ReceiptReview'
+import { useIssueRequest } from './useIssueRequest'
 import type { SealedBatch } from './useIssueLoad'
 
 export interface IssueProps {
@@ -49,7 +49,8 @@ export interface IssueProps {
   /** Another batch (made on another device while offline) has the same number (R10). */
   readonly duplicateNumber?: boolean
   readonly onChange: (draft: IssueDraft) => void
-  readonly onPost: () => Promise<IssuePostResult>
+  /** Posts the batch as given: it may hold the open line that joined just now. */
+  readonly onPost: (draft: IssueDraft) => Promise<IssuePostResult>
   /** Cancels the posted batch. Without it a posted batch has no cancel action. */
   readonly onCancel?: (reason: string) => Promise<CancelAttempt>
   /** Downloads the A4 print file of the posted (or cancelled) batch. */
@@ -80,8 +81,8 @@ function Totals({ totals }: { readonly totals: BatchTotals }) {
         <b>{formatMoney(totals.issuedMinor)}</b>
         <span>اللي اتسلّم (ج)</span>
       </div>
-      <div>
-        <b className={diff === 0 ? styles.same : styles.off}>{formatMoney(diff)}</b>
+      <div className={diff === 0 ? styles.same : styles.off}>
+        <b>{formatMoney(diff)}</b>
         <span>الفرق (ج)</span>
       </div>
     </div>
@@ -119,14 +120,16 @@ export function Issue(props: IssueProps) {
   // Set once this screen cancels the batch: the editor keeps its own copy from a one-time load.
   const [cancelledNow, setCancelledNow] = useState<string | null>(null)
 
+  const flow = useIssueRequest({ draft, items, stock, onChange })
   const readOnly = sealed !== null || phase.kind === 'done'
   const posting = phase.kind === 'posting'
   const itemOf = (code: string | null): Item | null => items.find((i) => i.code === code) ?? null
 
   // A posted batch is shown as it was posted: no validation, no live balances, stored totals.
+  // What blocks approving is judged on the batch as it will read once a ready open line joined.
   const problems = useMemo(
-    () => (readOnly ? [] : validateForPost(draft, { today, stock })),
-    [readOnly, draft, today, stock],
+    () => (readOnly ? [] : validateForPost(flow.withOpen, { today, stock })),
+    [readOnly, flow.withOpen, today, stock],
   )
   const overdrawn = useMemo(
     () => (readOnly ? new Set<string>() : overdrawnItems(draft, stock)),
@@ -155,16 +158,16 @@ export function Issue(props: IssueProps) {
     actions: readOnly ? null : actions,
   })
 
-  const post = async (): Promise<void> => {
+  const post = async (batch: IssueDraft): Promise<void> => {
     setPhase({ kind: 'posting' })
     setErrors([])
     try {
-      const result = await props.onPost()
+      const result = await props.onPost(batch)
       if (result.ok) {
         postedHaptic()
         return setPhase({
           kind: 'done',
-          totals: draftTotals(draft, (code) => itemOf(code)?.priceMinor ?? 0),
+          totals: draftTotals(batch, (code) => itemOf(code)?.priceMinor ?? 0),
         })
       }
       setErrors(result.problems.map((p) => p.message))
@@ -172,6 +175,19 @@ export function Issue(props: IssueProps) {
       setErrors([POST_FAILED])
     }
     setPhase({ kind: 'edit' })
+  }
+
+  /**
+   * راجع واعتمد / اعتماد. An open line only joins on this tap: its row then shows the batch and
+   * expiry it was given (earliest first, changeable there) before anything is posted, since a
+   * posted movement can only be reversed, never removed. With no open line, it posts.
+   */
+  const approve = (): void => {
+    const hadOpen = flow.open !== null
+    const batch = flow.approve()
+    if (batch === null || hadOpen) return
+    if (validateForPost(batch, { today, stock }).length > 0) return
+    void post(batch)
   }
 
   const saveReason = (reason: string): void => {
@@ -188,7 +204,6 @@ export function Issue(props: IssueProps) {
 
   const subTarget = itemOf(substituteFor)
   const subShort = shorts.find((c) => c.itemCode === substituteFor)?.shortQty ?? 0
-  const totalShort = shorts.reduce((sum, c) => sum + c.shortQty, 0)
   const seal: SealInfo | null =
     cancelledNow !== null
       ? { variant: 'cancelled', day: today, reason: cancelledNow }
@@ -230,8 +245,8 @@ export function Issue(props: IssueProps) {
           <IssueHeader draft={draft} onChange={edit} />
           <IssueAdd
             items={items}
+            flow={flow}
             availableOf={(code) => availableOf(stock, code, draft.issued)}
-            onAdd={(item, qty) => edit(addRequested(draft, item, qty, stock))}
           />
         </>
       )}
@@ -260,13 +275,13 @@ export function Issue(props: IssueProps) {
             </div>
           ) : null}
           <footer className={styles.footer}>
-            <span>{totalShort > 0 ? `ناقص ${totalShort}` : 'الكميات متغطّاة'}</span>
             <Button
-              variant="seal"
-              disabled={problems.length > 0 || posting}
-              onClick={() => void post()}
+              variant={flow.open ? 'primary' : 'seal'}
+              size="main"
+              disabled={posting || (flow.open ? flow.problem !== null : problems.length > 0)}
+              onClick={approve}
             >
-              اعتماد
+              {flow.open ? 'راجع واعتمد' : 'اعتماد'}
             </Button>
           </footer>
         </>

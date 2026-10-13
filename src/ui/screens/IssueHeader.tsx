@@ -40,7 +40,7 @@ function PermitAdder({ draft, onChange }: IssueHeaderProps) {
             onChange={(e) => setText(e.target.value)}
           />
         </label>
-        <Button type="submit" variant="primary" disabled={permit === null}>
+        <Button type="submit" disabled={permit === null}>
           إضافة إذن
         </Button>
       </form>

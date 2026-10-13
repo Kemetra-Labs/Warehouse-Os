@@ -1,6 +1,5 @@
 import type { ParityReport } from '../../excel/parity'
 import { Bdi } from '../components/Bdi'
-import { StatusDot } from '../components/StatusDot'
 import { kindLabel, valueLabel } from './importView'
 import styles from './ImportParity.module.css'
 
@@ -16,7 +15,9 @@ export function ParityResult({ report, source }: ParityResultProps) {
   return (
     <section className={styles.result} aria-label="نتيجة المطابقة">
       <div className={`${styles.counter} ${allMatch ? styles.ok : styles.bad}`}>
-        <StatusDot state={allMatch ? 'match' : 'miss'} />
+        <svg viewBox="0 0 18 18" aria-hidden="true" focusable="false" className={styles.glyph}>
+          <path d={allMatch ? 'M4.5 9.5l3 2.8L13.5 6' : 'M5.5 5.5l7 7M12.5 5.5l-7 7'} />
+        </svg>
         <b className={styles.big} aria-live="polite">
           <Bdi>
             {report.balanceMatched} / {report.total}

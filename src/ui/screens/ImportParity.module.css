@@ -1,17 +1,15 @@
 .screen {
   display: grid;
   gap: var(--space-3);
-  padding: var(--space-4);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-md);
-  background: var(--surface);
+  /* Room for the fixed import button under the last block. */
+  padding-block-end: calc(var(--tap-main) + var(--space-5));
 }
 
 .title {
   margin: 0;
+  color: var(--bone);
   font-size: var(--text-xl);
   font-weight: 800;
-  color: var(--scrub);
 }
 
 .note,
@@ -23,41 +21,53 @@
 }
 
 .summary {
-  color: var(--ink);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--panel);
+  color: var(--bone);
 }
 
 .refusal {
   margin: 0;
   padding: var(--space-3);
-  border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   background: var(--tint-marker);
-  color: var(--marker);
+  color: var(--bone);
   font-weight: 800;
 }
 
+/* Choosing a file: a hollow button, and the reversed one while no file is chosen yet. */
 .pick {
   display: grid;
   place-items: center;
   min-block-size: var(--tap-min);
   padding-inline: var(--space-4);
-  border: 1px solid var(--scrub);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  color: var(--scrub);
+  border: 2px solid var(--control-line);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--bone);
   font-size: var(--text-md);
   font-weight: 800;
   cursor: pointer;
 }
 
+.pickMain {
+  min-block-size: var(--tap-main);
+  border-color: var(--bone);
+  background: var(--bone);
+  color: var(--ground);
+  font-size: var(--text-lg);
+}
+
 .pick:focus-within {
-  outline: 2px solid var(--marker);
+  outline: 3px solid var(--count);
   outline-offset: 2px;
 }
 
 .disabled {
-  border-color: var(--disabled-bg);
-  color: var(--disabled-ink);
+  border: 2px dashed var(--hair);
+  background: transparent;
+  color: var(--muted);
   cursor: default;
 }
 
@@ -70,37 +80,31 @@
   clip-path: inset(50%);
 }
 
-.go {
-  min-block-size: var(--tap-min);
-  border: 0;
-  border-radius: var(--radius-sm);
-  background: var(--scrub);
-  color: var(--on-scrub);
-  font-family: inherit;
-  font-size: var(--text-md);
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.go:disabled {
-  background: var(--disabled-bg);
-  color: var(--disabled-ink);
-  cursor: default;
+/* The one primary: import, reversed, in the thumb zone above the navigation. */
+.footer {
+  position: fixed;
+  inset-inline: 0;
+  inset-block-end: calc(var(--nav-height) + env(safe-area-inset-bottom));
+  z-index: 5;
+  display: grid;
+  padding: var(--space-3) var(--space-4);
+  background: var(--ground);
 }
 
 .error {
   margin: 0;
   padding: var(--space-3);
+  border: 1px solid var(--short);
   border-radius: var(--radius-sm);
   background: var(--tint-miss);
-  color: var(--miss);
+  color: var(--short-ink);
   font-size: var(--text-sm);
   font-weight: 800;
 }
 
 .done {
   margin: 0;
-  color: var(--match);
+  color: var(--ok-ink);
   font-weight: 800;
 }
 
@@ -114,11 +118,15 @@
 
 .progress progress {
   inline-size: 100%;
-  accent-color: var(--marker);
+  accent-color: var(--count);
 }
 
 .warnings {
-  color: var(--amber);
+  padding: var(--space-3);
+  border: 1px solid var(--amber-line);
+  border-radius: var(--radius-sm);
+  background: var(--tint-amber);
+  color: var(--attn);
   font-size: var(--text-sm);
 }
 
@@ -132,62 +140,61 @@
   gap: var(--space-2);
 }
 
+/* The parity counter is one big state tile: solid green when every balance matches, solid red if not. */
 .counter {
   display: grid;
   justify-items: center;
   gap: var(--space-1);
   padding: var(--space-4);
-  border: 1px solid var(--line);
   border-radius: var(--radius-md);
+  color: var(--ink-on-fill);
   font-variant-numeric: tabular-nums;
 }
 
 .ok {
-  background: var(--surface);
-}
-
-.ok .big {
-  color: var(--match);
+  background: var(--ok);
 }
 
 .bad {
-  background: var(--tint-miss);
+  background: var(--short);
 }
 
-.bad .big {
-  color: var(--miss);
+.glyph {
+  inline-size: 28px;
+  block-size: 28px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .big {
-  font-size: var(--text-2xl);
+  font-size: var(--text-num);
   font-weight: 800;
+  line-height: 1;
 }
 
 .caption {
-  color: var(--muted);
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
+  font-weight: 800;
 }
 
 .diffs {
   display: grid;
-  gap: 0;
+  gap: var(--space-2);
   margin: 0;
   padding: 0;
   list-style: none;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-md);
-  overflow: hidden;
 }
 
 .diff {
   display: grid;
   gap: var(--space-1);
   padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--panel);
   font-size: var(--text-sm);
-}
-
-.diff + .diff {
-  border-block-start: 1px solid var(--hairline);
 }
 
 .diffHead {
@@ -199,7 +206,7 @@
 }
 
 .kind {
-  color: var(--miss);
+  color: var(--short-ink);
   font-size: var(--text-xs);
 }
 
@@ -207,7 +214,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-3);
-  color: var(--marker);
+  color: var(--count-ink);
   font-variant-numeric: tabular-nums;
 }
 

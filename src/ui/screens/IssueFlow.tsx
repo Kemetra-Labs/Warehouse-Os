@@ -52,12 +52,12 @@ function IssueEditor({ id, initial, sealed, isNew }: EditorProps) {
     autosave.schedule(next)
   }
 
-  const post = async (): Promise<IssuePostResult> => {
+  const post = async (batch: IssueDraft): Promise<IssuePostResult> => {
     if (state.status !== 'signedIn') throw new Error('not signed in')
     autosave.pause()
     try {
       const result = await postIssueBatch(
-        { id, draft, items, stock, uid: state.user.uid, deviceId: getDeviceId() },
+        { id, draft: batch, items, stock, uid: state.user.uid, deviceId: getDeviceId() },
         outbox,
       )
       if (!result.ok) autosave.resume()

@@ -4,12 +4,12 @@
   border: 1px solid var(--amber-line);
   border-radius: var(--radius-sm);
   background: var(--tint-amber);
-  color: var(--amber);
+  color: var(--attn);
   font-size: var(--text-sm);
   font-weight: 700;
 }
 
 .banner a {
-  color: var(--amber);
+  color: var(--attn);
   font-weight: 800;
 }

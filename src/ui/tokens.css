@@ -36,20 +36,6 @@
   --disabled-ink: #b4cdd0;
   --scrim: rgba(4, 16, 19, 0.62);
 
-  /* Older names, mapped onto the new world so every screen reads on the dark ground */
-  --board: var(--ground);
-  --surface: var(--panel);
-  --ink: var(--bone);
-  --line: var(--hair);
-  --hairline: var(--hair);
-  --marker: var(--count-ink);
-  --miss: var(--short-ink);
-  --match: var(--ok-ink);
-  --amber: var(--attn);
-  --scrub: var(--bone); /* a title, an outline or a reversed fill, with --on-scrub on it */
-  --scrub-2: var(--count);
-  --on-scrub: var(--ground);
-
   /* Radius and elevation (square-ish; no glass, no gradients) */
   --radius-sm: 10px;
   --radius-md: 12px;

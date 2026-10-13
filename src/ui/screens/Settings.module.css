@@ -2,10 +2,13 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: var(--space-3);
+  /* Room for the fixed save button under the last field. */
+  padding-block-end: calc(var(--tap-main) + var(--space-5));
 }
 
 .title {
   margin: 0;
+  color: var(--bone);
   font-size: var(--text-xl);
   font-weight: 800;
 }
@@ -18,7 +21,7 @@
 
 .problem {
   margin: 0;
-  color: var(--miss);
+  color: var(--short-ink);
   font-weight: 800;
 }
 
@@ -28,18 +31,29 @@
   border: 1px solid var(--amber-line);
   border-radius: var(--radius-sm);
   background: var(--tint-amber);
-  color: var(--amber);
+  color: var(--attn);
   font-size: var(--text-sm);
   font-weight: 800;
 }
 
 .done {
   margin: 0;
-  color: var(--match);
+  color: var(--ok-ink);
   font-weight: 800;
 }
 
 .foot {
   margin: var(--space-3) 0 0;
   font-size: var(--text-sm);
+}
+
+/* The one primary: save, reversed, in the thumb zone above the navigation. */
+.actions {
+  position: fixed;
+  inset-inline: 0;
+  inset-block-end: calc(var(--nav-height) + env(safe-area-inset-bottom));
+  z-index: 5;
+  display: grid;
+  padding: var(--space-3) var(--space-4);
+  background: var(--ground);
 }

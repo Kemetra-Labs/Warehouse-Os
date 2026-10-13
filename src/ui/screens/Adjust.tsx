@@ -135,7 +135,7 @@ function Fields(props: FieldsProps) {
           onPick={(direction) => onChange({ direction })}
         />
       ) : null}
-      <label className={styles.field}>
+      <label className={`${styles.field} ${styles.qty}`}>
         <span>الكمية</span>
         <input
           type="text"
@@ -284,9 +284,11 @@ export function AdjustView({ row, batches, today, onSave }: AdjustViewProps) {
               {error}
             </p>
           ) : null}
-          <Button variant="primary" disabled={input === null || busy} onClick={save}>
-            {form.kind === 'return' ? 'سجّل المرتجع' : 'سجّل التسوية'}
-          </Button>
+          <div className={styles.footer}>
+            <Button variant="primary" size="main" disabled={input === null || busy} onClick={save}>
+              {form.kind === 'return' ? 'سجّل المرتجع' : 'سجّل التسوية'}
+            </Button>
+          </div>
         </>
       )}
     </section>

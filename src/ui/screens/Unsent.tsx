@@ -62,13 +62,15 @@ function Lines({ view }: { readonly view: UnsentView }) {
 }
 
 interface CardProps {
+  /** The first refused document: its retry is the screen's one reversed button. */
+  readonly primary: boolean
   readonly view: UnsentView
   readonly note: string | null
   readonly onRetry: (id: string) => void
   readonly onExport: (view: UnsentView) => void
 }
 
-function Card({ view, note, onRetry, onExport }: CardProps) {
+function Card({ primary, view, note, onRetry, onExport }: CardProps) {
   const failed = view.status === 'failed'
   return (
     <article
@@ -84,7 +86,12 @@ function Card({ view, note, onRetry, onExport }: CardProps) {
             {view.businessDate ? ` · ${formatDay(view.businessDate)}` : ''}
           </p>
         </div>
-        <span className={styles.chip}>{failed ? 'فشل الإرسال' : 'مستنية النت'}</span>
+        <span className={styles.chip}>
+          <svg viewBox="0 0 12 12" aria-hidden="true" focusable="false">
+            <path d={failed ? 'M3 3l6 6M9 3l-6 6' : 'M6 3v3.5l2 1.5'} />
+          </svg>
+          {failed ? 'فشل الإرسال' : 'مستنية النت'}
+        </span>
       </header>
       <p className={failed ? styles.reason : styles.muted}>{failed ? REJECTED : WAITING}</p>
       {note ? (
@@ -103,7 +110,7 @@ function Card({ view, note, onRetry, onExport }: CardProps) {
       </details>
       <div className={styles.actions}>
         {failed ? (
-          <Button variant="primary" onClick={() => onRetry(view.id)}>
+          <Button variant={primary ? 'primary' : 'secondary'} onClick={() => onRetry(view.id)}>
             إعادة المحاولة
           </Button>
         ) : null}
@@ -125,6 +132,7 @@ export default function Unsent() {
     return sortUnsent(entries.map((e) => describeUnsent(e, (code) => names.get(code) ?? code)))
   }, [entries, items])
 
+  const firstFailed = views.find((v) => v.status === 'failed')?.id
   const retry = (id: string): void => {
     const entry = entries.find((e) => e.id === id)
     if (!entry) return
@@ -160,6 +168,7 @@ export default function Unsent() {
         {views.map((v) => (
           <li key={v.id}>
             <Card
+              primary={v.id === firstFailed}
               view={v}
               note={notes[v.id] ?? null}
               onRetry={retry}

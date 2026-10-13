@@ -10,6 +10,16 @@ import { describe, expect, it } from 'vitest'
  */
 const SRC = join(import.meta.dirname, '..', '..', '..', 'src')
 
+function sourceFiles(dir: string, ext: RegExp): string[] {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
+    e.isDirectory()
+      ? sourceFiles(join(dir, e.name), ext)
+      : ext.test(e.name)
+        ? [join(dir, e.name)]
+        : [],
+  )
+}
+
 function cssFiles(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
     e.isDirectory()
@@ -188,5 +198,29 @@ describe('colour tokens', () => {
   it('has no gradients anywhere in the stylesheets', () => {
     const found = FILES.filter((f) => /gradient\(/.test(f.css)).map((f) => f.name)
     expect(found).toEqual([])
+  })
+})
+
+describe('legacy token names', () => {
+  // The names of the old whiteboard-and-scrub palette. Every screen now uses the status-board
+  // tokens (--ground, --panel, --bone, --hair, --count-ink, --short-ink, --ok-ink, --attn).
+  const LEGACY =
+    /--(?:board|surface|ink|line|hairline|marker|miss|match|amber|scrub|scrub-2|on-scrub)(?![\w-])/g
+
+  it('are neither defined nor used anywhere in src', () => {
+    const found: string[] = []
+    for (const path of sourceFiles(SRC, /\.(css|ts|tsx)$/)) {
+      const text = readFileSync(path, 'utf8')
+      for (const m of text.matchAll(LEGACY)) {
+        found.push(`${relative(SRC, path).split(sep).join('/')}: ${m[0]}`)
+      }
+    }
+    expect(found).toEqual([])
+  })
+
+  it('does not trip on the status-board names that contain them', () => {
+    const text =
+      'var(--ink-on-fill) var(--ok-ink) var(--control-line) var(--amber-line) var(--tint-miss)'
+    expect(text.match(LEGACY)).toBeNull()
   })
 })

@@ -42,9 +42,9 @@ export function ItemsView({ rows, query, onQueryChange, onOpen }: ItemsViewProps
         <h1 id="items-title" className={styles.title}>
           الأصناف
         </h1>
-        <Link to="/items/new" className={styles.add}>
-          إضافة صنف
-        </Link>
+        <p className={styles.count} aria-live="polite">
+          {rows.length === 0 ? null : `${shown.length} صنف`}
+        </p>
       </header>
 
       <SearchBox
@@ -86,11 +86,7 @@ export function ItemsView({ rows, query, onQueryChange, onOpen }: ItemsViewProps
         <p className={styles.note}>
           المخزن لسه فاضي. <Link to="/import">استورد ملف الإكسيل</Link> أو أضف صنف.
         </p>
-      ) : (
-        <p className={styles.note} aria-live="polite">
-          {shown.length} صنف
-        </p>
-      )}
+      ) : null}
 
       <ul className={styles.list} aria-label="الأصناف">
         {shown.map((r) => (
@@ -106,6 +102,12 @@ export function ItemsView({ rows, query, onQueryChange, onOpen }: ItemsViewProps
       <p className={styles.foot}>
         <Link to="/settings">إعدادات المخزن</Link>
       </p>
+
+      <div className={styles.actions}>
+        <Link to="/items/new" className={styles.add}>
+          إضافة صنف
+        </Link>
+      </div>
     </section>
   )
 }

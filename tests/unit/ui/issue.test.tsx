@@ -33,7 +33,7 @@ let host: HTMLDivElement
 let root: Root
 let latest: IssueDraft
 let mounts = 0
-const onPost = vi.fn<() => Promise<IssuePostResult>>()
+const onPost = vi.fn<(draft: IssueDraft) => Promise<IssuePostResult>>()
 const onFinish = vi.fn()
 
 function Harness(props: {
@@ -85,6 +85,7 @@ const rowText = (i: number) => rows()[i]?.textContent ?? ''
 const dialog = () => [...document.querySelectorAll('[role="dialog"]')].at(-1) ?? null
 const sheetButton = (text: string) => buttonByText(dialog() ?? document.body, text)
 const post = () => buttonByText(host, 'اعتماد')
+const review = () => buttonByText(host, 'راجع واعتمد')
 
 /** 6 of NAL-01 against 4 in stock, a rep and a permit: ready but for the missing 2. */
 const shortDraft = () =>
@@ -116,36 +117,149 @@ describe('Issue: an empty batch', () => {
   })
 })
 
-describe('Issue: requested lines', () => {
-  async function addByPage(page: string, qty: string) {
-    type(host.querySelector('[role="search"] input'), page)
+describe('Issue: the open line', () => {
+  const box = () => host.querySelector('[role="search"] input')
+  const card = () => host.querySelector('[data-testid="pending-request"]')
+  const qtyField = () => inputByLabel(card()!, 'الكمية المطلوبة')
+  const search = (text: string) => {
+    type(box(), text)
     submit(host.querySelector('[role="search"]'))
-    const card = host.querySelector('[data-testid="pending-request"]')
-    expect(card).not.toBeNull()
-    type(inputByLabel(card!, 'الكمية المطلوبة'), qty)
-    click(buttonByText(card!, 'إضافة للدفعة'))
+  }
+  /** A typed page number finds the item and opens its line, asking for `qty`. */
+  function open(page: string, qty?: string) {
+    search(page)
+    expect(card()).not.toBeNull()
+    if (qty !== undefined) type(qtyField(), qty)
+  }
+  const hide = () => {
+    const hidden = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden')
+    act(() => void document.dispatchEvent(new Event('visibilitychange')))
+    hidden.mockRestore()
   }
 
-  it('a typed page number finds the item, and the quantity makes a line', async () => {
+  it('a typed page number opens the line for one piece, not on the batch yet', async () => {
     await mount()
-    await addByPage('10', '3')
+    open('10')
+    expect(card()?.textContent).toContain('مسمار قشري')
+    expect(qtyField()?.value).toBe('1')
+    expect(rows()).toHaveLength(0)
+    expect(latest.requested).toEqual([])
+    expect(card()?.textContent).toContain('جاهز')
+  })
+
+  it('the stepper counts the quantity; typing a number works too', async () => {
+    await mount()
+    open('10')
+    click(card()!.querySelector('button[aria-label="زوّد واحد"]'))
+    click(card()!.querySelector('button[aria-label="زوّد واحد"]'))
+    expect(qtyField()?.value).toBe('3')
+    type(qtyField(), '7')
+    expect(qtyField()?.value).toBe('7')
+    click(card()!.querySelector('button[aria-label="نقّص واحد"]'))
+    expect(qtyField()?.value).toBe('6')
+  })
+
+  it('the next item joins a ready line to the batch and opens its own', async () => {
+    await mount()
+    open('10', '3')
+    search('8')
     expect(rows()).toHaveLength(1)
     expect(rowText(0)).toContain('مسمار قشري')
     expect(latest.requested).toEqual([{ itemCode: 'SCR-01', qty: 3, priceMinor: 120_000 }])
-    expect(host.querySelector('[data-testid="pending-request"]')).toBeNull()
+    expect(card()?.textContent).toContain('نخاعي للفخذ')
+    expect(qtyField()?.value).toBe('1')
+  })
+
+  it('the same item again counts one more on the open line', async () => {
+    await mount()
+    open('10', '3')
+    search('10')
+    expect(qtyField()?.value).toBe('4')
+    expect(rows()).toHaveLength(0)
+  })
+
+  it('a line that is not ready never joins: it stays open and says what it needs', async () => {
+    await mount()
+    open('10', '0')
+    expect(card()?.textContent).toContain('اكتب الكمية المطلوبة')
+    expect(review()?.disabled).toBe(true)
+    search('8')
+    expect(host.querySelector('[data-testid="notice"]')?.textContent).toContain(
+      'كمّل الصنف المفتوح الأول',
+    )
+    expect(card()?.textContent).toContain('مسمار قشري')
+    expect(rows()).toHaveLength(0)
+    expect(latest.requested).toEqual([])
+  })
+
+  describe('text in the quantity field that is not a whole number', () => {
+    const typeBad = () => {
+      open('10', '3')
+      type(qtyField(), '2.5')
+    }
+
+    it('keeps the line open: it shows what it needs and blocks the approval', async () => {
+      await mount(draftOf({ rep: 'إيجي فيكس', permits: ['1001'] }))
+      typeBad()
+      expect(card()?.textContent).toContain('اكتب الكمية المطلوبة')
+      expect(card()?.textContent).not.toContain('جاهز')
+      expect(review()?.disabled).toBe(true)
+    })
+
+    it('the next item and the same item both refuse, and nothing joins', async () => {
+      await mount()
+      typeBad()
+      search('8')
+      expect(host.querySelector('[data-testid="notice"]')?.textContent).toContain(
+        'كمّل الصنف المفتوح الأول',
+      )
+      search('10')
+      expect(qtyField()?.value).toBe('2.5')
+      expect(rows()).toHaveLength(0)
+      expect(latest.requested).toEqual([])
+    })
+
+    it('leaving or going to the background adds nothing', async () => {
+      await mount()
+      typeBad()
+      hide()
+      act(() => root.render(<div />))
+      expect(latest.requested).toEqual([])
+    })
+
+    it('typing a whole number again makes the line ready', async () => {
+      await mount()
+      typeBad()
+      type(qtyField(), '4')
+      expect(card()?.textContent).toContain('جاهز')
+      hide()
+      expect(latest.requested[0]?.qty).toBe(4)
+    })
   })
 
   it('the same item from a second permit adds to the one line (FR-041)', async () => {
     await mount()
-    await addByPage('10', '3')
-    await addByPage('10', '2')
-    expect(rows()).toHaveLength(1)
-    expect(latest.requested[0]?.qty).toBe(5)
+    open('10', '3')
+    search('8')
+    search('10') // finishes NAL-01's line, opens SCR-01 for one piece again
+    click(review()) // a ready line joins on راجع واعتمد
+    expect(rows()).toHaveLength(2)
+    expect(latest.requested.find((r) => r.itemCode === 'SCR-01')?.qty).toBe(4)
+  })
+
+  it('removing the open line leaves the batch as it was', async () => {
+    await mount()
+    open('10', '3')
+    click(buttonByText(card()!, 'امسح السطر'))
+    expect(card()).toBeNull()
+    hide()
+    expect(latest.requested).toEqual([])
   })
 
   it('shows requested and delivered side by side, with a tick when they match', async () => {
     await mount()
-    await addByPage('10', '3')
+    open('10', '3')
+    search('8')
     const cells = [...(rows()[0]?.querySelectorAll('td') ?? [])].map((c) => c.textContent)
     expect(cells[1]).toBe('3')
     expect(cells[2]).toBe('3')
@@ -154,21 +268,86 @@ describe('Issue: requested lines', () => {
 
   it('says so when nothing matches', async () => {
     await mount()
-    type(host.querySelector('[role="search"] input'), '999')
-    submit(host.querySelector('[role="search"]'))
+    search('999')
     expect(host.querySelector('[data-testid="notice"]')?.textContent).toContain('مفيش صنف')
   })
 
-  it('lists what still blocks approving: the representative first', async () => {
+  it('the open line says what it will leave short, before it joins', async () => {
     await mount()
-    await addByPage('10', '3')
+    open('8', '6') // 4 in stock
+    expect(card()?.textContent).toContain('الرصيد 4')
+    expect(card()?.textContent).toContain('هيبقى ناقص 2')
+  })
+
+  it('"راجع واعتمد" takes a ready line along; what is short then shows on its row', async () => {
+    await mount(draftOf({ rep: 'إيجي فيكس', permits: ['1001'] }))
+    open('8', '6')
+    expect(post()).toBeNull() // while a line is open the primary is راجع واعتمد
+    expect(review()?.disabled).toBe(false)
+    click(review())
+    await flush()
+    expect(onPost).not.toHaveBeenCalled()
+    expect(card()).toBeNull()
+    expect(rowText(0)).toContain('ناقص 2')
+    expect(buttonByText(host, 'بديل')).not.toBeNull()
+    expect(post()?.disabled).toBe(true)
+  })
+
+  it('a line that joins on review shows on its row first; only the next tap posts', async () => {
+    onPost.mockResolvedValue({ ok: true, committed: Promise.resolve('acked') })
+    await mount(draftOf({ rep: 'إيجي فيكس', permits: ['1001'] }))
+    open('10', '3')
+    click(review())
+    await flush()
+    expect(onPost).not.toHaveBeenCalled() // the row (batch, expiry) is seen before posting
+    expect(rows()).toHaveLength(1)
+    expect(review()).toBeNull()
+    click(post())
+    await flush()
+    expect(onPost).toHaveBeenCalledOnce()
+    expect(onPost.mock.calls[0]?.[0].requested).toEqual([
+      { itemCode: 'SCR-01', qty: 3, priceMinor: 120_000 },
+    ])
+    expect(host.textContent).toContain('الدفعة اتعتمدت')
+  })
+
+  it('leaving the screen joins a ready line, as the next item would', async () => {
+    await mount()
+    open('10', '3')
+    act(() => root.render(<div />))
+    expect(latest.requested).toEqual([{ itemCode: 'SCR-01', qty: 3, priceMinor: 120_000 }])
+  })
+
+  it('the app going to the background joins it too', async () => {
+    await mount()
+    open('10', '3')
+    hide()
+    expect(latest.requested).toEqual([{ itemCode: 'SCR-01', qty: 3, priceMinor: 120_000 }])
+    expect(card()).toBeNull()
+  })
+
+  it('leaving with a line that is not ready adds nothing', async () => {
+    await mount()
+    open('10', '0')
+    act(() => root.render(<div />))
+    expect(latest.requested).toEqual([])
+  })
+
+  it('lists what still blocks approving: the representative first', async () => {
+    await mount(addRequested(draftOf({ rep: '', permits: [] }), SCR_01, 3, stock))
     expect(post()?.disabled).toBe(true)
     expect(host.textContent).toContain('اكتب اسم المندوب')
   })
 
+  it('an empty batch with a ready open line is not blocked as empty', async () => {
+    await mount(draftOf({ rep: 'إيجي فيكس', permits: [] }))
+    open('10')
+    expect(host.textContent).not.toContain('الدفعة فاضية')
+    expect(review()?.disabled).toBe(false)
+  })
+
   it('removing a line empties the table', async () => {
-    await mount()
-    await addByPage('10', '3')
+    await mount(addRequested(draftOf({ rep: 'م', permits: [] }), SCR_01, 3, stock))
     click(buttonByText(host, 'مسح'))
     expect(rows()).toHaveLength(0)
     expect(latest.issued).toEqual([])
@@ -186,7 +365,7 @@ describe('Issue: suggestions while typing', () => {
     expect(host.querySelector('[data-testid="pending-request"]')).toBeNull()
   })
 
-  it('tapping a suggestion opens the request card, and the quantity makes a line', async () => {
+  it('tapping a suggestion opens the line, and leaving makes it a requested line', async () => {
     await mount()
     type(box(), 'نخاعي')
     expect(options()).toHaveLength(3)
@@ -196,7 +375,7 @@ describe('Issue: suggestions while typing', () => {
     expect(box().value).toBe('')
     expect(options()).toHaveLength(0)
     type(inputByLabel(card!, 'الكمية المطلوبة'), '2')
-    click(buttonByText(card!, 'إضافة للدفعة'))
+    act(() => root.render(<div />))
     expect(latest.requested).toEqual([{ itemCode: 'NAL-07', qty: 2, priceMinor: 289_570 }])
   })
 

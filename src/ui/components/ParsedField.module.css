@@ -49,5 +49,5 @@
 
 .changed .label,
 .changed .hint {
-  color: var(--amber);
+  color: var(--attn);
 }

@@ -3,9 +3,9 @@
   gap: var(--space-2);
   margin: 0;
   padding: var(--space-3);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--panel);
 }
 
 .legend {
@@ -28,9 +28,8 @@
   align-items: center;
   gap: var(--space-2);
   padding-inline: var(--space-3) var(--space-1);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background: var(--tint-neutral);
+  border-radius: 99px;
+  background: var(--panel-2);
   font-weight: 800;
 }
 
@@ -39,7 +38,7 @@
   block-size: var(--tap-min);
   border: 0;
   background: transparent;
-  color: var(--miss);
+  color: var(--short-ink);
   font-family: inherit;
   font-size: var(--text-lg);
   cursor: pointer;
@@ -69,20 +68,20 @@
   min-block-size: var(--tap-min);
   padding-inline: var(--space-3);
   border: 1px solid var(--control-line);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  color: var(--ink);
+  border-radius: var(--radius-md);
+  background: var(--panel-2);
+  color: var(--bone);
   font-family: inherit;
   font-size: var(--text-md);
 }
 
 .input[aria-invalid='true'] {
-  border-color: var(--miss);
+  border-color: var(--short);
 }
 
 .problem {
   margin: 0;
-  color: var(--miss);
+  color: var(--short-ink);
   font-size: var(--text-sm);
   font-weight: 800;
 }

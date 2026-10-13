@@ -10,7 +10,7 @@
 
 .warn {
   margin: 0;
-  color: var(--miss);
+  color: var(--short-ink);
   font-size: var(--text-sm);
   font-weight: 800;
 }
@@ -29,9 +29,8 @@
   align-items: center;
   gap: var(--space-1);
   padding-inline-start: var(--space-3);
-  border: 1px solid var(--line);
   border-radius: 99px;
-  background: var(--surface);
+  background: var(--panel-2);
   font-weight: 800;
 }
 

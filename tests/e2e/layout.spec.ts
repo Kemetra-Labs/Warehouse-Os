@@ -7,7 +7,7 @@ import {
   type SeedItem,
   type SeedStock,
 } from './emulatorApi'
-import { addRequest, field, fillBatchHeader, receiveOneLine } from './flows'
+import { addRequest, field, fillBatchHeader, joinOpenLine, receiveOneLine } from './flows'
 
 /**
  * No horizontal overflow at phone width (T093), end to end. Every main route, and the screens
@@ -206,6 +206,8 @@ test.describe('no horizontal overflow at 412 px', () => {
     await fillBatchHeader(page, `مندوب بإسم طويل جدا للاختبار ${RUN}`)
     await expectNoOverflow(page, 'issue, header filled')
     await addRequest(page, code(2), 6)
+    await expectNoOverflow(page, 'issue, an open line')
+    await joinOpenLine(page)
     const short = page.getByRole('row', { name: new RegExp(NAME_SHORT.slice(0, 20)) })
     await expect(short).toContainText('ناقص 2')
     await expectNoOverflow(page, 'issue, a short item')

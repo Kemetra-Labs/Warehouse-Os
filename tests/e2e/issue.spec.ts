@@ -12,7 +12,7 @@ import {
   type SeedItem,
   type SeedStock,
 } from './emulatorApi'
-import { addRequest, fillBatchHeader } from './flows'
+import { addRequest, fillBatchHeader, joinOpenLine } from './flows'
 
 /**
  * Issuing to the rep, end to end (US3): aggregation of the same item, a substitute for a short
@@ -111,7 +111,9 @@ test.describe('issue to the rep', () => {
 
     // 1. The same item from two permits becomes one line (FR-041), fully available.
     await addRequest(page, code(1), 5)
+    await joinOpenLine(page)
     await addRequest(page, code(1), 3)
+    await joinOpenLine(page)
     const full = rowOf(page, /^صنف صرف كامل/)
     await expect(full).toHaveCount(1)
     await expect(cell(full, 1)).toHaveText('8')
@@ -134,6 +136,7 @@ test.describe('issue to the rep', () => {
 
     // 2. A short item (6 asked, 4 in stock) blocks approving until a substitute covers it.
     await addRequest(page, code(2), 6)
+    await joinOpenLine(page)
     const short = rowOf(page, /^صنف صرف ناقص/)
     await expect(short).toContainText('ناقص 2')
     const approve = page.getByRole('button', { name: 'اعتماد', exact: true })
@@ -153,7 +156,10 @@ test.describe('issue to the rep', () => {
     await expect(short).not.toContainText('ناقص 2')
 
     // 3. An item with no substitute in its category is issued below zero, with a reason.
+    // راجع واعتمد takes the ready open line along and never posts: its row shows first.
     await addRequest(page, code(6), 3)
+    await page.getByRole('button', { name: 'راجع واعتمد' }).click()
+    await expect(page.locator('svg[aria-label*="معتمد"]')).toHaveCount(0)
     const negative = rowOf(page, /^صنف صرف بالسالب/)
     await expect(negative).toContainText('ناقص 2')
     await negative.getByRole('button', { name: 'بديل', exact: true }).click()
