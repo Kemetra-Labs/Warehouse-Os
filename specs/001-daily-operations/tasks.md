@@ -168,12 +168,13 @@ US1 → US2 → US3 → US7. P2 stories follow: US4 → US5 → US6.
 
 ### Tests for User Story 3
 
-- [ ] T054 [P] [US3] Unit tests for substitute ranking in `tests/unit/domain/substitutes.test.ts`:
+- [X] T054 [P] [US3] Unit tests for substitute ranking in `tests/unit/domain/substitutes.test.ts`:
   - same category, in stock, excluding the item itself;
   - ordered by absolute price difference, then by balance;
   - the "all categories" toggle;
   - a check against workbook prices (NAL-01 → NAL-07 ±0, NAL-11 +75%).
-- [ ] T055 [P] [US3] Unit tests for the issue domain in `tests/unit/domain/issue.test.ts`:
+  - Note: the workbook is never committed, so the NAL prices are explicit test data taken from the issue-flow mockup (NAL-01 = NAL-07 = 2,895.70 EGP, NAL-11 = 5,064.13 EGP, plus a 3,986.66 EGP item at +38%). `rankSubstitutes` takes a `balanceOf` function so the screen can pass the stock still free in the batch.
+- [X] T055 [P] [US3] Unit tests for the issue domain in `tests/unit/domain/issue.test.ts`:
   - aggregation per item (FR-041);
   - the coverage check;
   - a negative issue needs a reason;
@@ -183,25 +184,29 @@ US1 → US2 → US3 → US7. P2 stories follow: US4 → US5 → US6.
   - the negative check sums issued quantity per item and per batch (two lines within balance whose sum is not need a reason);
   - local sequential numbering;
   - a business date in the future is rejected.
+  - Note: the domain is three files: `issue.ts` (validate, totals, `toMovements`, post plan, numbering), `issueEdit.ts` (aggregate, FEFO fill, substitute and negative edits) and `issueStock.ts` (batch keys, FEFO allocation, the per-item and per-batch negative check). Deviations: the next number counts **cancelled** batches too (a printed number is never reused, where R10 said posted or draft); an issued total above the requested one blocks posting (`over-issued`); a movement carries the negative reason in `reason`, the permit numbers in `docNumber`, and `بدل {code}` in `note`.
 
 ### Implementation for User Story 3
 
-- [ ] T056 [P] [US3] Implement `src/domain/substitutes.ts` so T054 passes
-- [ ] T057 [US3] Implement `src/domain/issue.ts` so T055 passes
-- [ ] T058 [US3] Implement `src/data/repos/issues.ts` (drafts, local numbering, atomic post through the outbox)
-- [ ] T059 [US3] Build the issue screen in `src/ui/screens/Issue.tsx`. Requirements:
+- [X] T056 [P] [US3] Implement `src/domain/substitutes.ts` so T054 passes
+- [X] T057 [US3] Implement `src/domain/issue.ts` so T055 passes
+- [X] T058 [US3] Implement `src/data/repos/issues.ts` (drafts, local numbering, atomic post through the outbox)
+  - Note: `receiptPost.ts` now exports a generic `settlePost` and `reconcilePendingPosts` takes the outbox `kind`, so receipts and issue batches share them. `DataProvider` subscribes to `issueBatches` (with `issueBatchesLoaded`, so a new draft is numbered only after the list has answered) and reconciles pending issue posts at start. `useDraftAutosave` is generic over a save function. No rules change was needed; a rules test now covers the exact posting patch.
+- [X] T059 [US3] Build the issue screen in `src/ui/screens/Issue.tsx`. Requirements:
   - rep name and permit numbers (numbers only);
   - requested lines;
   - the مطلوب | اتسلّم count table with status dots;
   - the totals summary;
   - the seal on post.
-- [ ] T060 [US3] Build the substitute bottom sheet in `src/ui/screens/SubstituteSheet.tsx`. Requirements:
+- [X] T060 [US3] Build the substitute bottom sheet in `src/ui/screens/SubstituteSheet.tsx`. Requirements:
   - nearest price pre-selected;
   - difference shown in EGP and percent, with balance;
   - the "كل الفئات" toggle;
   - "صرف بالسالب + سبب".
-- [ ] T061 [US3] Build the home screen in `src/ui/screens/Home.tsx`: the open draft batch at the top, receive and issue actions, and tallies (تحتاج طلب / نافد / تسويات معلّقة)
-- [ ] T062 [US3] Write an E2E issuing test (aggregation, substitute, negative with a reason, post, totals) in `tests/e2e/issue.spec.ts`
+- [X] T061 [US3] Build the home screen in `src/ui/screens/Home.tsx`: the open draft batch at the top, receive and issue actions, and tallies (تحتاج طلب / نافد / تسويات معلّقة)
+  - Note: Home is `src/ui/screens/Home.tsx`; `OpenDrafts.tsx` now holds `OpenBatches` (issue drafts, at the top) and `OpenDrafts` (receipt drafts). The receive and issue actions are two links: `استلام طلبية جديدة` and `صرف لمندوب`.
+- [X] T062 [US3] Write an E2E issuing test (aggregation, substitute, negative with a reason, post, totals) in `tests/e2e/issue.spec.ts`
+  - Note: the full flow runs only with `E2E_EMULATORS=1` (ran locally and passed together with import and receive). It uses run-unique item codes, categories and rep name, seeds balances as إضافة movements over the emulator REST API, and reopens the posted batch read-only. The ungated part checks that `/issue` renders an Arabic heading.
 
 **Checkpoint**: the MVP's daily loop (import → receive → issue) works end to end.
 

@@ -1,0 +1,44 @@
+.sub,
+.amber,
+.batch {
+  display: block;
+  margin-block-start: 2px;
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.amber {
+  color: var(--amber);
+  font-weight: 800;
+}
+
+.marker {
+  color: var(--marker);
+  font-weight: 800;
+}
+
+.batch {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.select {
+  min-block-size: var(--tap-min);
+  max-inline-size: 100%;
+  padding-inline: var(--space-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: var(--text-xs);
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-block-start: var(--space-2);
+}
