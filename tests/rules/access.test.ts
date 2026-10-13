@@ -6,6 +6,7 @@ import {
   type RulesTestEnvironment,
 } from '@firebase/rules-unit-testing'
 import {
+  arrayUnion,
   deleteDoc,
   doc,
   getDoc,
@@ -173,6 +174,42 @@ describe('settings', () => {
     await assertSucceeds(setDoc(doc(db, 'settings/app'), { coverageMonths: 2 }))
     await assertSucceeds(updateDoc(doc(db, 'settings/app'), { defaultReorder: 6 }))
     await assertFails(deleteDoc(doc(db, 'settings/app')))
+  })
+
+  it('owner can record exported ledger ids and the backup time (no rules change needed)', async () => {
+    const db = ownerDb(env)
+    // The first export of a fresh project: settings/app may not exist yet.
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await deleteDoc(doc(ctx.firestore(), 'settings/app'))
+    })
+    const ref = doc(db, 'settings/app')
+    await assertSucceeds(
+      setDoc(
+        ref,
+        { lastLedgerExportedIds: arrayUnion('a', 'b'), lastLedgerExportAt: serverTimestamp() },
+        { merge: true },
+      ),
+    )
+    // A second export (or a second device) unions in; nothing is rewritten.
+    await assertSucceeds(
+      setDoc(ref, { lastLedgerExportedIds: arrayUnion('b', 'c') }, { merge: true }),
+    )
+    await assertSucceeds(setDoc(ref, { lastBackupAt: serverTimestamp() }, { merge: true }))
+    const data = (await getDoc(ref)).data() ?? {}
+    expect(data.lastLedgerExportedIds).toEqual(['a', 'b', 'c'])
+    expect(data.lastLedgerExportAt).toBeDefined()
+    expect(data.lastBackupAt).toBeDefined()
+  })
+
+  it('a signed-in non-owner cannot touch the exported ids', async () => {
+    const other = env.authenticatedContext('someone-else').firestore()
+    await assertFails(
+      setDoc(
+        doc(other, 'settings/app'),
+        { lastLedgerExportedIds: arrayUnion('x') },
+        { merge: true },
+      ),
+    )
   })
 
   it('owner cannot write other settings documents', async () => {

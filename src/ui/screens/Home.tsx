@@ -1,5 +1,6 @@
 import { Link } from 'react-router'
 import { useLedger } from '../../data/useLedger'
+import { BackupReminder } from '../components/BackupReminder'
 import styles from './Home.module.css'
 import { DuplicateNumbers } from './DuplicateNumbers'
 import { NeedsAttention } from './NeedsAttention'
@@ -27,6 +28,7 @@ export function Home() {
     <div className={styles.screen}>
       <h1 className={styles.title}>الرئيسية</h1>
       <DuplicateNumbers />
+      <BackupReminder />
       <OpenBatches />
       <nav className={styles.actions} aria-label="العمليات">
         <Link to="/receive" className={`${styles.action} ${styles.receive}`}>

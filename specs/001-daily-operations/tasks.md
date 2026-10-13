@@ -303,7 +303,8 @@ US1 → US2 → US3 → US7. P2 stories follow: US4 → US5 → US6.
 
 **Independent Test**: print a posted receipt to A4, and paste exported rows into a **copy** of the workbook so that its balances equal the app.
 
-- [ ] T084 [P] [US6] Unit tests for ledger rows in `tests/unit/excel/ledgerRows.test.ts`:
+- [X] T084 [P] [US6] Unit tests for ledger rows in `tests/unit/excel/ledgerRows.test.ts`:
+  - Note: `src/excel/ledgerPlan.ts` holds the pure part (no exceljs): selection, ordering, the 18-cell rows, capacity; `ledgerRows.ts` writes the file. The test sets `TZ=Africa/Cairo` itself and checks the offset took effect, and it reads the raw date serials back with SheetJS and `serialToIso`. Empty cells are never written (not even `''`), so Skip blanks keeps the table's formulas; the test asserts this on the reloaded file and on the raw cell records. A month-only expiry (`2028-03`) is written as the last day of that month (the day it covers until). Column M is the note, then `بدل {item name}` (the issue movement's own `بدل {code}` note is dropped so it is not written twice), then the reason. Capacity: the app cannot see the workbook, so used rows = (last imported workbook row - 4, skipped zero rows still occupy a row) + the exported ids recorded; the warning is advisory.
   - columns A–R in table order;
   - formula columns empty;
   - signed تسوية;
@@ -311,12 +312,18 @@ US1 → US2 → US3 → US7. P2 stories follow: US4 → US5 → US6.
   - only movements not yet exported; **imported movements are never exported, so the first export after an import is empty**; exported IDs are added with `arrayUnion`;
   - dates written correctly under `TZ=Africa/Cairo`;
   - the capacity warning beyond row 595.
-- [ ] T085 [P] [US6] Unit tests for the print files (official header rows, RTL view, A4, fit width, totals, signature block, the ملغي banner) in `tests/unit/excel/prints.test.ts`
-- [ ] T086 [P] [US6] Unit tests for the backup workbook (three sheets with all fields) and the 7-day reminder in `tests/unit/excel/backup.test.ts`
-- [ ] T087 [US6] Implement `src/excel/printReceipt.ts` and `src/excel/printIssue.ts` with ExcelJS so T085 passes
-- [ ] T088 [US6] Implement `src/excel/ledgerRows.ts` and the "تم اللصق" confirmation that records exported IDs, so T084 passes
-- [ ] T089 [US6] Implement `src/excel/backup.ts` and the reminder banner so T086 passes
-- [ ] T090 [US6] Build the exports screen (print, ledger rows with steps, backup) in `src/ui/screens/Exports.tsx`
+- [X] T085 [P] [US6] Unit tests for the print files (official header rows, RTL view, A4, fit width, totals, signature block, the ملغي banner) in `tests/unit/excel/prints.test.ts`
+  - Note: reads the print files back with exceljs: header rows 1-3, title in row 4, info rows, table header on row 9, lines from row 10, totals, signature boxes (3 for a receipt, 2 for an issue), A4 portrait, fit to 1 page wide, RTL, no gridlines, Arial, and the red ملغي banner. An issue line stores no price, so each price comes from its movement `{batchId}-L{n}` and the totals from the stored `requestedValueMinor` / `issuedValueMinor`; a missing movement is refused (`PrintError`) rather than guessed.
+- [X] T086 [P] [US6] Unit tests for the backup workbook (three sheets with all fields) and the 7-day reminder in `tests/unit/excel/backup.test.ts`
+  - Note: headers are checked against `itemSchema` and `movementSchema` keys, so a new field fails the test. The 7-day reminder is `src/domain/backupReminder.ts` (exactly 7 days is fine, older is due, never is due).
+- [X] T087 [US6] Implement `src/excel/printReceipt.ts` and `src/excel/printIssue.ts` with ExcelJS so T085 passes
+  - Note: shared layout in `src/excel/printLayout.ts`; file names `استلام-{deliveryNo}.xlsx` (characters Windows refuses become `-`) and `صرف-دفعة-{number}.xlsx`. The issue title is `إذن صرف — دفعة {number}` as the contract says, without the store name. A cancelled document prints `ملغي — {title}` in red in row 4.
+- [X] T088 [US6] Implement `src/excel/ledgerRows.ts` and the "تم اللصق" confirmation that records exported IDs, so T084 passes
+  - Note: "تم اللصق" (`ExportLedger.tsx`) records the ids of the downloaded file, kept in state at download time, not a recompute, so a movement that arrives afterwards is never marked. The write is `markLedgerExported` in `src/data/repos/settings.ts`: `setDoc(merge)` with `arrayUnion` and `lastLedgerExportAt`. No rules change was needed (the owner may write any field of `settings/app`); `tests/rules/access.test.ts` got two cases that prove the exact write works, also on a missing document, and that a non-owner is refused. Layout deviation: the file is ONE sheet, rows from A1 with no header, and the steps are in column T (outside A:R), with the exact range `A1:R{n}` to type in the Name Box; contracts/excel-exports.md says only "a first-sheet note".
+- [X] T089 [US6] Implement `src/excel/backup.ts` and the reminder banner so T086 passes
+  - Note: `lastBackupAt` lives in `settings/app` (data-model), so it is shared by every device, not per device. `markBackupDone` runs after the file was built. The reminder banner (`src/ui/components/BackupReminder.tsx`) is on Home, only when the store has data, and links to the exports screen. Money is kept in piastres (exact) plus pounds; timestamps are ISO (UTC) text; the documents sheet has one row per line (requested and issued lines of a batch are marked مطلوب / مصروف).
+- [X] T090 [US6] Build the exports screen (print, ledger rows with steps, backup) in `src/ui/screens/Exports.tsx`
+  - Note: route `/exports` (lazy), bottom-nav entry renamed from التقارير to التصدير; `/reports` redirects to it. The links to the import and the settings that sat on the old Reports placeholder moved to the bottom of the exports screen. Print buttons are also on `ReceiptReview` and `Issue` for posted or cancelled documents (`PrintButton`). exceljs is only loaded by dynamic `import()` inside `exportActions.ts`; the main, receive and issue chunks do not import it. Spec file: `tests/e2e/exports.spec.ts` (emulator tests gated by `E2E_EMULATORS=1`, plus an ungated Arabic-heading test).
 - [ ] T091 [US6] **Spike R8, with the user, on a COPY of the workbook**:
   1. Paste exported rows with Paste Special → Skip blanks. The set must include at least one إضافة, one صرف, one positive تسوية, one negative تسوية, one مرتجع and one reversal pair, and column D's validation must accept them.
   2. Check that the formula columns still calculate and that the touched items' balances equal the app.

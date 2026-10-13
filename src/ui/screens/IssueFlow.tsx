@@ -12,6 +12,7 @@ import { cairoToday } from '../../domain/dates'
 import type { IssueDraft } from '../../domain/issue'
 import { isBlankIssueDraft } from '../../domain/issueEdit'
 import { hasDuplicateNumber } from '../../domain/issueNumbers'
+import { downloadIssuePrint } from './exportActions'
 import { Issue } from './Issue'
 import { useDraftAutosave, type AutosaveAdapter } from './useDraftAutosave'
 import { useIssueLoad, type SealedBatch } from './useIssueLoad'
@@ -21,6 +22,8 @@ const NOT_LOADED: CancelAttempt = {
   ok: false,
   problem: { code: 'incomplete', message: 'الدفعة لسه بتتحمّل. استنى لحظة وجرّب تاني.' },
 }
+
+const NOT_LOADED_PRINT = 'الدفعة لسه بتتحمّل. استنى لحظة وجرّب تاني.'
 
 const ISSUE_AUTOSAVE: AutosaveAdapter<IssueDraft> = {
   save: saveIssueDraft,
@@ -76,6 +79,12 @@ function IssueEditor({ id, initial, sealed, isNew }: EditorProps) {
     )
   }
 
+  const print = (): Promise<void> => {
+    const batch = issueBatches.find((b) => b.id === id)
+    if (!batch) return Promise.reject(new Error(NOT_LOADED_PRINT))
+    return downloadIssuePrint({ batch, items, movements })
+  }
+
   return (
     <Issue
       draft={draft}
@@ -87,6 +96,7 @@ function IssueEditor({ id, initial, sealed, isNew }: EditorProps) {
       onChange={update}
       onPost={post}
       onCancel={cancel}
+      onPrint={print}
       onFinish={() => void navigate('/')}
     />
   )

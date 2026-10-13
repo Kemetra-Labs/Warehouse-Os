@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import { Route, Routes } from 'react-router'
+import { Navigate, Route, Routes } from 'react-router'
 import { Shell } from './Shell'
 import { Adjust } from '../ui/screens/Adjust'
 import { Home } from '../ui/screens/Home'
@@ -7,7 +7,7 @@ import { ItemCard } from '../ui/screens/ItemCard'
 import { ItemEdit } from '../ui/screens/ItemEdit'
 import { Items } from '../ui/screens/Items'
 import { Settings } from '../ui/screens/Settings'
-import { MovementsScreen, ReportsScreen } from './screens'
+import { MovementsScreen } from './screens'
 
 // Lazy: keeps SheetJS (xlsx) out of the main bundle until the import screen is opened.
 const ImportParity = lazy(() => import('../ui/screens/ImportParity'))
@@ -15,6 +15,8 @@ const ImportParity = lazy(() => import('../ui/screens/ImportParity'))
 const ReceiptFlow = lazy(() => import('../ui/screens/ReceiptFlow'))
 // Lazy: the issue screen and its sheets load only when a batch is opened.
 const IssueFlow = lazy(() => import('../ui/screens/IssueFlow'))
+// Lazy: the exports screen (prints, ledger rows, backup) loads only when it is opened.
+const Exports = lazy(() => import('../ui/screens/Exports'))
 // Lazy: the unsent screen pulls in the Excel exporter only when it is opened.
 const Unsent = lazy(() => import('../ui/screens/Unsent'))
 
@@ -31,7 +33,16 @@ export function AppRoutes() {
         <Route path="items/:code/adjust" element={<Adjust />} />
         <Route path="settings" element={<Settings />} />
         <Route path="movements" element={<MovementsScreen />} />
-        <Route path="reports" element={<ReportsScreen />} />
+        {/* The old placeholder address now lands on the exports screen. */}
+        <Route path="reports" element={<Navigate to="/exports" replace />} />
+        <Route
+          path="exports"
+          element={
+            <Suspense fallback={<p>جاري التحميل...</p>}>
+              <Exports />
+            </Suspense>
+          }
+        />
         <Route
           path="import"
           element={

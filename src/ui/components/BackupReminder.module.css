@@ -1,0 +1,15 @@
+.banner {
+  margin: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--amber-line);
+  border-radius: var(--radius-sm);
+  background: var(--tint-amber);
+  color: var(--amber);
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+.banner a {
+  color: var(--amber);
+  font-weight: 800;
+}

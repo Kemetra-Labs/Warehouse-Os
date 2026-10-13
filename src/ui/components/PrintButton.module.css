@@ -1,0 +1,11 @@
+.box {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.error {
+  margin: 0;
+  color: var(--miss);
+  font-size: var(--text-sm);
+  font-weight: 700;
+}

@@ -9,6 +9,7 @@ import type { PostResult } from '../../data/receiptPost'
 import { cairoToday } from '../../domain/dates'
 import type { ReceiptDraft } from '../../domain/receipt'
 import { isBlankDraft } from '../../domain/receiptEdit'
+import { downloadReceiptPrint } from './exportActions'
 import { Receive } from './Receive'
 import { ReceiptReview, type SealInfo } from './ReceiptReview'
 import { useDraftAutosave, type AutosaveAdapter } from './useDraftAutosave'
@@ -19,6 +20,8 @@ const NOT_LOADED: CancelAttempt = {
   ok: false,
   problem: { code: 'incomplete', message: 'الإذن لسه بيتحمّل. استنى لحظة وجرّب تاني.' },
 }
+
+const NOT_LOADED_PRINT = 'الإذن لسه بيتحمّل. استنى لحظة وجرّب تاني.'
 
 const RECEIPT_AUTOSAVE: AutosaveAdapter<ReceiptDraft> = { save: saveDraft, isBlank: isBlankDraft }
 
@@ -74,6 +77,12 @@ function ReceiptEditor({ id, initial, sealed, isNew }: EditorProps) {
     )
   }
 
+  const print = (): Promise<void> => {
+    const receipt = receipts.find((r) => r.id === id)
+    if (!receipt) return Promise.reject(new Error(NOT_LOADED_PRINT))
+    return downloadReceiptPrint({ receipt, items })
+  }
+
   if (sealed || params.get('step') === 'review') {
     return (
       <ReceiptReview
@@ -87,6 +96,7 @@ function ReceiptEditor({ id, initial, sealed, isNew }: EditorProps) {
         onBack={() => setParams({})}
         onPost={post}
         onCancel={cancel}
+        onPrint={print}
         onFinish={() => void navigate('/')}
       />
     )
