@@ -236,6 +236,60 @@ describe('Receive: typed search', () => {
   })
 })
 
+describe('Receive: suggestions while typing', () => {
+  const box = () => host.querySelector('[role="search"] input') as HTMLInputElement
+  const options = () => [...host.querySelectorAll('[role="option"]')]
+
+  it('typing a page shows its items without pressing Enter', async () => {
+    await mount()
+    type(box(), '4')
+    expect(options().map((o) => o.textContent)).toEqual(['صنف تجريبي دالص 4 · BBB-02'])
+    expect(pending()).toBeNull()
+  })
+
+  it('tapping a suggestion starts the line, like Enter and choosing the item', async () => {
+    await mount()
+    type(box(), '2')
+    expect(options()).toHaveLength(2)
+    click(options()[1] ?? null)
+    expect(pending()?.textContent).toContain('BBB-01')
+    expect(box().value).toBe('')
+    expect(options()).toHaveLength(0)
+    expect(host.querySelector('[role="dialog"]')).toBeNull()
+  })
+
+  it('tapping the item of the open line counts one more, as a repeated scan does', async () => {
+    await mount()
+    type(box(), '4')
+    click(options()[0] ?? null)
+    expect(field('اللي اتعدّ', pending()!)?.value).toBe('1')
+    type(box(), '4')
+    click(options()[0] ?? null)
+    expect(field('اللي اتعدّ', pending()!)?.value).toBe('2')
+  })
+
+  it('tapping another item while a line is open asks to finish it first', async () => {
+    await mount()
+    type(box(), '4')
+    click(options()[0] ?? null)
+    type(box(), '1')
+    click(options()[0] ?? null)
+    expect(pending()?.textContent).toContain('BBB-02')
+    expect(host.querySelector('[data-testid="notice"]')?.textContent).toContain('كمّل السطر')
+  })
+
+  it('a typed GTIN plus Enter still works: it suggests the item and Enter starts the line', async () => {
+    await mount()
+    type(box(), GTIN_A)
+    expect(options()).toHaveLength(1)
+    const enter = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true })
+    act(() => void box().dispatchEvent(enter))
+    expect(enter.defaultPrevented).toBe(false)
+    submit(host.querySelector('[role="search"]'))
+    expect(pending()?.textContent).toContain('AAA-01')
+  })
+})
+
 describe('Receive: line rules', () => {
   const open = async () => {
     const cam = await mount()

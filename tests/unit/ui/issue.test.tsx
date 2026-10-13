@@ -175,6 +175,41 @@ describe('Issue: requested lines', () => {
   })
 })
 
+describe('Issue: suggestions while typing', () => {
+  const box = () => host.querySelector('[role="search"] input') as HTMLInputElement
+  const options = () => [...host.querySelectorAll('[role="option"]')]
+
+  it('typing a page shows its items without pressing Enter', async () => {
+    await mount()
+    type(box(), '10')
+    expect(options().map((o) => o.textContent)).toEqual(['مسمار قشريص 10 · SCR-01'])
+    expect(host.querySelector('[data-testid="pending-request"]')).toBeNull()
+  })
+
+  it('tapping a suggestion opens the request card, and the quantity makes a line', async () => {
+    await mount()
+    type(box(), 'نخاعي')
+    expect(options()).toHaveLength(3)
+    click(options()[1] ?? null)
+    const card = host.querySelector('[data-testid="pending-request"]')
+    expect(card?.textContent).toContain('نخاعي للساق')
+    expect(box().value).toBe('')
+    expect(options()).toHaveLength(0)
+    type(inputByLabel(card!, 'الكمية المطلوبة'), '2')
+    click(buttonByText(card!, 'إضافة للدفعة'))
+    expect(latest.requested).toEqual([{ itemCode: 'NAL-07', qty: 2, priceMinor: 289_570 }])
+  })
+
+  it('says so under the box when nothing matches, and Enter still reports it', async () => {
+    await mount()
+    type(box(), '999')
+    expect(options()).toHaveLength(0)
+    expect(host.textContent).toContain('مفيش صنف بالرقم أو الاسم ده')
+    submit(host.querySelector('[role="search"]'))
+    expect(host.querySelector('[data-testid="notice"]')?.textContent).toContain('مفيش صنف')
+  })
+})
+
 describe('Issue: the batch of a line (FR-046)', () => {
   const twoBatches = () => addRequested(draftOf({ rep: 'م', permits: [] }), TWO_01, 2, stock)
   const select = () => host.querySelector('select')

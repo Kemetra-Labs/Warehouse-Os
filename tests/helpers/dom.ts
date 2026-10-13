@@ -13,6 +13,14 @@ export function type(el: Element | null, value: string): void {
   })
 }
 
+/** Presses a key on an element the way a keyboard would (keydown only). Returns the event. */
+export function press(el: Element | null, key: string): KeyboardEvent {
+  if (!el) throw new Error('press(): element not found')
+  const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true })
+  act(() => void el.dispatchEvent(event))
+  return event
+}
+
 export function click(el: Element | null): void {
   if (!(el instanceof HTMLElement)) throw new Error('click(): element not found')
   act(() => el.click())

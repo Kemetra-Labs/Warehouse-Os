@@ -186,3 +186,29 @@ export function resolve<
       return items.filter((i) => i.page === cls.page)
   }
 }
+
+/** The longest list of suggestions shown under the search box. */
+export const SUGGESTION_LIMIT = 6
+
+/**
+ * Items to suggest while the user types, with the same matching as Enter (`classify` +
+ * `resolve`). A text that reads as a name also matches a part of an item code ("nal-0"), so
+ * a half-typed code still finds its items; exact matches come first. Empty input gives none.
+ */
+export function suggestItems<
+  T extends Identifiable & {
+    readonly nameAr: string
+    readonly nameEn?: string | undefined
+    readonly page?: number | undefined
+  },
+>(items: readonly T[], text: string, limit: number = SUGGESTION_LIMIT): T[] {
+  const query = normalizeDigits(text.trim())
+  if (query === '' || limit <= 0) return []
+  const cls = classify(query)
+  const matched = resolve(items, cls)
+  const needle = query.toLowerCase()
+  const byPartialCode =
+    cls.kind === 'name' ? items.filter((i) => i.code.toLowerCase().includes(needle)) : []
+  const extra = byPartialCode.filter((i) => !matched.includes(i))
+  return [...matched, ...extra].slice(0, limit)
+}
