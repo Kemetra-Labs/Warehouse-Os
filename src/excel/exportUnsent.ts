@@ -5,6 +5,8 @@ import { fromMinor } from '../domain/money'
 const KIND_LABELS: Readonly<Record<UnsentView['kind'], string>> = {
   receipt: 'استلام',
   issue: 'صرف',
+  cancel: 'إلغاء',
+  adjust: 'مرتجع / تسوية',
   unknown: 'غير معروف',
 }
 

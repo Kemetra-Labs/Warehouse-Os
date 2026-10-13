@@ -149,6 +149,25 @@ describe('describeDocument', () => {
     expect(doc.link).toBe('/issue/b1')
   })
 
+  it('names and links the reversal of a receipt line or an issue line, which has no reference', () => {
+    for (const [kind, link] of [
+      ['receipt', '/receive/r1'],
+      ['issue', '/issue/r1'],
+    ] as const) {
+      const doc = describeDocument(
+        move({
+          type: MOVEMENT_TYPES.ADJUST,
+          qty: -1,
+          reverses: 'r1-L1',
+          reason: 'خطأ',
+          source: { kind, id: 'r1' },
+        }),
+      )
+      expect(doc.label).not.toBe('')
+      expect(doc.link).toBe(link)
+    }
+  })
+
   it('says an imported row came from the workbook, with no link', () => {
     const doc = describeDocument(move({ type: MOVEMENT_TYPES.ADD, qty: 1, docNumber: '55' }))
     expect(doc.label).toContain('الإكسيل')

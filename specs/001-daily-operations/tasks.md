@@ -278,16 +278,22 @@ US1 → US2 → US3 → US7. P2 stories follow: US4 → US5 → US6.
 
 **Independent Test**: cancel a posted issue batch. Balances return, both movements are visible, and a second cancel is refused.
 
-- [ ] T078 [P] [US5] Unit tests for cancel composition in `tests/unit/domain/cancel.test.ts`:
+- [X] T078 [P] [US5] Unit tests for cancel composition in `tests/unit/domain/cancel.test.ts`:
   - receipt reversals plus the price-restore rule, with GTIN links kept;
   - issue reversals;
   - return (+) and signed adjustment;
   - a reason is required.
-- [ ] T079 [P] [US5] Rules test 5 (`rev-X` once only, reason required, `reverses == X`) in `tests/rules/movements.test.ts`
-- [ ] T080 [US5] Implement the cancel batches in `src/data/repos/receipts.ts` and `src/data/repos/issues.ts` (through the outbox) so T078 and T079 pass
-- [ ] T081 [US5] Build the return and adjustment screen in `src/ui/screens/Adjust.tsx`
-- [ ] T082 [US5] Add the cancel action with a reason and the red "ملغي" seal to `src/ui/screens/ReceiptReview.tsx` and `src/ui/screens/Issue.tsx`
-- [ ] T083 [US5] Write an E2E test (cancel a batch, adjust a pending settlement, re-cancel refused) in `tests/e2e/cancel.spec.ts`
+  - Note: also covers `src/domain/adjust.ts` (return and adjustment, `suggestSettlement`). A cancel reverses the movements the document actually wrote (picked by `source.kind` and `source.id`), never the lines: a receipt line that counted 0 wrote none, and issue prices were snapshotted at posting. It refuses a blank reason, a document that is not `posted`, a reversal that already exists, and a count of movements different from the one the document wrote (`expectedMovements`, so a half-loaded ledger can never cancel the document and leave stock unreversed). The reversal's `source` is the document, so the item card links back to it.
+- [X] T079 [P] [US5] Rules test 5 (`rev-X` once only, reason required, `reverses == X`) in `tests/rules/movements.test.ts`
+  - Note: rules test 5 already existed (earlier phase) and all of T079's three cases passed against the old rules. The new cases are about the cancel as one atomic batch (reversals, price restore and `posted -> cancelled`, for both collections): it succeeds; a second cancel fails as a whole and writes no reversal; one reversal without a reason fails the whole batch and the document stays posted; a draft cannot be cancelled; a `rev-` movement must be a تسوية. One rule changed: `reverses` is allowed only on `rev-*` ids (data-model: "only on `rev-*`"), so a stray adjustment cannot strike another movement out of the history. That case was the only red one before the change. `contracts/firestore-rules.md` says so too.
+- [X] T080 [US5] Implement the cancel batches in `src/data/repos/receipts.ts` and `src/data/repos/issues.ts` (through the outbox) so T078 and T079 pass
+  - Note: the pure part is `src/domain/cancel.ts` (the plan) and `src/data/cancelPost.ts` (outbox, `runReceiptCancel`, `runIssueCancel`, `runManualMovement`); `repos/cancelCommit.ts` is the one batch writer; `repos/receipts.ts` and `repos/issues.ts` hold `cancelReceiptDoc` and `cancelIssueDoc`. The batch has no leading `setDoc` (the document is posted) and the document patch is exactly `{status, cancelledAt, cancelReason}`. A cancel is queued under the outbox id `cancel-{docId}`, so it never overwrites the post of the same document that may still be waiting. R12: the cancel check is its own, `status === 'cancelled'` on the server (the post check treats `posted` as applied, which would silently lose a cancel the server refused); the app-start reconcile and the unsent retry use it. The Unsent screen describes and retries cancels, returns and adjustments too.
+- [X] T081 [US5] Build the return and adjustment screen in `src/ui/screens/Adjust.tsx`
+  - Note: route `/items/:code/adjust` (not lazy, so it opens offline), linked from the item card ("مرتجع / تسوية", and "سوّي الرصيد" when the item has a pending settlement). An item below zero opens as the adjustment that brings it to 0, on the batch that is below zero. The price on the movement is the item's current price.
+- [X] T082 [US5] Add the cancel action with a reason and the red "ملغي" seal to `src/ui/screens/ReceiptReview.tsx` and `src/ui/screens/Issue.tsx`
+  - Note: one shared `src/ui/components/CancelAction.tsx` (red button, reason sheet, refusal text) is used by both screens, plus the "اتلغى" note with the reason under the red seal. The editor switches to the cancelled seal as soon as the cancel is queued. The button is hidden on a cancelled document; a stale tab that still shows it is refused with a message.
+- [X] T083 [US5] Write an E2E test (cancel a batch, adjust a pending settlement, re-cancel refused) in `tests/e2e/cancel.spec.ts`
+  - Note: runs only with `E2E_EMULATORS=1`, except the last test (the adjust route renders an Arabic screen). Besides the three flows asked for it covers cancelling a posted receipt (balance back, price restored) and a return. "Second cancel refused" is the app's refusal in a tab that still shows the batch as posted; the server side is rules test 5b.
 
 ---
 

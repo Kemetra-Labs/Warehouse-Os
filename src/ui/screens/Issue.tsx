@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import type { CancelAttempt } from '../../data/cancelPost'
 import type { IssuePostResult } from '../../data/issuePost'
 import { formatDay } from '../../domain/fieldInput'
 import {
@@ -23,6 +24,7 @@ import { formatMoney } from '../../domain/money'
 import type { Item } from '../../domain/types'
 import { Bdi } from '../components/Bdi'
 import { Button } from '../components/Button'
+import { BATCH_NOUN, CancelAction, CancelledNote } from '../components/CancelAction'
 import { CountTable } from '../components/CountTable'
 import { ReasonSheet } from '../components/ReasonSheet'
 import { Seal } from '../components/Seal'
@@ -31,6 +33,7 @@ import { IssueHeader } from './IssueHeader'
 import styles from './Issue.module.css'
 import { buildIssueRows, type IssueRowActions } from './issueRows'
 import { SubstituteSheet } from './SubstituteSheet'
+import type { SealInfo } from './ReceiptReview'
 import type { SealedBatch } from './useIssueLoad'
 
 export interface IssueProps {
@@ -45,6 +48,8 @@ export interface IssueProps {
   readonly duplicateNumber?: boolean
   readonly onChange: (draft: IssueDraft) => void
   readonly onPost: () => Promise<IssuePostResult>
+  /** Cancels the posted batch. Without it a posted batch has no cancel action. */
+  readonly onCancel?: (reason: string) => Promise<CancelAttempt>
   /** Shown after posting: leave the batch. */
   readonly onFinish?: () => void
 }
@@ -56,6 +61,8 @@ type Phase =
 
 const NEGATIVE_PRESETS = ['حالة مستعجلة', 'الرصيد على الورق غلط', 'هتتسوّى بعد الجرد'] as const
 const POST_FAILED = 'ما قدرناش نعتمد الدفعة. جرّب تاني.'
+const CANCEL_PRESETS = ['اتصرفت للمندوب الغلط', 'الدفعة اتكررت', 'الأصناف أو الكميات غلط'] as const
+const CANCEL_SUMMARY = 'هيتعمل عكس لكل صنف في الدفعة والأرصدة هترجع. الحركات الأصلية هتفضل ظاهرة.'
 
 function Totals({ totals }: { readonly totals: BatchTotals }) {
   const diff = totals.differenceMinor
@@ -105,6 +112,8 @@ export function Issue(props: IssueProps) {
   const [errors, setErrors] = useState<readonly string[]>([])
   const [substituteFor, setSubstituteFor] = useState<string | null>(null)
   const [reasonFor, setReasonFor] = useState<string | null>(null)
+  // Set once this screen cancels the batch: the editor keeps its own copy from a one-time load.
+  const [cancelledNow, setCancelledNow] = useState<string | null>(null)
 
   const readOnly = sealed !== null || phase.kind === 'done'
   const posting = phase.kind === 'posting'
@@ -175,7 +184,11 @@ export function Issue(props: IssueProps) {
   const subTarget = itemOf(substituteFor)
   const subShort = shorts.find((c) => c.itemCode === substituteFor)?.shortQty ?? 0
   const totalShort = shorts.reduce((sum, c) => sum + c.shortQty, 0)
-  const seal = sealed?.seal ?? (readOnly ? { variant: 'posted' as const, day: today } : null)
+  const seal: SealInfo | null =
+    cancelledNow !== null
+      ? { variant: 'cancelled', day: today, reason: cancelledNow }
+      : (sealed?.seal ?? (readOnly ? { variant: 'posted', day: today } : null))
+  const canCancel = props.onCancel !== undefined && seal?.variant === 'posted'
   const reasonItem = itemOf(reasonFor)
 
   return (
@@ -254,7 +267,20 @@ export function Issue(props: IssueProps) {
         </>
       )}
 
-      {phase.kind === 'done' ? (
+      {seal?.variant === 'cancelled' ? (
+        <CancelledNote noun={BATCH_NOUN} reason={seal.reason ?? null} />
+      ) : null}
+      {canCancel && props.onCancel ? (
+        <CancelAction
+          noun={BATCH_NOUN}
+          presets={CANCEL_PRESETS}
+          summary={CANCEL_SUMMARY}
+          onCancel={props.onCancel}
+          onCancelled={setCancelledNow}
+        />
+      ) : null}
+
+      {phase.kind === 'done' && cancelledNow === null ? (
         <div className={styles.done} role="status">
           <p>الدفعة اتعتمدت. لو النت مش موجود هتتبعت أول ما يرجع.</p>
           {props.onFinish ? <Button onClick={props.onFinish}>رجوع للرئيسية</Button> : null}

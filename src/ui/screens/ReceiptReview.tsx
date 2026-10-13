@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import type { CancelAttempt } from '../../data/cancelPost'
 import type { PostResult } from '../../data/receiptPost'
 import { formatDay } from '../../domain/fieldInput'
 import { formatMoney } from '../../domain/money'
@@ -12,6 +13,7 @@ import {
 import { lineDiff, patchLine, resolveLine } from '../../domain/receiptEdit'
 import type { Item } from '../../domain/types'
 import { Button } from '../components/Button'
+import { CancelAction, CancelledNote, RECEIPT_NOUN } from '../components/CancelAction'
 import { CountTable } from '../components/CountTable'
 import { ItemPickerSheet } from '../components/ItemPickerSheet'
 import { ReasonSheet } from '../components/ReasonSheet'
@@ -22,8 +24,10 @@ import { buildReviewRows, type ReasonField } from './reviewRows'
 /** A receipt that is already posted (or cancelled): shown read-only under its seal. */
 export interface SealInfo {
   readonly variant: SealVariant
-  /** The day it was posted, `YYYY-MM-DD`. */
+  /** The day it was posted, or cancelled, `YYYY-MM-DD`. */
   readonly day: string
+  /** Why it was cancelled. */
+  readonly reason?: string | null
 }
 
 export interface ReceiptReviewProps {
@@ -37,6 +41,8 @@ export interface ReceiptReviewProps {
   readonly onChange: (draft: ReceiptDraft) => void
   readonly onBack: () => void
   readonly onPost: () => Promise<PostResult>
+  /** Cancels the posted receipt. Without it a posted receipt has no cancel action. */
+  readonly onCancel?: (reason: string) => Promise<CancelAttempt>
   /** Shown after posting: leave the receipt. */
   readonly onFinish?: () => void
 }
@@ -50,6 +56,9 @@ interface ReasonTarget {
 
 const DIFF_PRESETS = ['ناقص من المورد', 'زيادة من المورد', 'تالف', 'لم يصل'] as const
 const POST_FAILED = 'ما قدرناش نعتمد الإذن. جرّب تاني.'
+const CANCEL_PRESETS = ['استلام بالغلط', 'الإذن اتكرر', 'الأصناف أو الكميات غلط'] as const
+const CANCEL_SUMMARY =
+  'هيتعمل عكس لكل صنف في الإذن والأرصدة هترجع. الحركات الأصلية هتفضل ظاهرة، والسعر بيرجع لو ما اتغيرش من استلام تاني.'
 
 function counts(draft: ReceiptDraft) {
   return {
@@ -88,10 +97,16 @@ export function ReceiptReview(props: ReceiptReviewProps) {
   const [ack, setAck] = useState(false)
   const [reasonFor, setReasonFor] = useState<ReasonTarget | null>(null)
   const [resolveN, setResolveN] = useState<number | null>(null)
+  // Set once this screen cancels the receipt: the editor keeps its own copy from a one-time load.
+  const [cancelledNow, setCancelledNow] = useState<string | null>(null)
 
   const done = phase.kind === 'done'
   const readOnly = sealed !== null || done
-  const sealInfo: SealInfo | null = sealed ?? (done ? { variant: 'posted', day: today } : null)
+  const sealInfo: SealInfo | null =
+    cancelledNow !== null
+      ? { variant: 'cancelled', day: today, reason: cancelledNow }
+      : (sealed ?? (done ? { variant: 'posted', day: today } : null))
+  const canCancel = props.onCancel !== undefined && sealInfo?.variant === 'posted'
 
   const { issues, warnings } = useMemo(
     () => previewPost(draft, { today, existing, selfId, items }),
@@ -196,7 +211,20 @@ export function ReceiptReview(props: ReceiptReviewProps) {
         </>
       )}
 
-      {done ? (
+      {sealInfo?.variant === 'cancelled' ? (
+        <CancelledNote noun={RECEIPT_NOUN} reason={sealInfo.reason ?? null} />
+      ) : null}
+      {canCancel && props.onCancel ? (
+        <CancelAction
+          noun={RECEIPT_NOUN}
+          presets={CANCEL_PRESETS}
+          summary={CANCEL_SUMMARY}
+          onCancel={props.onCancel}
+          onCancelled={setCancelledNow}
+        />
+      ) : null}
+
+      {done && cancelledNow === null ? (
         <div className={styles.done} role="status">
           <p>الإذن اتعتمد. لو النت مش موجود هيتبعت أول ما يرجع.</p>
           {props.onFinish ? <Button onClick={props.onFinish}>رجوع للرئيسية</Button> : null}

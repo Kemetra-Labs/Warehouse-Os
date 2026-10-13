@@ -6,12 +6,18 @@ import type { DataError } from './listener'
 import { createOutbox, type Outbox } from './outbox'
 import {
   reconcilePendingIssueBatches,
+  reconcilePendingIssueCancels,
   subscribeIssueBatches,
   type IssueBatchDoc,
 } from './repos/issues'
 import { subscribeItems } from './repos/items'
-import { subscribeMovements } from './repos/movements'
-import { reconcilePendingReceipts, subscribeReceipts, type ReceiptDoc } from './repos/receipts'
+import { reconcilePendingManualMovements, subscribeMovements } from './repos/movements'
+import {
+  reconcilePendingReceiptCancels,
+  reconcilePendingReceipts,
+  subscribeReceipts,
+  type ReceiptDoc,
+} from './repos/receipts'
 import { subscribeSettings } from './repos/settings'
 import { syncStore } from './sync'
 
@@ -106,9 +112,13 @@ export function DataProvider({ children }: { readonly children: ReactNode }) {
   }, [])
 
   useEffect(() => {
-    // Receipt and issue posts that were pending when the app closed: re-attach, then ask the server (R12).
+    // Posts, cancels, returns and adjustments that were pending when the app closed: re-attach,
+    // then ask the server (R12).
     reconcilePendingReceipts(outbox).catch(() => undefined)
     reconcilePendingIssueBatches(outbox).catch(() => undefined)
+    reconcilePendingReceiptCancels(outbox).catch(() => undefined)
+    reconcilePendingIssueCancels(outbox).catch(() => undefined)
+    reconcilePendingManualMovements(outbox).catch(() => undefined)
   }, [outbox])
 
   useEffect(() => {

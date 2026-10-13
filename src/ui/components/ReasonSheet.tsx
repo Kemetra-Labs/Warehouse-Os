@@ -10,15 +10,20 @@ export interface ReasonSheetProps {
   readonly summary?: ReactNode
   readonly presets: readonly string[]
   readonly initial: string
+  /** The label of the confirm button. */
+  readonly submitLabel?: string
   readonly onSave: (reason: string) => void
   readonly onClose: () => void
 }
 
-interface FormProps extends Pick<ReasonSheetProps, 'presets' | 'initial' | 'onSave'> {
+interface FormProps extends Pick<
+  ReasonSheetProps,
+  'presets' | 'initial' | 'submitLabel' | 'onSave'
+> {
   readonly summary?: ReactNode
 }
 
-function ReasonForm({ summary, presets, initial, onSave }: FormProps) {
+function ReasonForm({ summary, presets, initial, submitLabel = 'حفظ السبب', onSave }: FormProps) {
   const [text, setText] = useState(initial)
   const reason = text.trim()
 
@@ -49,7 +54,7 @@ function ReasonForm({ summary, presets, initial, onSave }: FormProps) {
         />
       </label>
       <Button type="submit" variant="primary" disabled={reason === ''}>
-        حفظ السبب
+        {submitLabel}
       </Button>
     </form>
   )

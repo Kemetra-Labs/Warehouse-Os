@@ -11,9 +11,16 @@ import {
   type Firestore,
   type WriteBatch,
 } from 'firebase/firestore'
+import type { StoredMovement } from '../../domain/cancel'
 import { cairoToday } from '../../domain/dates'
 import { newIssueDraft, nextBatchNumber, toDraftDoc, type IssueDraft } from '../../domain/issue'
 import { issueBatchSchema, type IssueBatch } from '../../domain/types'
+import {
+  ISSUE_CANCEL_KIND,
+  runIssueCancel,
+  type CancelAttempt,
+  type IssueCancelRequest,
+} from '../cancelPost'
 import { stripUndefined } from '../convert'
 import { getFirebase } from '../firebase'
 import {
@@ -25,7 +32,8 @@ import {
 } from '../issuePost'
 import type { Listener, Unsubscribe } from '../listener'
 import type { Outbox } from '../outbox'
-import type { ReattachResult } from '../receiptPost'
+import { reconcilePendingPosts, type ReattachResult } from '../receiptPost'
+import { cancelledOnServer, commitCancel } from './cancelCommit'
 import { listenCollection } from './shared'
 
 export type IssueBatchDoc = IssueBatch & { readonly id: string }
@@ -127,4 +135,63 @@ export async function getIssueBatch(id: string): Promise<IssueBatchDoc | null> {
   if (!snap.exists()) return null
   const parsed = issueBatchSchema.safeParse(snap.data({ serverTimestamps: 'estimate' }))
   return parsed.success ? { ...parsed.data, id } : null
+}
+
+/** True when the server (not the cache) holds the batch as cancelled; gets the cancel's outbox id. */
+export const issueBatchCancelledOnServer = (entryId: string): Promise<boolean> =>
+  cancelledOnServer('issueBatches', entryId)
+
+export type CancelIssueInput = Omit<IssueCancelRequest, 'today'>
+
+/**
+ * Cancels a posted batch (إلغاء): a reversal per movement and the status in one atomic batch.
+ * Returns as soon as the outbox holds it; `committed` settles when the server answers.
+ */
+export function cancelIssueBatch(
+  input: CancelIssueInput,
+  outbox: Pick<Outbox, 'put' | 'markAcked' | 'reconcile'>,
+): Promise<CancelAttempt> {
+  return runIssueCancel(
+    { ...input, today: cairoToday() },
+    { outbox, commit: commitCancel, checkServer: issueBatchCancelledOnServer },
+  )
+}
+
+export interface CancelIssueDocInput {
+  readonly reason: string
+  /** Every movement the app knows. */
+  readonly movements: readonly StoredMovement[]
+  readonly uid: string
+  readonly deviceId: string
+}
+
+/** Cancels the batch as the app holds it: its status and movement count come from it. */
+export function cancelIssueDoc(
+  batch: IssueBatchDoc,
+  input: CancelIssueDocInput,
+  outbox: Pick<Outbox, 'put' | 'markAcked' | 'reconcile'>,
+): Promise<CancelAttempt> {
+  return cancelIssueBatch(
+    {
+      ...input,
+      docId: batch.id,
+      status: batch.status,
+      label: `دفعة ${batch.number}`,
+      expectedMovements: batch.issued.length,
+    },
+    outbox,
+  )
+}
+
+/** App start: re-attach to issue cancels that were pending when the app closed. */
+export async function reconcilePendingIssueCancels(
+  outbox: Pick<Outbox, 'list' | 'markAcked' | 'markFailed'>,
+): Promise<ReattachResult[]> {
+  const { db } = getFirebase()
+  return reconcilePendingPosts(
+    outbox,
+    () => waitForPendingWrites(db),
+    issueBatchCancelledOnServer,
+    ISSUE_CANCEL_KIND,
+  )
 }

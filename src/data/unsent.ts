@@ -5,6 +5,13 @@
  */
 import { toDraftDoc as issueDraftDoc } from '../domain/issue'
 import { toDraftDoc as receiptDraftDoc } from '../domain/receipt'
+import {
+  ISSUE_CANCEL_KIND,
+  MANUAL_MOVEMENT_KIND,
+  RECEIPT_CANCEL_KIND,
+  type CancelCommitPlan,
+  type ManualPayload,
+} from './cancelPost'
 import { ISSUE_POST_KIND, buildIssueWrites, type IssueCommitPlan } from './issuePost'
 import type { Outbox, OutboxEntry, ServerCheck } from './outbox'
 import {
@@ -15,7 +22,7 @@ import {
   type PostOutcome,
 } from './receiptPost'
 
-export type UnsentKind = 'receipt' | 'issue' | 'unknown'
+export type UnsentKind = 'receipt' | 'issue' | 'cancel' | 'adjust' | 'unknown'
 
 /** One movement the document would have written. */
 export interface UnsentLine {
@@ -51,24 +58,55 @@ const recs = (v: unknown): Rec[] => (Array.isArray(v) ? v.filter(isRec) : [])
 /** Names are looked up by the caller (the payload only holds item codes). */
 export type NameOf = (itemCode: string) => string
 
+function lineOf(data: Rec, nameOf: NameOf): UnsentLine {
+  const itemCode = str(data['itemCode'])
+  return {
+    itemCode,
+    name: nameOf(itemCode),
+    type: str(data['type']),
+    qty: num(data['qty']),
+    priceMinor: num(data['priceMinor']),
+    batchNo: strOrNull(data['batchNo']),
+    expiry: strOrNull(data['expiry']),
+  }
+}
+
+/** The movements of a list of `{data}` writes (a post batch or a cancel plan). */
+function movementLines(writes: readonly Rec[], nameOf: NameOf): UnsentLine[] {
+  return writes.flatMap((w) => (isRec(w['data']) ? [lineOf(w['data'], nameOf)] : []))
+}
+
 function linesOf(batch: unknown, nameOf: NameOf): UnsentLine[] {
-  const movements = isRec(batch) ? recs(batch['movements']) : []
-  return movements.flatMap((m) => {
-    const data = m['data']
-    if (!isRec(data)) return []
-    const itemCode = str(data['itemCode'])
-    return [
-      {
-        itemCode,
-        name: nameOf(itemCode),
-        type: str(data['type']),
-        qty: num(data['qty']),
-        priceMinor: num(data['priceMinor']),
-        batchNo: strOrNull(data['batchNo']),
-        expiry: strOrNull(data['expiry']),
-      },
-    ]
-  })
+  return movementLines(isRec(batch) ? recs(batch['movements']) : [], nameOf)
+}
+
+/** A cancel shows the reversals it would write; the price restores are not movements. */
+function cancelView(payload: Rec, nameOf: NameOf): Partial<UnsentView> {
+  const lines = movementLines(recs(payload['writes']), nameOf)
+  const label = str(payload['label'])
+  const reason = str(payload['reason'])
+  const first = recs(payload['writes']).find((w) => isRec(w['data']))
+  const data = first && isRec(first['data']) ? first['data'] : {}
+  return {
+    kind: 'cancel',
+    title: `إلغاء ${label || 'مستند'}`,
+    subtitle: reason ? `السبب: ${reason}` : 'من غير سبب',
+    businessDate: str(data['businessDate']),
+    lines,
+  }
+}
+
+function adjustView(payload: Rec, nameOf: NameOf): Partial<UnsentView> {
+  const movement = isRec(payload['movement']) ? payload['movement'] : {}
+  const line = lineOf(movement, nameOf)
+  const reason = str(movement['reason'])
+  return {
+    kind: 'adjust',
+    title: `${line.type || 'حركة'} ${line.name}`.trim(),
+    subtitle: reason ? `السبب: ${reason}` : 'من غير سبب',
+    businessDate: str(movement['businessDate']),
+    lines: line.itemCode === '' ? [] : [line],
+  }
 }
 
 function receiptView(payload: Rec, nameOf: NameOf): Partial<UnsentView> {
@@ -104,7 +142,11 @@ export function describeUnsent(entry: OutboxEntry, nameOf: NameOf = (c) => c): U
       ? receiptView(payload, nameOf)
       : entry.kind === ISSUE_POST_KIND
         ? issueView(payload, nameOf)
-        : {}
+        : entry.kind === RECEIPT_CANCEL_KIND || entry.kind === ISSUE_CANCEL_KIND
+          ? cancelView(payload, nameOf)
+          : entry.kind === MANUAL_MOVEMENT_KIND
+            ? adjustView(payload, nameOf)
+            : {}
   return {
     id: entry.id,
     kind: 'unknown',
@@ -128,11 +170,33 @@ export function sortUnsent(views: readonly UnsentView[]): UnsentView[] {
 export type RebuiltPost =
   | { readonly kind: 'receipt'; readonly plan: CommitPlan }
   | { readonly kind: 'issue'; readonly plan: IssueCommitPlan }
+  | { readonly kind: 'receipt-cancel' | 'issue-cancel'; readonly plan: CancelCommitPlan }
+  | { readonly kind: 'manual'; readonly plan: ManualPayload }
+
+function rebuildCancel(entry: OutboxEntry, payload: Rec): RebuiltPost | null {
+  const { collection, docId, writes } = payload
+  if (collection !== 'receipts' && collection !== 'issueBatches') return null
+  if (typeof docId !== 'string' || !Array.isArray(writes)) return null
+  // The stored value is the very object the cancel built; the shape is checked above.
+  const plan = { collection, docId, writes } as CancelCommitPlan
+  return { kind: entry.kind === RECEIPT_CANCEL_KIND ? 'receipt-cancel' : 'issue-cancel', plan }
+}
+
+function rebuildManual(payload: Rec): RebuiltPost | null {
+  const { id, movement } = payload
+  if (typeof id !== 'string' || !isRec(movement)) return null
+  return { kind: 'manual', plan: { id, movement: movement as ManualPayload['movement'] } }
+}
 
 /** Rebuilds the atomic write from the stored payload, or null when the payload is unreadable. */
 export function rebuildPost(entry: OutboxEntry): RebuiltPost | null {
   const payload = entry.payload
-  if (!isRec(payload) || !isRec(payload['draft']) || !isRec(payload['batch'])) return null
+  if (!isRec(payload)) return null
+  if (entry.kind === RECEIPT_CANCEL_KIND || entry.kind === ISSUE_CANCEL_KIND) {
+    return rebuildCancel(entry, payload)
+  }
+  if (entry.kind === MANUAL_MOVEMENT_KIND) return rebuildManual(payload)
+  if (!isRec(payload['draft']) || !isRec(payload['batch'])) return null
   if (!Array.isArray(payload['batch']['movements'])) return null
   // The stored value is the very object the post built; the shape is checked above.
   if (entry.kind === RECEIPT_POST_KIND) {
@@ -164,6 +228,12 @@ export interface RetryDeps {
   readonly commitIssue: (plan: IssueCommitPlan) => Promise<void>
   readonly checkReceipt: ServerCheck
   readonly checkIssue: ServerCheck
+  readonly commitCancel: (plan: CancelCommitPlan) => Promise<void>
+  /** True only when the server holds the document as `cancelled` (gets the outbox id). */
+  readonly checkReceiptCancel: ServerCheck
+  readonly checkIssueCancel: ServerCheck
+  readonly commitManual: (payload: ManualPayload) => Promise<void>
+  readonly checkManual: ServerCheck
 }
 
 export type RetryResult =
@@ -171,25 +241,50 @@ export type RetryResult =
   /** `outcome` settles when the server answers; never while offline, never rejects. */
   | { readonly ok: true; readonly outcome: Promise<PostOutcome> }
 
+function settleRebuilt(id: string, rebuilt: RebuiltPost, deps: RetryDeps): Promise<PostOutcome> {
+  const { outbox } = deps
+  switch (rebuilt.kind) {
+    case 'receipt':
+      return settlePost(id, rebuilt.plan, {
+        outbox,
+        commit: deps.commitReceipt,
+        checkServer: deps.checkReceipt,
+      })
+    case 'issue':
+      return settlePost(id, rebuilt.plan, {
+        outbox,
+        commit: deps.commitIssue,
+        checkServer: deps.checkIssue,
+      })
+    case 'receipt-cancel':
+      return settlePost(id, rebuilt.plan, {
+        outbox,
+        commit: deps.commitCancel,
+        checkServer: deps.checkReceiptCancel,
+      })
+    case 'issue-cancel':
+      return settlePost(id, rebuilt.plan, {
+        outbox,
+        commit: deps.commitCancel,
+        checkServer: deps.checkIssueCancel,
+      })
+    case 'manual':
+      return settlePost(id, rebuilt.plan, {
+        outbox,
+        commit: deps.commitManual,
+        checkServer: deps.checkManual,
+      })
+  }
+}
+
 /**
- * Sends a stored post again. The entry goes back to pending first, so the pill stops being red
- * until the server answers; a second rejection fails it again and keeps the payload.
+ * Sends a stored post, cancel, return or adjustment again. The entry goes back to pending first,
+ * so the pill stops being red until the server answers; a second rejection fails it again and
+ * keeps the payload.
  */
 export async function retryUnsent(entry: OutboxEntry, deps: RetryDeps): Promise<RetryResult> {
   const rebuilt = rebuildPost(entry)
   if (!rebuilt) return { ok: false }
   await deps.outbox.put({ id: entry.id, kind: entry.kind, payload: entry.payload })
-  const outcome =
-    rebuilt.kind === 'receipt'
-      ? settlePost(entry.id, rebuilt.plan, {
-          outbox: deps.outbox,
-          commit: deps.commitReceipt,
-          checkServer: deps.checkReceipt,
-        })
-      : settlePost(entry.id, rebuilt.plan, {
-          outbox: deps.outbox,
-          commit: deps.commitIssue,
-          checkServer: deps.checkIssue,
-        })
-  return { ok: true, outcome }
+  return { ok: true, outcome: settleRebuilt(entry.id, rebuilt, deps) }
 }

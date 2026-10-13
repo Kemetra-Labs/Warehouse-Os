@@ -31,6 +31,7 @@ function sealOf(doc: ReceiptDoc): SealInfo | null {
   return {
     variant: doc.status === 'cancelled' ? 'cancelled' : 'posted',
     day: at > 0 ? cairoToday(new Date(at)) : doc.businessDate,
+    reason: doc.cancelReason,
   }
 }
 

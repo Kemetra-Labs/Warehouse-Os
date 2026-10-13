@@ -1,7 +1,17 @@
 import type { Outbox, OutboxEntry } from '../outbox'
 import { retryUnsent, type RetryResult } from '../unsent'
-import { commitPlan as commitIssue, issueBatchPostedOnServer } from './issues'
-import { commitPlan as commitReceipt, receiptPostedOnServer } from './receipts'
+import { commitCancel } from './cancelCommit'
+import {
+  commitPlan as commitIssue,
+  issueBatchCancelledOnServer,
+  issueBatchPostedOnServer,
+} from './issues'
+import { commitManualMovement, movementExistsOnServer } from './movements'
+import {
+  commitPlan as commitReceipt,
+  receiptCancelledOnServer,
+  receiptPostedOnServer,
+} from './receipts'
 
 /** Thin Firestore adapter over `unsent.ts`: sends a stored post again. */
 export function retryOutboxEntry(
@@ -14,5 +24,10 @@ export function retryOutboxEntry(
     commitIssue,
     checkReceipt: receiptPostedOnServer,
     checkIssue: issueBatchPostedOnServer,
+    commitCancel,
+    checkReceiptCancel: receiptCancelledOnServer,
+    checkIssueCancel: issueBatchCancelledOnServer,
+    commitManual: commitManualMovement,
+    checkManual: movementExistsOnServer,
   })
 }
