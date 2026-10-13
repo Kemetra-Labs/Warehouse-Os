@@ -231,7 +231,7 @@ test.describe('no horizontal overflow at 412 px', () => {
     await sheet.getByRole('button', { name: 'حفظ', exact: true }).click()
     await expect(page.getByRole('dialog')).toHaveCount(0)
 
-    const search = page.getByRole('search').getByRole('searchbox')
+    const search = page.getByRole('search').getByRole('combobox')
     await search.fill(String(PAGE_BASE + 1))
     await search.press('Enter')
     await expect(page.getByTestId('pending-line')).toContainText(NAME_RECEIVE)

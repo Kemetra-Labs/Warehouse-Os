@@ -114,9 +114,13 @@ test.describe('receive an order', () => {
     await expect(card.locator('[data-changed="true"]')).toContainText('12.50')
     await card.getByRole('button', { name: 'إضافة للإذن' }).click()
 
-    // 3. A typed page number finds the next item. 50 invoiced, 48 counted: a difference.
-    await page.getByRole('search').getByRole('searchbox').fill('92')
-    await page.getByRole('search').getByRole('searchbox').press('Enter')
+    // 3. A typed page number lists its item under the box (no Enter); tapping it starts the line.
+    //    50 invoiced, 48 counted: a difference.
+    const search = page.getByRole('search').getByRole('combobox')
+    await search.fill('92')
+    await page.getByRole('option', { name: /صنف استلام باء/ }).click()
+    await expect(search).toHaveValue('')
+    await expect(page.getByRole('listbox')).toHaveCount(0)
     card = await addScannedLine(page, 'صنف استلام باء')
     await field(card, 'رقم التشغيلة').fill('B-200')
     await field(card, 'الصلاحية').fill('11/2030')

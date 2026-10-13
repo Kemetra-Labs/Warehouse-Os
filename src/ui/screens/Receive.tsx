@@ -50,7 +50,12 @@ export function Receive(props: ReceiveProps) {
       />
       <Scanner source={scanSource} onCode={flow.onCode} onUnavailable={() => setCameraOff(true)} />
       {cameraOff ? <p className={styles.note}>الكاميرا مش شغالة. اكتب الرقم في الخانة.</p> : null}
-      <SearchBox clearOnSubmit onResolve={flow.onSearch} />
+      <SearchBox
+        clearOnSubmit
+        onResolve={flow.onSearch}
+        suggestFrom={items}
+        onPickItem={flow.pickChosen}
+      />
       {flow.notice ? (
         <p className={styles.notice} role="status" data-testid="notice">
           {flow.notice}

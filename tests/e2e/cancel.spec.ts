@@ -212,7 +212,7 @@ test.describe('cancel, return and adjust', () => {
     await signInAsOwner(page, OWNER_UID)
     await page.getByRole('link', { name: 'استلام طلبية جديدة' }).click()
     await fillReceiptHeader(page, deliveryNo)
-    const box = page.getByRole('search').getByRole('searchbox')
+    const box = page.getByRole('search').getByRole('combobox')
     await box.fill('704')
     await box.press('Enter')
     const card = page.getByTestId('pending-line')

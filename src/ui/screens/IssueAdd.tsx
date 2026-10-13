@@ -87,7 +87,7 @@ export function IssueAdd({ items, availableOf, onAdd }: IssueAddProps) {
 
   return (
     <>
-      <SearchBox clearOnSubmit onResolve={resolve} />
+      <SearchBox clearOnSubmit onResolve={resolve} suggestFrom={items} onPickItem={pick} />
       {notice ? (
         <p className={styles.notice} role="status" data-testid="notice">
           {notice}
