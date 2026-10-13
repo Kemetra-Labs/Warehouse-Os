@@ -45,7 +45,7 @@ export function getFirebase(): Firebase {
     popupRedirectResolver: browserPopupRedirectResolver,
   })
   if (emulatorsEnabled(import.meta.env)) {
-    connectFirestoreEmulator(db, 'localhost', 8080)
+    connectFirestoreEmulator(db, 'localhost', 8081)
     connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true })
   }
   instance = { app, db, auth }
