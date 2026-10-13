@@ -1,7 +1,9 @@
 # Quickstart: Daily Operations (Phase 1)
 
 How to run, test, and verify phase 1 locally. Windows 11 with Git Bash. Toolchain present on
-2026-10-12: Node 22.14, npm 10.9, Firebase CLI 15 (pinned as a dev dependency), and **Java 21** for the Firestore emulator. firebase-tools 15.33 refuses Java 17; this machine has Java 17, so local rules tests need JDK 21 installed. CI uses Java 21.
+2026-10-13: Node 24.21, npm 11.19, Firebase CLI 15 (pinned as a dev dependency), and **Java 21** for the Firestore emulator (Temurin 21, `winget install EclipseAdoptium.Temurin.21.JDK`). firebase-tools 15.33 refuses Java 17. CI uses Java 21.
+
+The Firestore emulator listens on **8081**, not the default 8080, because 8080 is taken on the dev machine by a backup service. The port is set in `firebase.json` and `src/data/firebase.ts`; change both together.
 
 ## 1. Install and configure
 
