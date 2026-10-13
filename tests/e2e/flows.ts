@@ -86,15 +86,28 @@ export async function fillBatchHeader(page: Page, rep: string): Promise<void> {
   await expect(page.getByRole('dialog')).toHaveCount(0)
 }
 
-/** Searches by item code, says how many the permit asks for, and adds it to the batch. */
+/**
+ * Searches by item code and says how many the permit asks for. The line stays open: it joins the
+ * batch with the next item, with the approval, or when the page goes to the background (see
+ * `joinOpenLine`). There is no add button.
+ */
 export async function addRequest(page: Page, itemCode: string, qty: number): Promise<void> {
   const box = page.getByRole('search').getByRole('combobox')
   await box.fill(itemCode)
   await box.press('Enter')
   const card = page.getByTestId('pending-request')
   await card.getByLabel('الكمية المطلوبة').fill(String(qty))
-  await card.getByRole('button', { name: 'إضافة للدفعة' }).click()
-  await expect(card).toHaveCount(0)
+  await expect(card).toContainText('جاهز')
+}
+
+/** The page going to the background: a ready open issue line joins the batch, as it would on leaving. */
+export async function joinOpenLine(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'hidden' })
+    document.dispatchEvent(new Event('visibilitychange'))
+    Reflect.deleteProperty(document, 'visibilityState')
+  })
+  await expect(page.getByTestId('pending-request')).toHaveCount(0)
 }
 
 /** Opens a new issue batch from home, fills it for `rep`, and adds one requested item. */
@@ -110,8 +123,16 @@ export async function startIssue(
   await addRequest(page, itemCode, qty)
 }
 
-/** Posts the open batch: the seal appears at once, even offline. */
+/**
+ * Posts the batch: the seal appears at once, even offline. An open line first joins on
+ * راجع واعتمد (its row shows before anything posts), then اعتماد posts.
+ */
 export async function approveIssue(page: Page): Promise<void> {
+  const review = page.getByRole('button', { name: 'راجع واعتمد' })
+  if ((await review.count()) > 0) {
+    await review.click()
+    await expect(page.getByTestId('pending-request')).toHaveCount(0)
+  }
   await page.getByRole('button', { name: 'اعتماد', exact: true }).click()
   await expect(page.locator('svg[aria-label*="معتمد"]')).toBeVisible()
 }

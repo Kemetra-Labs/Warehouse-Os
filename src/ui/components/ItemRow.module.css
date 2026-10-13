@@ -93,7 +93,7 @@ button.row:active {
 }
 
 .flag {
-  color: var(--miss);
+  color: var(--short-ink);
   font-size: var(--text-xs);
   font-weight: 800;
 }

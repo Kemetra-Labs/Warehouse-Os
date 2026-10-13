@@ -2,69 +2,67 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: var(--space-3);
+  /* Room for the fixed add button under the last row. */
+  padding-block-end: calc(var(--tap-main) + var(--space-5));
 }
 
 .head {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
   gap: var(--space-3);
 }
 
 .title {
   margin: 0;
+  color: var(--bone);
   font-size: var(--text-xl);
   font-weight: 800;
 }
 
-.add {
-  display: grid;
-  place-items: center;
-  min-block-size: var(--tap-min);
-  padding-inline: var(--space-4);
-  border-radius: var(--radius-sm);
-  background: var(--scrub);
-  color: var(--on-scrub);
-  font-weight: 800;
-  text-decoration: none;
+.count {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
 }
 
+/* The filters are small count tiles: the label, then the number. The pressed one is ringed. */
 .chips {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
   gap: var(--space-2);
 }
 
 .chip {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
+  display: grid;
+  justify-items: start;
+  gap: 2px;
   min-block-size: var(--tap-min);
-  padding-inline: var(--space-3);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  color: var(--ink);
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--panel);
+  color: var(--muted);
   font-family: inherit;
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  text-align: start;
   cursor: pointer;
 }
 
 .chip b {
-  color: var(--marker);
+  color: var(--bone);
+  font-size: var(--text-xl);
+  font-weight: 800;
+  line-height: 1.1;
   font-variant-numeric: tabular-nums;
 }
 
-/* The pressed filter is filled and bold, not only a different colour. */
+/* The pressed filter is ringed and raised, not only a different colour. */
 .chip[aria-pressed='true'] {
-  border-color: var(--scrub);
-  background: var(--scrub);
-  color: var(--on-scrub);
-  font-weight: 800;
-}
-
-.chip[aria-pressed='true'] b {
-  color: var(--on-scrub);
+  background: var(--panel-2);
+  box-shadow: inset 0 0 0 2px var(--bone);
+  color: var(--bone);
 }
 
 .category {
@@ -78,9 +76,9 @@
   min-block-size: var(--tap-min);
   padding-inline: var(--space-3);
   border: 1px solid var(--control-line);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  color: var(--ink);
+  border-radius: var(--radius-md);
+  background: var(--panel);
+  color: var(--bone);
   font-family: inherit;
   font-size: var(--text-md);
 }
@@ -102,4 +100,39 @@
 .foot {
   margin: var(--space-3) 0 0;
   font-size: var(--text-sm);
+}
+
+/* The one primary: add an item, reversed, in the thumb zone above the navigation. */
+.actions {
+  position: fixed;
+  inset-inline: 0;
+  inset-block-end: calc(var(--nav-height) + env(safe-area-inset-bottom));
+  z-index: 5;
+  display: grid;
+  padding: var(--space-3) var(--space-4);
+  background: var(--ground);
+}
+
+.add {
+  display: grid;
+  place-items: center;
+  min-block-size: var(--tap-main);
+  border-radius: var(--radius-md);
+  background: var(--bone);
+  color: var(--ground);
+  font-size: var(--text-lg);
+  font-weight: 800;
+  text-decoration: none;
+  transition: transform var(--dur-press) linear;
+}
+
+.add:active {
+  transform: scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .add:active {
+    transform: none;
+    opacity: 0.82;
+  }
 }

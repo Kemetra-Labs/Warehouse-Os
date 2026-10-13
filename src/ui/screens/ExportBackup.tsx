@@ -13,8 +13,13 @@ import styles from './Exports.module.css'
 const FAILED = 'ما قدرناش نجهّز النسخة الاحتياطية. جرّب تاني.'
 const NOT_RECORDED = 'النسخة نزلت، بس ما قدرناش نسجّل تاريخها. التذكير ممكن يظهر تاني.'
 
+export interface ExportBackupProps {
+  /** The backup is the screen's next step (it is due): its button is the reversed one. */
+  readonly primary?: boolean
+}
+
 /** FR-062: a full copy of items, movements and documents, and the 7-day reminder. */
-export function ExportBackup() {
+export function ExportBackup({ primary = false }: ExportBackupProps) {
   const { items, movements, receipts, issueBatches, settings } = useData()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -56,7 +61,7 @@ export function ExportBackup() {
         {last}
       </p>
       <div className={styles.actions}>
-        <Button variant="primary" disabled={busy} onClick={run}>
+        <Button variant={primary ? 'primary' : 'secondary'} disabled={busy} onClick={run}>
           {busy ? 'جاري التجهيز...' : 'نزّل نسخة احتياطية'}
         </Button>
       </div>

@@ -283,7 +283,12 @@ function ItemForm({ original, items }: FormProps) {
       ) : null}
 
       <div className={styles.actions}>
-        <Button variant="primary" disabled={invalid || saving} onClick={() => void save()}>
+        <Button
+          variant="primary"
+          size="main"
+          disabled={invalid || saving}
+          onClick={() => void save()}
+        >
           {saving ? 'بيحفظ...' : 'حفظ'}
         </Button>
         <Link to={target} className={styles.cancel}>

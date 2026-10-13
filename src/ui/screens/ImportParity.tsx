@@ -9,6 +9,7 @@ import { ImportError } from '../../excel/errors'
 import { importWorkbook } from '../../excel/importWorkbook'
 import { computeParity, type ParityReport } from '../../excel/parity'
 import type { ImportResult } from '../../excel/types'
+import { Button } from '../components/Button'
 import { AuthorityImport } from './AuthorityImport'
 import { alreadyImportedMessage } from './importView'
 import { ParityResult } from './ParityResult'
@@ -122,7 +123,9 @@ export default function ImportParity() {
         </p>
       )}
 
-      <label className={`${styles.pick} ${busy ? styles.disabled : ''}`}>
+      <label
+        className={`${styles.pick} ${result ? '' : styles.pickMain} ${busy ? styles.disabled : ''}`}
+      >
         {imported ? 'اختار الملف للمقارنة' : 'اختار ملف الإكسيل'}
         <input
           className={styles.file}
@@ -179,9 +182,11 @@ export default function ImportParity() {
       ) : null}
 
       {result && !imported && stage.kind !== 'done' ? (
-        <button type="button" className={styles.go} disabled={busy} onClick={() => void start()}>
-          {stage.kind === 'writing' ? 'بيستورد...' : 'استورد'}
-        </button>
+        <div className={styles.footer}>
+          <Button variant="primary" size="main" disabled={busy} onClick={() => void start()}>
+            {stage.kind === 'writing' ? 'بيستورد...' : 'استورد'}
+          </Button>
+        </div>
       ) : null}
 
       <AuthorityImport />

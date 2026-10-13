@@ -10,10 +10,19 @@ export interface QtyStepperProps {
   readonly onCommit: (value: number) => void
   /** Under the numeral, e.g. "اتعدّ من 6 في الفاتورة". */
   readonly caption?: ReactNode
+  /**
+   * Told whether the text now in the field is a whole number. Invalid text commits nothing, so the
+   * committed value alone cannot say that the field and the value have drifted apart.
+   */
+  readonly onValidChange?: (valid: boolean) => void
 }
 
 /** The text of a whole-number input that follows its committed value but keeps what was typed. */
-function useQtyText(value: number, onCommit: (value: number) => void) {
+function useQtyText(
+  value: number,
+  onCommit: (value: number) => void,
+  onValidChange?: (valid: boolean) => void,
+) {
   const [text, setText] = useState(String(value))
   const [synced, setSynced] = useState(value)
   if (value !== synced) {
@@ -23,11 +32,13 @@ function useQtyText(value: number, onCommit: (value: number) => void) {
   const set = (next: number): void => {
     setSynced(next)
     setText(String(next))
+    onValidChange?.(true)
     onCommit(next)
   }
   const type = (next: string): void => {
     setText(next)
     const n = parseQtyInput(next)
+    onValidChange?.(n !== null)
     if (n !== null) {
       setSynced(n)
       onCommit(n)
@@ -71,8 +82,8 @@ export function InlineQty({ value, label, onCommit }: InlineQtyProps) {
  * input, so typing a number stays possible; text that is not a whole number is kept as typed and
  * marked invalid, nothing is committed.
  */
-export function QtyStepper({ value, label, onCommit, caption }: QtyStepperProps) {
-  const { text, valid, set, type } = useQtyText(value, onCommit)
+export function QtyStepper({ value, label, onCommit, caption, onValidChange }: QtyStepperProps) {
+  const { text, valid, set, type } = useQtyText(value, onCommit, onValidChange)
 
   return (
     <div className={styles.stepper}>

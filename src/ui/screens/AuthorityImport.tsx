@@ -10,6 +10,7 @@ import {
   type RejectReason,
 } from '../../excel/importAuthorityCodes'
 import { Bdi } from '../components/Bdi'
+import { Button } from '../components/Button'
 import shared from './ImportParity.module.css'
 import styles from './AuthorityImport.module.css'
 
@@ -156,14 +157,9 @@ export function AuthorityImport() {
       ) : null}
       {plan ? <Summary plan={plan} /> : null}
       {plan ? (
-        <button
-          type="button"
-          className={shared.go}
-          disabled={plan.updates.length === 0}
-          onClick={() => void apply(plan)}
-        >
+        <Button disabled={plan.updates.length === 0} onClick={() => void apply(plan)}>
           {plan.updates.length === 0 ? 'مفيش حاجة تتحدّث' : `حدّث ${plan.updates.length} صنف`}
-        </button>
+        </Button>
       ) : null}
       {stage.kind === 'writing' ? <p className={shared.note}>بيحدّث...</p> : null}
       {stage.kind === 'done' ? (

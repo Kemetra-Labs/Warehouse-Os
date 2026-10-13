@@ -21,8 +21,13 @@ interface Downloaded {
   readonly ids: readonly string[]
 }
 
+export interface ExportLedgerProps {
+  /** The ledger rows are the screen's next step: their download button is the reversed one. */
+  readonly primary?: boolean
+}
+
 /** FR-061: new movements as rows to paste into a copy of the workbook, then "تم اللصق". */
-export function ExportLedger() {
+export function ExportLedger({ primary = false }: ExportLedgerProps) {
   const { movements, items, settings } = useData()
   // Kept on the device: the phone downloads, the PC pastes, and the tab may be gone in between.
   const [downloaded, setDownloaded] = useState<Downloaded | null>(() => {
@@ -101,7 +106,11 @@ export function ExportLedger() {
         ))}
       </ol>
       <div className={styles.actions}>
-        <Button variant="primary" disabled={count === 0 || busy} onClick={download}>
+        <Button
+          variant={primary ? 'primary' : 'secondary'}
+          disabled={count === 0 || busy}
+          onClick={download}
+        >
           {busy ? 'جاري التجهيز...' : `نزّل ملف السطور (${count})`}
         </Button>
         {downloaded ? <Button onClick={confirm}>تم اللصق</Button> : null}

@@ -9,6 +9,7 @@ import { formatExpiry } from '../../domain/fieldInput'
 import { buildHistory, type HistoryEntry } from '../../domain/itemHistory'
 import type { BatchBalance } from '../../domain/ledger'
 import { formatMoney } from '../../domain/money'
+import { STATUS_LABELS } from '../../domain/types'
 import { Bdi } from '../components/Bdi'
 import { ItemHistory } from './ItemHistory'
 import styles from './ItemCard.module.css'
@@ -29,6 +30,20 @@ const orNone = (text: string): ReactNode => (text.trim() === '' ? NONE : text)
 function reorderNote(row: ItemRow): string {
   if (row.item.reorderManual !== null && row.item.reorderManual > 0) return 'يدوي'
   return row.issued > 0 ? 'محسوب من الصرف' : 'الحد الافتراضي'
+}
+
+type Tone = 'short' | 'attn' | 'ok'
+
+/** The balance tile's state: out or below zero is red, reorder is amber, anything else is calm. */
+function toneOf(row: ItemRow): Tone {
+  if (row.balance <= 0 || row.pendingSettlement) return 'short'
+  return row.status === STATUS_LABELS.REORDER ? 'attn' : 'ok'
+}
+
+const GLYPHS: Readonly<Record<Tone, string>> = {
+  short: 'M4 4l8 8M12 4l-8 8',
+  attn: 'M8 3v6M8 12.5v.5',
+  ok: 'M3.5 8.5l3 3 6-7',
 }
 
 function MasterData({ row }: { readonly row: ItemRow }) {
@@ -104,18 +119,11 @@ export interface ItemCardViewProps {
 /** The item card: data, balance and status, batches with expiry, and the full movement history. */
 export function ItemCardView({ row, batches, history, today }: ItemCardViewProps) {
   const { item } = row
+  const tone = toneOf(row)
   return (
     <article className={styles.card} aria-labelledby="item-name">
       <nav className={styles.top} aria-label="تنقل">
         <Link to="/items">الأصناف</Link>
-        <span className={styles.actions}>
-          <Link to={`/items/${item.code}/adjust`} className={styles.edit}>
-            مرتجع / تسوية
-          </Link>
-          <Link to={`/items/${item.code}/edit`} className={styles.edit}>
-            تعديل
-          </Link>
-        </span>
       </nav>
 
       <header className={styles.head}>
@@ -133,10 +141,7 @@ export function ItemCardView({ row, batches, history, today }: ItemCardViewProps
         </p>
       </header>
 
-      <section
-        className={`${styles.balance} ${row.pendingSettlement ? styles.negative : ''}`}
-        aria-label="الرصيد والحالة"
-      >
+      <section className={`${styles.balance} ${styles[tone]}`} aria-label="الرصيد والحالة">
         <div>
           <span className={styles.label}>الرصيد</span>
           <b className={styles.number} data-testid="item-balance">
@@ -144,7 +149,12 @@ export function ItemCardView({ row, batches, history, today }: ItemCardViewProps
           </b>
         </div>
         <div className={styles.state}>
-          <b>{row.status}</b>
+          <b>
+            <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+              <path d={GLYPHS[tone]} />
+            </svg>
+            {row.status}
+          </b>
           {row.pendingSettlement ? <span>تسوية معلّقة</span> : null}
           {row.pendingSettlement ? (
             <Link to={`/items/${item.code}/adjust`} className={styles.settle}>
@@ -172,6 +182,15 @@ export function ItemCardView({ row, batches, history, today }: ItemCardViewProps
         </h2>
         <ItemHistory entries={history} />
       </section>
+
+      <div className={styles.actions}>
+        <Link to={`/items/${item.code}/adjust`} className={`${styles.action} ${styles.primary}`}>
+          مرتجع / تسوية
+        </Link>
+        <Link to={`/items/${item.code}/edit`} className={styles.action}>
+          تعديل
+        </Link>
+      </div>
     </article>
   )
 }

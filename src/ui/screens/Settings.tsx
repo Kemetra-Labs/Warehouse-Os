@@ -135,13 +135,6 @@ export function SettingsView({ settings, items, movements, save: write }: Settin
         </p>
       ) : null}
 
-      <Button
-        variant="primary"
-        disabled={!valid || unchanged || saving}
-        onClick={() => void save()}
-      >
-        {saving ? 'بيحفظ...' : 'حفظ'}
-      </Button>
       {outcome ? (
         <p className={outcome === 'failed' ? styles.problem : styles.done} role="status">
           {MESSAGES[outcome]}
@@ -151,6 +144,17 @@ export function SettingsView({ settings, items, movements, save: write }: Settin
       <p className={styles.foot}>
         <Link to="/items">الأصناف</Link> · <Link to="/import">استيراد الإكسيل وأكواد الهيئة</Link>
       </p>
+
+      <div className={styles.actions}>
+        <Button
+          variant="primary"
+          size="main"
+          disabled={!valid || unchanged || saving}
+          onClick={() => void save()}
+        >
+          {saving ? 'بيحفظ...' : 'حفظ'}
+        </Button>
+      </div>
     </section>
   )
 }

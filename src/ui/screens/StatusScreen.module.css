@@ -1,25 +1,52 @@
+/* A message that fills the screen: one tile, the words, and the one next step. */
 .screen {
   display: grid;
   place-items: center;
   min-block-size: 100dvh;
   padding: var(--space-4);
+  background: var(--ground);
 }
 
 .card {
   display: grid;
   gap: var(--space-3);
   inline-size: min(100%, 420px);
-  padding: var(--space-5);
-  border: 1px solid var(--line);
+  padding: var(--space-5) var(--space-4);
   border-radius: var(--radius-md);
-  background: var(--surface);
+  background: var(--panel);
+}
+
+.mark {
+  display: grid;
+  place-items: center;
+  inline-size: 64px;
+  block-size: 64px;
+  border-radius: var(--radius-md);
+  background: var(--bone);
+  color: var(--ground);
+}
+
+.markAlert {
+  background: var(--short);
+  color: var(--ink-on-fill);
+}
+
+.mark svg {
+  inline-size: 32px;
+  block-size: 32px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .title {
-  margin: 0;
-  color: var(--scrub);
-  font-size: var(--text-xl);
+  margin: var(--space-2) 0 0;
+  color: var(--bone);
+  font-size: var(--text-2xl);
   font-weight: 800;
+  line-height: 1.25;
 }
 
 .message {
@@ -27,29 +54,15 @@
   color: var(--muted);
 }
 
-.button {
-  min-block-size: var(--tap-min);
-  padding-inline: var(--space-4);
-  border: 0;
-  border-radius: var(--radius-sm);
-  background: var(--scrub);
-  color: var(--on-scrub);
-  font-family: inherit;
-  font-size: var(--text-md);
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.button:disabled {
-  background: var(--disabled-bg);
-  color: var(--disabled-ink);
-  cursor: default;
-}
-
 .error {
   margin: 0;
-  color: var(--miss);
+  padding: var(--space-3);
+  border: 1px solid var(--short);
+  border-radius: var(--radius-sm);
+  background: var(--tint-miss);
+  color: var(--short-ink);
   font-size: var(--text-sm);
+  font-weight: 800;
 }
 
 .list {

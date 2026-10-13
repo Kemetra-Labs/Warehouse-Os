@@ -131,11 +131,10 @@ function RequestNotes({ row, item, direct, input }: RequestNotesProps) {
       {actions ? (
         <span className={styles.controls}>
           {row.shortQty > 0 ? (
-            <Button variant="primary" onClick={() => actions.onSubstitute(code)}>
-              بديل
-            </Button>
+            <Button onClick={() => actions.onSubstitute(code)}>بديل</Button>
           ) : null}
           <Button
+            size="square"
             aria-label="قلّل المطلوب"
             disabled={row.requestedQty <= 1}
             onClick={() => actions.onQty(code, row.requestedQty - 1)}
@@ -143,6 +142,7 @@ function RequestNotes({ row, item, direct, input }: RequestNotesProps) {
             −
           </Button>
           <Button
+            size="square"
             aria-label="زوّد المطلوب"
             onClick={() => actions.onQty(code, row.requestedQty + 1)}
           >
