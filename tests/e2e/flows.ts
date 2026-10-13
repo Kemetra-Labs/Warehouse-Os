@@ -52,7 +52,7 @@ export async function receiveOneLine(page: Page, step: ReceiptStep): Promise<voi
   await page.getByRole('link', { name: 'استلام طلبية جديدة' }).click()
   await expect(page.getByRole('heading', { level: 1 })).toContainText('استلام')
   await fillReceiptHeader(page, step.deliveryNo)
-  const box = page.getByRole('search').getByRole('searchbox')
+  const box = page.getByRole('search').getByRole('combobox')
   await box.fill(String(step.pageNo))
   await box.press('Enter')
   const card = page.getByTestId('pending-line')
@@ -89,7 +89,7 @@ export async function fillBatchHeader(page: Page, rep: string): Promise<void> {
 
 /** Searches by item code, says how many the permit asks for, and adds it to the batch. */
 export async function addRequest(page: Page, itemCode: string, qty: number): Promise<void> {
-  const box = page.getByRole('search').getByRole('searchbox')
+  const box = page.getByRole('search').getByRole('combobox')
   await box.fill(itemCode)
   await box.press('Enter')
   const card = page.getByTestId('pending-request')

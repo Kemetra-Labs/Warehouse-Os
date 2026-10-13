@@ -3,7 +3,9 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { BottomSheet } from '../../../src/ui/components/BottomSheet'
 import { CountTable, rowState } from '../../../src/ui/components/CountTable'
-import { hintFor, SearchBox } from '../../../src/ui/components/SearchBox'
+import { hintFor, SearchBox, stepIndex } from '../../../src/ui/components/SearchBox'
+import { press, type as typeInto } from '../../helpers/dom'
+import { ITEMS } from '../../helpers/receiptFixtures'
 import { Seal } from '../../../src/ui/components/Seal'
 import { StatusDot } from '../../../src/ui/components/StatusDot'
 import { SyncPill } from '../../../src/ui/components/SyncPill'
@@ -131,6 +133,118 @@ describe('SearchBox clearOnSubmit', () => {
     })
     expect(onResolve).toHaveBeenCalledWith({ kind: 'page', page: 10 })
     expect(input.value).toBe('')
+  })
+})
+
+describe('SearchBox suggestions', () => {
+  const onResolve = vi.fn()
+  const onPickItem = vi.fn()
+  const input = () => host.querySelector('input') as HTMLInputElement
+  const options = () => [...host.querySelectorAll('[role="option"]')]
+  const mount = () =>
+    render(
+      <SearchBox clearOnSubmit onResolve={onResolve} suggestFrom={ITEMS} onPickItem={onPickItem} />,
+    )
+
+  beforeEach(() => {
+    onResolve.mockClear()
+    onPickItem.mockClear()
+  })
+
+  it('steps through the options and wraps at both ends', () => {
+    expect(stepIndex(-1, 3, 1)).toBe(0)
+    expect(stepIndex(-1, 3, -1)).toBe(2)
+    expect(stepIndex(2, 3, 1)).toBe(0)
+    expect(stepIndex(0, 3, -1)).toBe(2)
+    expect(stepIndex(0, 0, 1)).toBe(-1)
+  })
+
+  it('shows nothing for empty input, and is a combobox pointing at its listbox', () => {
+    mount()
+    expect(input().getAttribute('role')).toBe('combobox')
+    expect(input().getAttribute('aria-expanded')).toBe('false')
+    expect(host.querySelector('[role="listbox"]')).toBeNull()
+    expect(host.textContent).not.toContain('مفيش صنف')
+  })
+
+  it('lists the matching items as you type, with name, page and code', () => {
+    mount()
+    typeInto(input(), '2')
+    const list = host.querySelector('[role="listbox"]')
+    expect(list?.id).toBe(input().getAttribute('aria-controls'))
+    expect(input().getAttribute('aria-expanded')).toBe('true')
+    expect(options().map((o) => o.textContent)).toEqual([
+      'صنف تجريبي باءص 2 · AAA-02',
+      'صنف تجريبي جيمص 2 · BBB-01',
+    ])
+    expect(onResolve).not.toHaveBeenCalled()
+  })
+
+  it('says so when nothing matches', () => {
+    mount()
+    typeInto(input(), 'كرسي')
+    expect(options()).toHaveLength(0)
+    expect(host.textContent).toContain('مفيش صنف بالرقم أو الاسم ده')
+    expect(input().getAttribute('aria-expanded')).toBe('false')
+  })
+
+  it('a tap picks the item, empties the field and closes the list', () => {
+    mount()
+    typeInto(input(), '2')
+    act(() => (options()[1] as HTMLElement).click())
+    expect(onPickItem).toHaveBeenCalledWith(ITEMS[2])
+    expect(onResolve).not.toHaveBeenCalled()
+    expect(input().value).toBe('')
+    expect(host.querySelector('[role="listbox"]')).toBeNull()
+  })
+
+  it('arrow keys highlight an option, and Enter picks it instead of submitting', () => {
+    mount()
+    typeInto(input(), '2')
+    press(input(), 'ArrowDown')
+    press(input(), 'ArrowDown')
+    expect(options()[1]?.getAttribute('aria-selected')).toBe('true')
+    expect(input().getAttribute('aria-activedescendant')).toBe(options()[1]?.id)
+    press(input(), 'ArrowUp')
+    expect(options()[0]?.getAttribute('aria-selected')).toBe('true')
+    const enter = press(input(), 'Enter')
+    expect(enter.defaultPrevented).toBe(true)
+    expect(onPickItem).toHaveBeenCalledWith(ITEMS[1])
+    expect(onResolve).not.toHaveBeenCalled()
+  })
+
+  it('Enter with no highlighted option still submits the text, as before', () => {
+    mount()
+    typeInto(input(), '4')
+    expect(options()).toHaveLength(1)
+    const enter = press(input(), 'Enter')
+    expect(enter.defaultPrevented).toBe(false)
+    act(() => {
+      host
+        .querySelector('form')
+        ?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
+    })
+    expect(onResolve).toHaveBeenCalledWith({ kind: 'page', page: 4 })
+    expect(onPickItem).not.toHaveBeenCalled()
+  })
+
+  it('Escape closes the list, keeps the text, and typing opens it again', () => {
+    mount()
+    typeInto(input(), '2')
+    const esc = press(input(), 'Escape')
+    expect(esc.defaultPrevented).toBe(true)
+    expect(host.querySelector('[role="listbox"]')).toBeNull()
+    expect(input().value).toBe('2')
+    typeInto(input(), '21')
+    typeInto(input(), '2')
+    expect(options()).toHaveLength(2)
+  })
+
+  it('leaves the field a plain search box when no suggestions are asked for', () => {
+    render(<SearchBox onResolve={onResolve} />)
+    expect(input().getAttribute('role')).toBeNull()
+    typeInto(input(), '2')
+    expect(host.querySelector('[role="listbox"]')).toBeNull()
   })
 })
 

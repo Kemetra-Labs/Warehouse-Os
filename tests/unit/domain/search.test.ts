@@ -7,6 +7,7 @@ import {
   parseGs1,
   resolve,
   searchItems,
+  suggestItems,
 } from '../../../src/domain/search'
 
 const GS = '\x1d'
@@ -198,5 +199,62 @@ describe('resolve (FR-020)', () => {
   })
   it('returns nothing when no item matches', () => {
     expect(resolve(items, classify('99999999'))).toEqual([])
+  })
+})
+
+describe('suggestItems', () => {
+  const items = [
+    { code: 'NAL-01', nameAr: 'نخاعي للفخذ', gtins: ['6221234567890'], page: 8 },
+    { code: 'NAL-07', nameAr: 'نخاعي للساق', gtins: [], page: 8, authorityCode: '70000409' },
+    { code: 'SCR-01', nameAr: 'مسمار قشري', nameEn: 'Cortical screw', gtins: [], page: 10 },
+    { code: 'PLA-11', nameAr: 'شريحة أمامية', gtins: ['12345670'], page: 1 },
+  ]
+  const codes = (text: string, limit?: number) =>
+    suggestItems(items, text, limit).map((i) => i.code)
+
+  it('suggests nothing for empty or blank input', () => {
+    expect(codes('')).toEqual([])
+    expect(codes('   ')).toEqual([])
+  })
+  it('a page number suggests the items on that page, and only those', () => {
+    expect(codes('8')).toEqual(['NAL-01', 'NAL-07'])
+    expect(codes('1')).toEqual(['PLA-11'])
+    expect(codes('٨')).toEqual(['NAL-01', 'NAL-07'])
+    expect(codes('9')).toEqual([])
+  })
+  it('a part of a code suggests its items, and a whole code finds one', () => {
+    expect(codes('nal')).toEqual(['NAL-01', 'NAL-07'])
+    expect(codes('nal-0')).toEqual(['NAL-01', 'NAL-07'])
+    expect(codes('pla-11')).toEqual(['PLA-11'])
+    expect(codes('-01')).toEqual(['NAL-01', 'SCR-01'])
+  })
+  it('an Arabic name matches with the letters folded, and an English name matches too', () => {
+    expect(codes('شريحه امامية')).toEqual(['PLA-11'])
+    expect(codes('نخاعى')).toEqual(['NAL-01', 'NAL-07'])
+    expect(codes('cortical')).toEqual(['SCR-01'])
+  })
+  it('a GTIN or an 8-digit number finds its item', () => {
+    expect(codes('6221234567890')).toEqual(['NAL-01'])
+    expect(codes('12345670')).toEqual(['PLA-11'])
+    expect(codes('70000409')).toEqual(['NAL-07'])
+    expect(codes('6221234567899')).toEqual([])
+  })
+  it('puts exact matches before part-of-code matches, without repeating an item', () => {
+    const both = [
+      { code: 'ABC-01', nameAr: 'شيء', gtins: [], page: 4 },
+      { code: 'ZZZ-01', nameAr: 'abc', gtins: [], page: 3 },
+    ]
+    expect(suggestItems(both, 'abc').map((i) => i.code)).toEqual(['ZZZ-01', 'ABC-01'])
+  })
+  it('stops at the limit (6 by default)', () => {
+    const many = Array.from({ length: 10 }, (_, n) => ({
+      code: `ABC-${String(n).padStart(2, '0')}`,
+      nameAr: `صنف ${n}`,
+      gtins: [],
+      page: 5,
+    }))
+    expect(suggestItems(many, '5')).toHaveLength(6)
+    expect(suggestItems(many, 'abc', 3)).toHaveLength(3)
+    expect(suggestItems(many, 'abc', 0)).toEqual([])
   })
 })
