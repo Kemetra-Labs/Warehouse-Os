@@ -16,6 +16,7 @@ import { Button } from '../components/Button'
 import { CancelAction, CancelledNote, RECEIPT_NOUN } from '../components/CancelAction'
 import { CountTable } from '../components/CountTable'
 import { ItemPickerSheet } from '../components/ItemPickerSheet'
+import { PrintButton } from '../components/PrintButton'
 import { ReasonSheet } from '../components/ReasonSheet'
 import { Seal, type SealVariant } from '../components/Seal'
 import styles from './ReceiptReview.module.css'
@@ -43,6 +44,8 @@ export interface ReceiptReviewProps {
   readonly onPost: () => Promise<PostResult>
   /** Cancels the posted receipt. Without it a posted receipt has no cancel action. */
   readonly onCancel?: (reason: string) => Promise<CancelAttempt>
+  /** Downloads the A4 print file of the posted (or cancelled) receipt. */
+  readonly onPrint?: () => Promise<void>
   /** Shown after posting: leave the receipt. */
   readonly onFinish?: () => void
 }
@@ -214,6 +217,7 @@ export function ReceiptReview(props: ReceiptReviewProps) {
       {sealInfo?.variant === 'cancelled' ? (
         <CancelledNote noun={RECEIPT_NOUN} reason={sealInfo.reason ?? null} />
       ) : null}
+      {sealInfo && props.onPrint ? <PrintButton run={props.onPrint} /> : null}
       {canCancel && props.onCancel ? (
         <CancelAction
           noun={RECEIPT_NOUN}

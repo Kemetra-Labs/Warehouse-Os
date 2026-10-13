@@ -9,7 +9,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { to: '/', label: 'الرئيسية', end: true },
   { to: '/items', label: 'الأصناف' },
   { to: '/movements', label: 'الحركات' },
-  { to: '/reports', label: 'التقارير' },
+  { to: '/exports', label: 'التصدير' },
 ]
 
 export const HOSPITAL_NAME = 'مستشفى القناطر الخيرية'

@@ -26,6 +26,7 @@ import { Bdi } from '../components/Bdi'
 import { Button } from '../components/Button'
 import { BATCH_NOUN, CancelAction, CancelledNote } from '../components/CancelAction'
 import { CountTable } from '../components/CountTable'
+import { PrintButton } from '../components/PrintButton'
 import { ReasonSheet } from '../components/ReasonSheet'
 import { Seal } from '../components/Seal'
 import { IssueAdd } from './IssueAdd'
@@ -50,6 +51,8 @@ export interface IssueProps {
   readonly onPost: () => Promise<IssuePostResult>
   /** Cancels the posted batch. Without it a posted batch has no cancel action. */
   readonly onCancel?: (reason: string) => Promise<CancelAttempt>
+  /** Downloads the A4 print file of the posted (or cancelled) batch. */
+  readonly onPrint?: () => Promise<void>
   /** Shown after posting: leave the batch. */
   readonly onFinish?: () => void
 }
@@ -270,6 +273,7 @@ export function Issue(props: IssueProps) {
       {seal?.variant === 'cancelled' ? (
         <CancelledNote noun={BATCH_NOUN} reason={seal.reason ?? null} />
       ) : null}
+      {seal && props.onPrint ? <PrintButton run={props.onPrint} /> : null}
       {canCancel && props.onCancel ? (
         <CancelAction
           noun={BATCH_NOUN}
