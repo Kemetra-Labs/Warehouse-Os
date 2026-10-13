@@ -44,7 +44,15 @@ export function useDraftAutosave<T>(
     adapter.save(id, draft).catch(() => undefined) // a refusal shows up in the sync pill
   }, [id, skipBlank, adapter, clear])
 
-  useEffect(() => flush, [flush])
+  /** False once the screen has left. React cleans a parent's effects before its children's. */
+  const alive = useRef(true)
+  useEffect(() => {
+    alive.current = true
+    return () => {
+      alive.current = false
+      flush()
+    }
+  }, [flush])
 
   // A phone may freeze or close a backgrounded app before the timer fires: save at once instead.
   useEffect(() => {
@@ -60,6 +68,9 @@ export function useDraftAutosave<T>(
       (draft) => {
         latest.current = draft
         clear()
+        // A child that writes while leaving (the receive screen joining its open line) comes
+        // after this hook's own cleanup: no timer would ever be flushed, so save at once.
+        if (!alive.current) return flush()
         timer.current = setTimeout(flush, SAVE_DELAY_MS)
       },
       [clear, flush],

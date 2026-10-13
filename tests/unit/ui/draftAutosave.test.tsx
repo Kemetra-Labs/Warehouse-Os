@@ -68,6 +68,12 @@ describe('useDraftAutosave', () => {
     expect(save).toHaveBeenCalledExactlyOnceWith('doc-1', 'abcd')
   })
 
+  it('a change that arrives after the screen left (a child joining its open line) saves at once', () => {
+    act(() => root.render(<div />)) // React cleans the parent's effects before the child's
+    autosave.schedule('late line')
+    expect(save).toHaveBeenCalledExactlyOnceWith('doc-1', 'late line')
+  })
+
   it('never saves a blank new document, and nothing while paused', () => {
     autosave.schedule('')
     goHidden()
