@@ -14,9 +14,17 @@ export interface CountRow {
   readonly state?: DotState
 }
 
+export interface CountTableLabels {
+  readonly name?: string
+  readonly requested?: string
+  readonly delivered?: string
+}
+
 export interface CountTableProps {
   readonly rows: readonly CountRow[]
   readonly caption: string
+  /** Column headings. Issuing keeps the defaults; receiving uses الفاتورة | اتعدّ. */
+  readonly labels?: CountTableLabels
 }
 
 export function rowState(row: CountRow): DotState {
@@ -26,18 +34,18 @@ export function rowState(row: CountRow): DotState {
 }
 
 /** Requested vs delivered side by side; a mismatch turns red with a glyph. */
-export function CountTable({ rows, caption }: CountTableProps) {
+export function CountTable({ rows, caption, labels = {} }: CountTableProps) {
   return (
     <table className={styles.table}>
       <caption className={styles.caption}>{caption}</caption>
       <thead>
         <tr>
-          <th scope="col">صنف</th>
+          <th scope="col">{labels.name ?? 'صنف'}</th>
           <th scope="col" className={styles.num}>
-            مطلوب
+            {labels.requested ?? 'مطلوب'}
           </th>
           <th scope="col" className={styles.num}>
-            اتسلّم
+            {labels.delivered ?? 'اتسلّم'}
           </th>
           <th scope="col" className={styles.num}>
             <span className={styles.caption}>الحالة</span>

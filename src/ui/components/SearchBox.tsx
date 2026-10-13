@@ -5,6 +5,8 @@ import styles from './SearchBox.module.css'
 export interface SearchBoxProps {
   readonly onResolve: (result: SearchClass) => void
   readonly placeholder?: string
+  /** Empty the field after each submit, so the next lookup starts clean (receiving, issuing). */
+  readonly clearOnSubmit?: boolean
 }
 
 const KIND_LABELS: Readonly<Record<SearchClass['kind'], string>> = {
@@ -25,6 +27,7 @@ export function hintFor(input: string): string | null {
 export function SearchBox({
   onResolve,
   placeholder = 'رقم الصفحة أو الباركود أو الكود أو الاسم',
+  clearOnSubmit = false,
 }: SearchBoxProps) {
   const [value, setValue] = useState('')
   const hintId = useId()
@@ -34,6 +37,7 @@ export function SearchBox({
     e.preventDefault()
     if (value.trim() === '') return
     onResolve(classify(value))
+    if (clearOnSubmit) setValue('')
   }
 
   return (

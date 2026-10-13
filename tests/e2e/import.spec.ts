@@ -1,5 +1,6 @@
 import { resolve } from 'node:path'
 import { expect, test } from '@playwright/test'
+import { ensureOwnerAccount } from './emulatorApi'
 
 const FIXTURE = resolve(import.meta.dirname, '..', 'fixtures', 'mini-workbook.xlsx')
 
@@ -9,11 +10,9 @@ const FIXTURE = resolve(import.meta.dirname, '..', 'fixtures', 'mini-workbook.xl
  * This needs a real Firestore, so it only runs against the Firebase emulators:
  *   1. `.env.local`: VITE_USE_EMULATORS=1 and the usual VITE_FIREBASE_* keys.
  *   2. `npm run emulators` (renders the rules for the owner uid `test-owner`).
- *   3. The account created in the Auth emulator popup must have uid `test-owner`
- *      (create it first in the emulator UI at http://localhost:4000 with that localId).
- *   4. `E2E_EMULATORS=1 npx playwright test tests/e2e/import.spec.ts`
+ *   3. `E2E_EMULATORS=1 npx playwright test tests/e2e/import.spec.ts`
+ * The test creates the `test-owner` account in the Auth emulator over REST (see emulatorApi.ts).
  * Without E2E_EMULATORS the test is skipped; no test-only code path exists in the app.
- * NOT YET RUN against the emulators (needs the owner's local Firebase setup).
  */
 test.describe('import the workbook', () => {
   test.skip(
@@ -21,12 +20,22 @@ test.describe('import the workbook', () => {
     'needs the Firebase emulators (see the comment at the top of this file)',
   )
 
+  test.beforeAll(async ({ request }) => {
+    await ensureOwnerAccount(request, 'test-owner')
+  })
+
   test('imports the fixture, shows parity, and refuses a second import', async ({ page }) => {
     await page.goto('/')
     const popupPromise = page.waitForEvent('popup')
     await page.getByRole('button', { name: 'الدخول بحساب جوجل' }).click()
     const popup = await popupPromise
-    await popup.getByText('test-owner').click()
+    // The widget wires its click handlers when the page has parsed; clicking earlier does nothing.
+    await popup.waitForLoadState('domcontentloaded')
+    await popup.getByText('test-owner').first().click()
+    // Navigating before the popup hands back the session would land on sign-in again.
+    await expect(page.getByRole('link', { name: 'استلام طلبية جديدة' })).toBeVisible({
+      timeout: 20_000,
+    })
 
     await page.goto('/import')
     await page.locator('input[type="file"]').setInputFiles(FIXTURE)

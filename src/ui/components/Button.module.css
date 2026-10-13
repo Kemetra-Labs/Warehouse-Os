@@ -1,0 +1,44 @@
+.button {
+  min-block-size: var(--tap-min);
+  padding-inline: var(--space-4);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: var(--text-md);
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform var(--dur-press) linear;
+}
+
+.button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.primary {
+  background: var(--scrub-2);
+  color: var(--on-scrub);
+}
+
+.secondary {
+  border-color: var(--scrub);
+  background: var(--surface);
+  color: var(--scrub);
+}
+
+.danger {
+  border-color: var(--miss);
+  background: var(--surface);
+  color: var(--miss);
+}
+
+.seal {
+  background: var(--seal);
+  color: #fff;
+}
+
+.button:disabled {
+  border-color: transparent;
+  background: var(--disabled-bg);
+  color: var(--disabled-ink);
+  cursor: default;
+}

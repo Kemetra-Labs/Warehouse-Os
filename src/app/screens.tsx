@@ -1,5 +1,6 @@
 import { Link } from 'react-router'
 import { useLedger } from '../data/useLedger'
+import { OpenDrafts } from '../ui/screens/OpenDrafts'
 import styles from './screens.module.css'
 
 function Placeholder({ title }: { readonly title: string }) {
@@ -45,6 +46,7 @@ export function HomeScreen() {
           lit={tally.pendingSettlements > 0}
         />
       </section>
+      <OpenDrafts />
     </>
   )
 }
