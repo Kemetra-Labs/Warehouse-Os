@@ -26,7 +26,9 @@
   font-size: var(--text-sm);
 }
 
-/* The filters are small count tiles: the label, then the number. The pressed one is ringed. */
+/* The filters are small count tiles: the label, then the number. The two that are states (نافد,
+   تحتاج طلب) fill with their colour when there are some and go hollow at zero, like the home
+   tiles. The pressed one is ringed. */
 .chips {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
@@ -58,10 +60,38 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* The pressed filter is ringed and raised, not only a different colour. */
+.chip[data-zero] {
+  background: transparent;
+  box-shadow: inset 0 0 0 2px var(--hair);
+}
+
+.chip[data-zero] b {
+  color: var(--muted);
+}
+
+.chip[data-tone] {
+  color: var(--ink-on-fill);
+}
+
+.chip[data-tone] b {
+  color: inherit;
+}
+
+.chip[data-tone='short'] {
+  background: var(--short);
+}
+
+.chip[data-tone='attn'] {
+  background: var(--attn);
+}
+
+/* The pressed filter is ringed, not only a different colour; a plain one is raised as well. */
 .chip[aria-pressed='true'] {
-  background: var(--panel-2);
   box-shadow: inset 0 0 0 2px var(--bone);
+}
+
+.chip[aria-pressed='true']:not([data-tone], [data-zero]) {
+  background: var(--panel-2);
   color: var(--bone);
 }
 
@@ -105,7 +135,7 @@
 /* The one primary: add an item, reversed, in the thumb zone above the navigation. */
 .actions {
   position: fixed;
-  inset-inline: 0;
+  inset-inline: var(--bar-inset);
   inset-block-end: calc(var(--nav-height) + env(safe-area-inset-bottom));
   z-index: 5;
   display: grid;

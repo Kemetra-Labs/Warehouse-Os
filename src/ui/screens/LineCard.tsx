@@ -47,7 +47,7 @@ function Heading({ line, item, onPickItem }: Pick<LineCardProps, 'line' | 'item'
       <strong className={styles.name}>
         باركود <Bdi>{line.scannedGtin ?? '؟'}</Bdi> مش معروف
       </strong>
-      <Button variant="primary" onClick={onPickItem}>
+      <Button variant="secondary" onClick={onPickItem}>
         اختار الصنف
       </Button>
     </div>

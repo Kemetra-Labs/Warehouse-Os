@@ -31,8 +31,9 @@
   stroke-linejoin: round;
 }
 
-/* Count-match tick: the check draws itself (motion table). */
-.tick {
+/* Count-match tick: when a row turns into a match, the check draws itself, once (motion table).
+   A tick that was there from the start is static, so a freshly opened screen shows whole ticks. */
+.draw {
   stroke-dasharray: 16;
   stroke-dashoffset: 0;
   animation: draw var(--dur-tick) var(--ease-standard) both;
@@ -48,7 +49,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .tick {
+  .draw {
     animation: none;
   }
 }

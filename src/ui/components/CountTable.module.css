@@ -33,15 +33,15 @@
 
 .table td:first-child {
   border-inline-start: 2px solid transparent;
-  border-start-start-radius: 10px;
-  border-end-start-radius: 10px;
+  border-start-start-radius: var(--radius-sm);
+  border-end-start-radius: var(--radius-sm);
   font-weight: 700;
 }
 
 .table td:last-child {
   border-inline-end: 2px solid transparent;
-  border-start-end-radius: 10px;
-  border-end-end-radius: 10px;
+  border-start-end-radius: var(--radius-sm);
+  border-end-end-radius: var(--radius-sm);
 }
 
 /* A row that disagrees is outlined in red, and carries the cross badge as well. */

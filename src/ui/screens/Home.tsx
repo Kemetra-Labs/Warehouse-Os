@@ -44,8 +44,6 @@ export function Home() {
   return (
     <div className={styles.screen}>
       <h1 className={styles.title}>الرئيسية</h1>
-      <DuplicateNumbers />
-      <BackupReminder />
       <section className={styles.tiles} aria-label="ملخص المخزن">
         <Tile value={tally.out} label="نافد" tone="short" glyph="M4 4l8 8M12 4l-8 8" />
         <Tile value={tally.needsReorder} label="تحتاج طلب" tone="attn" glyph="M8 3v6M8 12.5v.5" />
@@ -56,6 +54,8 @@ export function Home() {
           glyph="M4 6h8M4 10h8"
         />
       </section>
+      <DuplicateNumbers />
+      <BackupReminder />
       <OpenBatches />
       <OpenDrafts />
       {rows.length === 0 ? (

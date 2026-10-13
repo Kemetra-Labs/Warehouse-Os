@@ -55,16 +55,29 @@ button.row:active {
   background: var(--count);
 }
 
-/* The state as a shape, not only a colour: solid red, solid amber, hollow ring. */
+/* The state as a shape, not only a colour: a red square struck through, a plain amber square,
+   a hollow ring. 14px, so the cross still reads. */
 .mark {
+  display: grid;
+  place-items: center;
   flex: none;
-  inline-size: 12px;
-  block-size: 12px;
+  inline-size: 14px;
+  block-size: 14px;
   border-radius: 3px;
 }
 
 .out {
   background: var(--short);
+  color: var(--ink-on-fill);
+}
+
+.out svg {
+  inline-size: 14px;
+  block-size: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
 }
 
 .reorder {

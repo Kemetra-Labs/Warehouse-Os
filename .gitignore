@@ -2,6 +2,7 @@
 .impeccable/*
 !.impeccable/surfaces/
 !.impeccable/config.json
+!.impeccable/design.json
 node_modules/
 dist/
 dev-dist/

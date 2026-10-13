@@ -1,42 +1,64 @@
 ---
 name: مخزن الشرائح والمسامير
-description: Arabic RTL count-board for a hospital implants store. Scrub green shell, whiteboard ground, marker-blue counts, one violet seal.
+description: Arabic RTL nursing-station status board for a hospital implants store. Dark station-teal ground, state tiles filled by form and hue, one reversed next step, one violet seal.
 colors:
-  scrub: "#0f5f58"
-  scrub-2: "#13756c"
-  board: "#f4f7f6"
-  surface: "#ffffff"
-  ink: "#122321"
-  muted: "#4b5f5c"
-  marker: "#1f4fa3"
-  miss: "#c2362b"
-  match: "#2e7d4f"
-  seal: "#5b2d8e"
-  amber: "#9a6200"
-  line: "#d5dfdc"
-  control-line: "#758985"
-  hairline: "#eef3f1"
-  on-scrub: "#ffffff"
-  on-scrub-muted: "#bfe0da"
-  scrub-line: "#9fd1c8"
-  tint-neutral: "#f7faf9"
-  tint-miss: "#fdecea"
-  tint-marker: "#f2f6fd"
-  tint-amber: "#fff8e6"
-  amber-line: "#e9c46a"
-  disabled-bg: "#c9d6d3"
-  disabled-ink: "#3c4f4b"
+  ground: "#0e2a30"
+  panel: "#16404a"
+  panel-2: "#1c4c57"
+  bone: "#f4f8f8"
+  muted: "#a9c4c6"
+  hair: "rgba(244, 248, 248, 0.14)"
+  control-line: "#6f9ba1"
+  ok: "#22b07d"
+  short: "#ef4f4f"
+  attn: "#f5a524"
+  count: "#5aa8ff"
+  ink-on-fill: "#0b2126"
+  ok-ink: "#6fe3b3"
+  short-ink: "#ff9090"
+  count-ink: "#7dbaff"
+  seal: "#6d3fd8"
+  tint-miss: "#3b2d35"
+  tint-amber: "#3a3a26"
+  tint-marker: "#1b4a63"
+  tint-neutral: "#1c4c57"
+  amber-line: "#a8741c"
+  disabled-bg: "#27505a"
+  disabled-ink: "#b4cdd0"
+  scrim: "rgba(4, 16, 19, 0.62)"
 typography:
-  title:
+  numeral:
+    fontFamily: "Almarai, system-ui, sans-serif"
+    fontSize: "46px"
+    fontWeight: 800
+    lineHeight: 1
+    fontFeature: "tabular-nums"
+  stepper:
+    fontFamily: "Almarai, system-ui, sans-serif"
+    fontSize: "40px"
+    fontWeight: 800
+    lineHeight: 1
+    fontFeature: "tabular-nums"
+  display:
+    fontFamily: "Almarai, system-ui, sans-serif"
+    fontSize: "28px"
+    fontWeight: 800
+    lineHeight: 1.3
+  headline:
     fontFamily: "Almarai, system-ui, sans-serif"
     fontSize: "22px"
     fontWeight: 800
     lineHeight: 1.5
-  headline:
+  title:
     fontFamily: "Almarai, system-ui, sans-serif"
     fontSize: "18px"
     fontWeight: 800
     lineHeight: 1.5
+  station:
+    fontFamily: "Almarai, system-ui, sans-serif"
+    fontSize: "17px"
+    fontWeight: 800
+    lineHeight: 1.3
   body:
     fontFamily: "Almarai, system-ui, sans-serif"
     fontSize: "15px"
@@ -54,9 +76,12 @@ typography:
     fontWeight: 700
     lineHeight: 1.5
 rounded:
+  mark: "3px"
+  check: "6px"
+  badge: "8px"
   sm: "10px"
-  md: "14px"
-  sheet: "20px"
+  md: "12px"
+  sheet: "16px"
   pill: "99px"
 spacing:
   "1": "4px"
@@ -68,239 +93,400 @@ spacing:
   "7": "48px"
 components:
   button-primary:
-    backgroundColor: "{colors.scrub-2}"
-    textColor: "{colors.on-scrub}"
-    rounded: "{rounded.sm}"
+    backgroundColor: "{colors.bone}"
+    textColor: "{colors.ground}"
+    rounded: "{rounded.md}"
     padding: "0 16px"
     height: "44px"
+  button-main:
+    typography: "{typography.title}"
+    rounded: "{rounded.md}"
+    height: "64px"
+  button-square:
+    rounded: "{rounded.md}"
+    width: "44px"
+    height: "44px"
   button-secondary:
-    backgroundColor: "{colors.surface}"
-    textColor: "{colors.scrub}"
-    rounded: "{rounded.sm}"
+    backgroundColor: "transparent"
+    textColor: "{colors.bone}"
+    rounded: "{rounded.md}"
+    padding: "0 16px"
     height: "44px"
   button-danger:
-    backgroundColor: "{colors.surface}"
-    textColor: "{colors.miss}"
-    rounded: "{rounded.sm}"
+    backgroundColor: "transparent"
+    textColor: "{colors.short-ink}"
+    rounded: "{rounded.md}"
     height: "44px"
   button-seal:
     backgroundColor: "{colors.seal}"
-    textColor: "{colors.on-scrub}"
-    rounded: "{rounded.sm}"
+    textColor: "{colors.bone}"
+    rounded: "{rounded.md}"
     height: "44px"
   button-disabled:
-    backgroundColor: "{colors.disabled-bg}"
-    textColor: "{colors.disabled-ink}"
-  input:
-    backgroundColor: "{colors.surface}"
-    textColor: "{colors.ink}"
-    rounded: "{rounded.sm}"
-    height: "44px"
-  card:
-    backgroundColor: "{colors.surface}"
-    rounded: "{rounded.md}"
-    padding: "12px"
-  sync-pill:
     backgroundColor: "transparent"
-    textColor: "{colors.on-scrub}"
+    textColor: "{colors.muted}"
+    rounded: "{rounded.md}"
+  search-input:
+    backgroundColor: "{colors.panel}"
+    textColor: "{colors.bone}"
+    typography: "{typography.station}"
+    rounded: "{rounded.md}"
+    padding: "0 16px"
+    height: "52px"
+  state-tile-short:
+    backgroundColor: "{colors.short}"
+    textColor: "{colors.ink-on-fill}"
+    typography: "{typography.numeral}"
+    rounded: "{rounded.md}"
+    padding: "12px 12px 10px"
+    height: "118px"
+  state-tile-attn:
+    backgroundColor: "{colors.attn}"
+    textColor: "{colors.ink-on-fill}"
+    rounded: "{rounded.md}"
+    height: "118px"
+  state-tile-count:
+    backgroundColor: "{colors.count}"
+    textColor: "{colors.ink-on-fill}"
+    rounded: "{rounded.md}"
+    height: "118px"
+  state-tile-hollow:
+    backgroundColor: "transparent"
+    textColor: "{colors.muted}"
+    rounded: "{rounded.md}"
+    height: "118px"
+  item-row:
+    backgroundColor: "{colors.panel}"
+    textColor: "{colors.bone}"
+    rounded: "{rounded.md}"
+    padding: "12px 14px"
+    height: "44px"
+  status-badge:
+    textColor: "{colors.ink-on-fill}"
+    rounded: "{rounded.badge}"
+    size: "28px"
+  item-mark:
+    rounded: "{rounded.mark}"
+    size: "14px"
+  checkbox:
+    rounded: "{rounded.check}"
+    size: "22px"
+  chip:
+    backgroundColor: "{colors.panel-2}"
+    textColor: "{colors.bone}"
+    typography: "{typography.label}"
     rounded: "{rounded.pill}"
+    height: "44px"
+  bottom-sheet:
+    backgroundColor: "{colors.panel}"
+    textColor: "{colors.bone}"
+    rounded: "{rounded.sheet}"
+    padding: "0 16px 16px"
+  nav:
+    backgroundColor: "{colors.ground}"
+    textColor: "{colors.muted}"
+    typography: "{typography.label}"
+    height: "68px"
 ---
 
 # Design System: مخزن الشرائح والمسامير
 
-This file was written from the code that shipped (Phase 10, 2026-10-13): `src/ui/tokens.css`, the CSS modules in `src/ui` and `src/scan`, and what the Pixel 7 (412 px) screens render. Where the code and `docs/design/ui-inspiration.md` differ, this file says what the code does.
+Written from the code that shipped on branch `claude/redesign-finish` (2026-10-13). The sources were `src/ui/tokens.css`, `src/app/Shell.*`, the CSS modules in `src/ui` and `src/scan`, the enforced rules in `tests/unit/ui/designRules.test.ts`, and the captures in `.impeccable/review/` (412 x 915, plus `desktop.png` at 1440 x 900). The approved comp is `.impeccable/mocks/status-board/index.html`. Where the comp or the direction contract (`.impeccable/surfaces/src-ui-tokens-css.md`) and the code differ, this file records what the code does. This file replaces the earlier whiteboard and count-board system.
 
 ## Overview
 
-**Creative North Star: "The Count Board With a Seal"**
+**Creative North Star: "The Nursing-Station Status Board"**
 
-Every receipt and issue closes like a count at the end of a shift: what was asked against what was counted, side by side, with nothing posted until the two agree or a reason is written. The screen is a whiteboard-white ground under a scrub-green header. Counts are written in marker blue, mismatches in red, matches in green, and the one violet mark in the product, a round approval seal, lands only when a document is posted.
+The store reads like the board at a nursing station. Every count that matters is a tile filled with its state colour, readable at arm's length in a dim storeroom. Each screen offers exactly one next step, and that step is the only reversed (bone-filled) element on the screen. The ground is a deep station teal, panels are a step lighter, and text is bone. The four state colours (ok green, short red, attention amber, count blue) are bright fills with dark ink on them. Violet appears in one place only: posting.
 
-The storekeeper holds a phone in one hand and a box in the other, often in a dim storeroom, often offline. So the system is dense but calm: hairline tables, big thumb-zone buttons, numbers first, every state carried by a glyph as well as a colour, and motion kept to short, quiet moments. There is no dashboard of KPI cards, no texture, no costume.
+The storekeeper holds a phone in one hand and a box in the other, often offline. The board is dense but loud where it counts. Numerals are huge and tabular, labels are small, and targets are big. State is always shown by form (solid, hollow, struck, ringed, glyph) as well as hue. There is no glass, no gradient, no texture, and no SaaS dashboard of soft white cards. The old light whiteboard and scrub-green header are gone, and the theme is dark only.
 
 **Key Characteristics:**
 
-- Arabic first, RTL by default; layout order mirrors, numbers, codes and cameras do not.
-- Almarai only, tabular numerals, 12 px floor.
-- One accent per meaning: blue counts, red mismatch, green match, amber attention, violet posted. Violet is used nowhere else.
-- Flat surfaces separated by hairlines. One sheet shadow, one ambient card shadow.
-- Motion is transform and opacity only, with a reduced-motion answer for every moment.
+- Dark only. `color-scheme: dark`, with no `prefers-color-scheme` branch (enforced by test).
+- Arabic first and RTL. Logical properties only (enforced by test).
+- Almarai 400/700/800 only. Numerals are tabular, the 12 px floor is enforced by test, and the numerals are the loud part.
+- One reversed primary per screen, 64 px, fixed in the thumb zone above the bottom navigation.
+- State by form and hue: filled tile, hollow tile at zero, struck square, solid square, hollow ring, glyph badge.
+- Violet means posting: the seal, and the one button that makes it.
+- Flat panels. The bottom sheet is the only shadowed layer.
 
 ## Colors
 
-A cool green-grey family with four signal colours. Every text pair clears 4.5:1 (WCAG AA); `tests/unit/ui/designRules.test.ts` checks the pairs on each run.
+A deep teal ground with bone text and four saturated state fills. Each state has a lighter "ink" variant for use as text on dark. Every text pair in use clears 4.5:1, and every meaningful edge or fill clears 3:1 against the ground. `designRules.test.ts` checks the pairs on each run.
 
 ### Primary
 
-- **Scrub Green** (`#0f5f58`): the app header, secondary button text and border, page titles on receipt and status screens, the active bottom-nav item.
-- **Scrub Green Bright** (`#13756c`): the primary button fill and the receive action. White on it is 5.5:1.
+- **Bone** (`bone`): body text, and the fill of the one reversed primary button (ground-coloured text on it). Reversal is the primary's whole identity.
+- **Station Teal** (`ground`): the page, the station bar, the bottom nav, and the fixed action bar. It is also the text colour on the reversed primary.
 
 ### Secondary
 
-- **Marker Blue** (`#1f4fa3`): counts, balances, the changed-since-seen dot, focus rings, links, the issue action tile. The colour of "a number somebody wrote".
-- **Seal Violet** (`#5b2d8e`): the posted seal and the approve button. Reserved for the posted or approved state only.
+- **Seal Violet** (`seal`): the posted seal's disc and the `seal` button variant that posts (اعتماد). It is always a solid form with bone on it.
 
-### Signal
+### Tertiary (state)
 
-- **Mismatch Red** (`#c2362b`): counts that disagree, negative balances, cancel actions, the red cancelled seal, the failed sync pill.
-- **Match Green** (`#2e7d4f`): matching counts and done notices.
-- **Attention Amber** (`#9a6200`) on **Amber Tint** (`#fff8e6`) with **Amber Line** (`#e9c46a`): price changes, short quantities, warnings, the backup reminder.
+- **Count Blue** (`count`) / **Count Ink** (`count-ink`): fills the pending-settlement tile, the focus ring, the checked checkbox or radio, selection, the active nav icon, the changed-since-seen dot, and the 40 px stepper numeral. Its ink is used for links, the caret and blue text.
+- **Short Red** (`short`) / **Short Ink** (`short-ink`): fills the out-of-stock tile, the struck item mark, the miss badge, the cancelled seal and the mismatch row outline. Its ink is used for negative balances, danger buttons, invalid quantities and the failed sync label.
+- **Attention Amber** (`attn`): fills the needs-reorder tile and the reorder mark. The same hex is used as text on dark (it passes 4.5:1), for missing header fields, the pending sync label and warnings.
+- **OK Green** (`ok`) / **OK Ink** (`ok-ink`): fills the match badge and the known-scan chip. Its ink is used for the synced label and zero-difference totals.
+- **Ink on Fill** (`ink-on-fill`): the only text or glyph colour that sits on a state fill.
 
 ### Neutral
 
-- **Whiteboard** (`#f4f7f6`): the page ground. **Surface** (`#ffffff`): cards, inputs, sheets, the bottom nav.
-- **Board Ink** (`#122321`): body text. **Muted Ink** (`#4b5f5c`): secondary text, 6.3:1 on the ground, tested for dim light.
-- **Hairline** (`#eef3f1`) and **Line** (`#d5dfdc`): table row dividers and card edges. Decorative only (1.3:1).
-- **Control Line** (`#758985`): the border of any input, select or field box. 3.7:1 on white, 3.4:1 on the ground (WCAG 1.4.11). Added in Phase 10; inputs used `--line` before.
-- **Disabled** (`#c9d6d3` fill, `#3c4f4b` text): 5.8:1.
-- Tints: `#f7faf9` table header, `#fdecea` red wash, `#f2f6fd` blue wash (changed-since-seen rows).
-- On the scrub header: white, **Scrub Mist** `#bfe0da` (5.3:1) for the hospital name, **Scrub Line** `#9fd1c8` for the sync pill border (4.4:1, a non-text edge).
+- **Panel** (`panel`): rows, count-table rows, search, sheets and summary cells. **Raised Panel** (`panel-2`): stepper buttons, chips, a pressed plain filter, and the reduced-motion press. Only bone, muted or ok-ink text may sit on it.
+- **Muted** (`muted`): secondary text, labels, placeholders, inactive nav and hollow tile text.
+- **Hair** (`hair`): decorative dividers and hollow edges (tiles at zero, disabled buttons, secondary rows). It does not meet 3:1 and never carries meaning alone.
+- **Control Line** (`control-line`): the edge of anything typed into or checked: inputs, the checkbox and radio, the secondary button and the sheet handle.
+- **Tints** (`tint-miss`, `tint-amber`, `tint-marker`, `tint-neutral`) with **Amber Line** (`amber-line`): notice washes such as the backup reminder, the error list and the changed-row layer. `tint-neutral` currently equals `panel-2`.
+- **Disabled** (`disabled-bg` / `disabled-ink`): disabled checked controls. **Scrim** (`scrim`): behind bottom sheets.
 
 ### Named Rules
 
-**The Glyph Rule.** A state is never colour alone. Match is a tick, mismatch a cross, attention an exclamation mark; a changed row has a dot as well as a tint; a mismatch also says "ناقص" or "زيادة" in words.
+**The Form-and-Hue Rule.** A state is never colour alone. Tiles carry a drawn glyph (cross, exclamation, ring) and go hollow at zero. Item marks are a struck red square (out), a solid amber square (reorder) or a hollow ring (fine). Badges carry a tick, cross or exclamation. A mismatch row is outlined red and badged with a cross. A missing field is amber with a dashed underline.
 
-**The Seal Is Violet Alone Rule.** Violet appears on the posted seal and the approve button and nowhere else. Not on badges, loaders, links or "new".
+**The Seal Rule.** Violet belongs to posting. It appears on the posted seal and on the one `seal` button that posts (اعتماد), and nowhere else: not on badges, loaders, links, chips or "new".
+
+**The Ink-on-Fill Rule.** Text on a state fill is always `ink-on-fill`. Text on the ground or a panel uses the state's ink, never the raw fill (amber is the one fill that doubles as its own ink).
 
 ## Typography
 
-**Font:** Almarai (400, 700, 800), self-hosted through `@fontsource/almarai`, fallback `system-ui, sans-serif`. One family for everything, including numerals and codes.
+**Font:** Almarai (400, 700, 800), self-hosted through `@fontsource/almarai`, with `system-ui, sans-serif` as the fallback. One family for everything, including numerals and codes.
 
-**Character:** a plain, sturdy Arabic sans that reads at 12 px in dim light. Weight 800 does the work of hierarchy; size stays close.
+**Character:** a sturdy Arabic sans. Weight 800 carries hierarchy (107 declarations, against 21 at 700 and 6 at 400). Size jumps hard from small labels to huge numerals.
 
 ### Hierarchy
 
-- **Title** (800, 22 px `--text-xl`, 1.5): the screen heading.
-- **Large number** (800, 28 px `--text-2xl`): the balance on the item card and the parity counters. The home tally is 22 px (`--text-xl`) and a balance in a list row is 18 px (`--text-lg`).
-- **Headline / item name** (800, 18 px or 15 px): the store name, an item name in a row or a count table.
-- **Body** (400, 15 px `--text-md`, 1.5): the default. `font-variant-numeric: tabular-nums` on `body`, so numbers never change width.
-- **Body small** (400, 13 px `--text-sm`): summaries and table cells.
-- **Label / meta** (400 or 700, 12 px `--text-xs`): column headings, codes, field labels, sub-lines. **12 px is the floor**; the seal's 12-unit text is drawn at 104 px so it renders at 12.5 px.
+- **Numeral** (800, 46 px `--text-num`, line-height 1): the three home state tiles.
+- **Stepper** (800, 40 px, line-height 1): the quantity being counted, in count blue. It is large text, so 3:1 suffices (tested).
+- **Display** (800, 28 px `--text-2xl`): the balance on the item card and parity counters.
+- **Headline** (800, 22 px `--text-xl`): screen titles, the balance in an item row, count-table counts and item filter numerals.
+- **Title** (800, 18 px `--text-lg`): main buttons, sums and square-button glyph size.
+- **Station** (800, 17 px, line-height 1.3): the store name in the station bar and typed text in the search box and item picker. It is a literal value, matching the approved comp, and has no token yet.
+- **Body** (400, 15 px `--text-md`, 1.5): the default, with `tabular-nums` set on `body`.
+- **Body small** (13 px `--text-sm`, the most used size): header summaries, tile labels, the sync label, count-table cells.
+- **Label** (700, 12 px `--text-xs`): column heads, meta lines, nav labels, chips, hints. **12 px is the floor** (tested). The seal draws its 12-unit text at 104 px, so it renders at 12.5 px.
 
-Line height 1.5 everywhere, for Arabic diacritics. Body measure is not an issue on a 412 px column.
+Line height is 1.5 for running text (Arabic diacritics) and 1 for the big numerals.
 
 ### Named Rules
 
-**The Two-Line Rule.** Long Arabic labels wrap to two lines or more. No ellipsis, no `nowrap` on a label, no truncated صرف / استلام / اعتماد. `overflow-wrap: anywhere` on `body` lets an unbreakable code wrap instead of widening the page; as a side effect a very narrow box may split an ordinary word, which was not seen on any screen checked.
+**The Loud Numeral Rule.** The number is the content. A count, balance or tally is set larger and heavier than its label, and the label sits small and muted beside or under it.
 
-**The Numerals Rule.** Western digits (0-9) everywhere, matching the workbook and the barcodes. Never mixed with Arabic-Indic digits in one row.
+**The Two-Line Rule.** Long Arabic labels wrap and are never truncated. `overflow-wrap: anywhere` on `body` lets an unbreakable code (`DHS_LCP_4.5_2.5x30`) wrap instead of widening the page.
+
+**The Numerals Rule.** Western digits (0-9) everywhere, matching the workbook and the barcodes.
 
 ## Layout
 
-Single column, phone first, designed at 412 px (Pixel 7) and never wider than the viewport. The shell is: scrub header, `12 px` padded content, a fixed bottom navigation (`56 px` plus the safe-area inset) with four destinations (الرئيسية، الأصناف، الحركات، التصدير). Primary actions sit in the thumb zone, above the nav, in a sticky footer on receive and issue.
+Single column, phone first, designed at 412 px. On wider screens the working column caps at `--column` (560 px) and centres. Fixed bars (the bottom nav, the action bar and bottom sheets) start and end at `--bar-inset`, the column edge, so on `desktop.png` the bars line up with the content rather than spanning the window.
 
-Screens are CSS grids with `minmax(0, 1fr)` columns, so a long item name cannot widen them. Count tables use four columns: a flexible name and three 52 px columns (requested, counted, state). Chips and fields wrap (`flex-wrap`) rather than scroll. Nothing scrolls sideways; `tests/e2e/layout.spec.ts` checks every route at 412 px with long and unbreakable names.
+The shell has three parts:
+- A thin station bar on the ground, with one hairline under it. The store name and hospital sit at inline-start and the sync state at inline-end.
+- Content padded at 16 px.
+- A fixed four-tab bottom nav, `--nav-height` 68 px plus the safe area, holding الرئيسية، الأصناف، الحركات، التصدير.
 
-Spacing scale (4 px base): 4, 8, 12, 16, 24, 32, 48 (`--space-1` to `--space-7`). Tap targets are at least 44 px (`--tap-min`). Forms that must not push the page wider carry `min-inline-size: 0` and `max-inline-size: 100%` globally.
+Home shows the three state tiles in a 3-column grid with a 10 px gap. Under them are notices and the open document, then the two thumb-zone actions.
+
+The spacing scale is 4, 8, 12, 16, 24, 32, 48 (`--space-1` to `--space-7`). The 10 px gap between tiles and actions is a literal from the comp. Tap targets are at least 44 px (`--tap-min`), and the main action is 64 px (`--tap-main`). Grids use `minmax(0, 1fr)`, and form controls carry `min-inline-size: 0; max-inline-size: 100%`, so nothing scrolls sideways (`tests/e2e/layout.spec.ts`).
+
+### The thumb zone
+
+Every task screen puts its one main action in a fixed footer above the bottom nav: `inset-block-end: calc(var(--nav-height) + safe-area)`, on the ground, padded 12/16. The content reserves `--tap-main + --space-5` beneath it. Screens with this footer: Home, Receive, Issue, ReceiptReview, Adjust, ItemEdit, ItemCard, Items, ImportParity and Settings.
+
+### RTL rules
+
+- The document is `dir="rtl"` and `lang="ar"`. CSS uses logical properties only, and the test fails on `left`, `right`, `margin-left`, `text-align: left` and similar.
+- Direction and order mirror. Numbers, the camera, ticks and the symmetric mismatch shake do not.
+- Codes, GTINs, batches, dates, sizes and quantities are LTR isolates, using `<Bdi>` or `<Num>` (`direction: ltr; unicode-bidi: isolate`).
+- Quantity and code fields set `dir` and `inputMode` per field. Free text uses `dir="auto"`.
+- The sync state sits at inline-end of the station bar.
 
 ## Elevation & Depth
 
-Flat by default. Depth comes from tonal layering (white cards on the whiteboard ground) and 1 px lines, not shadows. Two shadows give depth (the scanner frame's `box-shadow` is a 2 px outline plus a dimmed surround, not depth):
+Flat. Depth comes from tonal steps (ground, panel, raised panel), not shadows. There is one shadow:
 
-- **Sheet shadow** (`0 -6px 24px rgba(0,0,0,0.18)`): bottom sheets only, over a 32% scrim (`rgba(18,35,33,0.32)`).
-- **Ambient card shadow** (`0 2px 8px rgba(15,60,55,0.08)`): the receive line card only.
+- **Sheet shadow** (`--shadow-sheet`): bottom sheets only, over the scrim. It is the one layer that covers the page.
+
+The 2 px inset ring (`box-shadow: inset 0 0 0 2px`) used on hollow and pressed things is an edge, not elevation (see Shapes). The scanner's frame uses a spread shadow as a dimmed surround, not depth.
 
 ### Named Rules
 
-**The Flat-By-Default Rule.** A new surface starts flat with a `1px solid var(--line)` edge. A shadow needs a reason: it is a layer that covers the page.
+**The Flat Board Rule.** A new surface is a panel on the ground with no shadow. Only a layer that covers the page (a sheet) casts one.
 
 ## Shapes
 
-Soft, small radii. `10 px` for buttons, inputs, chips and inline panels; `14 px` for cards, tally, the camera view; `20 px` on the top corners of a bottom sheet; `99 px` for pills (the sync pill, chips). The seal is a circle (double ring, 3 and 1.5 stroke) tilted -14 degrees. No side stripes: a changed row is a tint plus a dot.
+Square-ish. The radius ramp is proportional to the element:
+
+- **Mark** (`rounded.mark`): the 14 px item mark and the 12 px line-card mark. A square that still reads as a square.
+- **Check** (`rounded.check`): the 22 px drawn checkbox. The radio is a circle.
+- **Badge** (`rounded.badge`): the 28 px status badge and the scanner result chip and glyph.
+- **Small** (`rounded.sm`): stepper buttons, the scanner frame, count-table row ends and summary cells.
+- **Medium** (`rounded.md`): buttons, tiles, rows, panels and the search box. This is the board's default corner.
+- **Sheet** (`rounded.sheet`): the top corners of a bottom sheet.
+- **Pill** (`rounded.pill`): chips and the header "edit details" pill.
+- **Circle** (50%): the hollow ok ring, the changed dot and the radio.
+
+Edges carry state:
+- solid fill = has a value or state;
+- 2 px hair ring or `hair` border = hollow, zero or plain;
+- 2 px dashed `hair` = disabled, or not yet built;
+- 2 px state-colour edge = this one is in question (the red miss row, the amber differing count, the count-blue open line);
+- 2 px bone ring = pressed or selected.
+
+There are no side stripes and no gradients (gradients are banned by test).
+
+### Named Rules
+
+**The Hollow-at-Zero Rule.** A tile or filter with nothing in it drops its fill and keeps only a 2 px hair edge, with muted text. A board shows its empty states at a glance.
 
 ## Components
 
 ### Buttons
 
-- **Shape:** 10 px radius, 44 px minimum height, 16 px inline padding, Almarai 800 at 15 px.
-- **Primary:** Scrub Green Bright fill, white text. **Secondary:** white fill, scrub text and 1 px scrub border. **Danger:** white fill, red text and border. **Seal (approve):** violet fill, white text.
-- **Disabled:** `#c9d6d3` fill, `#3c4f4b` text, no border. The approve button is disabled until counts reconcile.
-- **Press:** scale 0.97 over 80 ms linear; under reduced motion, opacity 0.82 instead.
+- **Shape:** 12 px radius, 2 px border, Almarai 800 at 15 px, minimum 44 px high, 16 px inline padding. `main` is 64 px at 18 px and is the thumb-zone action. `square` is 44 x 44 for a drawn `Glyph` (minus, plus, cross).
+- **Primary:** reversed. Bone fill and border with ground-coloured text. This is the one next step.
+- **Secondary (default):** hollow, with a `control-line` edge and bone text.
+- **Danger:** hollow, with a `short-ink` edge and text.
+- **Seal:** violet fill and border with bone text. It is used only for the button that posts.
+- **Disabled:** dashed 2 px hair edge, transparent fill, muted text. It never reads as available (see `review.png`, where اعتماد stays dashed until every reason is written).
+- **Press:** scale 0.97 over `--dur-press` (80 ms) linear. Under reduced motion it changes opacity to 0.82 instead.
 
-### Chips
+### The one primary
 
-Filter chips (`Items`): 44 px high, 10 px radius, 1 px line. Pressed = scrub fill, white text and bold, so the state is not colour alone. Header and document-data chips on receive and issue are pill-shaped.
+- **Exactly one primary per screen.** It is `size="main"` and fixed in the thumb zone above the bottom nav. Home's pair is استلام طلبية جديدة (reversed) and صرف لمندوب (hollow).
+- **Receive:** the primary reads "راجع واعتمد · N سطور" (bone).
+- **Issue:** while a line is open, the primary reads "راجع واعتمد" (bone). With no open line it becomes the violet "اعتماد" and posts.
+- **ReceiptReview:** the primary is the violet "اعتماد", disabled and dashed until the review has no problems.
+- **Exports and Unsent:** one card's button is promoted to primary. Exports promotes the backup when it is due and the ledger otherwise. Unsent promotes the first failed item. Every other card's button is secondary.
+- **Inside a bottom sheet:** the sheet is its own layer and may hold its own primary (the reason, substitute and header sheets).
 
-### Cards / Containers
+### The open line (receive and issue)
 
-White surface, 14 px radius, `1px solid var(--line)`, 12 px padding. Home tally is one bordered card split by hairlines into three cells (تحتاج طلب, نافد, تسويات معلّقة); a non-zero cell is washed red.
+- The line being counted is a panel with a 2 px count-blue edge, chips for what the barcode gave, and the stepper.
+- **A ready open line joins on its own** at four moments:
+  - when the next item is picked;
+  - at راجع واعتمد;
+  - when the user leaves the screen (a nav tab, back);
+  - when the page is backgrounded (`visibilitychange` to hidden).
+
+  Until then the card says so: "جاهز: بيتضاف مع الصنف اللي بعده أو مع راجع واعتمد" on Issue, "… أو مع المراجعة" on Receive.
+- **A line that is not ready never joins.** It stays out and names what it still needs (a batch, an expiry, a count) in place of the ready note.
+
+### State tile (signature)
+
+Home's three tiles are نافد (short red), تحتاج طلب (attention amber) and تسويات معلّقة (count blue).
+- **Shape:** 118 px minimum height, 12 px radius, padded 12/12/10.
+- **Content:** a 46 px numeral at the top, and a 13 px 800 label with a 16 px drawn glyph at the foot.
+- **Filled when non-zero:** `ink-on-fill` text.
+- **Hollow at zero:** a 2 px hair edge with muted text.
+
+### Status badge (`StatusDot`)
+
+- **Shape:** a 28 px square-ish badge (`rounded.badge`) in the state fill, with an 18 px `ink-on-fill` stroke glyph: tick (match), cross (miss) or exclamation (warn).
+- **Tick motion:** the tick draws itself (`stroke-dashoffset` over `--dur-tick`) only when a row changes into a match while on screen. A screen that opens on a finished count shows whole ticks. This is the one named non-transform animation the tests allow.
+
+### Item row and item marks
+
+- **Row:** a panel row (12 px radius, padded 12/14, at least 44 px). In order it shows:
+  - the state mark;
+  - the name (700) over a 12 px muted meta line (page · code · status);
+  - a 22 px 800 balance at inline-end, short-ink when negative with "تسوية معلّقة" under the name.
+- **Marks (14 px):**
+  - **out:** a red square with an `ink-on-fill` cross struck through it;
+  - **reorder:** a solid amber square;
+  - **ok:** a hollow 2 px muted ring.
+- **Changed since seen:** a count-blue 10 px dot plus a `tint-marker` layer that fades in once (`--dur-row-in`) and out when opened (`--dur-row-out`). It never uses a side stripe.
+
+### Count table
+
+- **Rows:** raised panel rows separated by an 8 px gap, with 10 px ends, under small muted column heads. The columns are صنف | مطلوب or الفاتورة | اتسلّم or اتعدّ | badge.
+- **Counts:** 22 px 800 bone. A count that disagrees turns short-ink, and its row is outlined 2 px red and badged with a cross.
+- **Sub-lines:** 12 px muted. A short count says "ناقص N" in amber.
+
+### Stepper (`QtyStepper` / `InlineQty`)
+
+- **Stepper:** 56 px raised-panel steps either side of a 40 px count-blue numeral that is still an input. A disabled step goes hollow (2 px hair ring).
+- **InlineQty:** the invoiced quantity inside a caption. It is an underline field (2 px `control-line` under, no radius) with an amber placeholder, and turns red when invalid.
 
 ### Inputs / Fields
 
-White fill, 1 px `--control-line` border, 10 px radius, 44 px high, 15 px text. A field with an inside label (`ParsedField`) puts the border on the wrapper. Focus is a 3 px marker-blue outline with 2 px offset (global `:focus-visible`). Number fields are LTR with a numeric keyboard. Caret is marker blue; checkboxes and radios take `accent-color: --scrub-2`. A select with a long option scrolls inside its own box.
+- **Search box:** a 52 px panel field with a 1 px `control-line` edge, 12 px radius and 17 px text, with a 12 px muted hint under it.
+- **ParsedField:** a labelled field with the edge on the wrapper.
+- **Focus:** the global 3 px count-blue outline with a 2 px offset.
+- **Caret:** count-ink. Placeholders are muted.
+- **Checkbox and radio:** drawn, not native. They are 22 px with a 2 px `control-line` edge. When checked they fill count blue with an ink tick or dot. When disabled the edge goes dashed.
+
+### Chips and filters
+
+- **Chips:** pills on `panel-2`, 12 px 700, at least 44 px high.
+- **Item filters:** small tiles with a 22 px numeral. They follow the tile language: a short or amber fill when they carry a tone, and hollow (hair ring, muted numeral) at zero. The pressed filter adds a 2 px bone inset ring, so selection is never hue alone.
 
 ### Navigation
 
-Fixed bottom bar, white, 1 px top line, four equal links in 12 px text; the active one is scrub green and bold. The header holds the hospital name (12 px, mist) over the store name (18 px, 800) at inline-start, and the sync pill at inline-end.
+- **Bar:** a fixed four-tab bottom bar on the ground with a hairline above.
+- **Tabs:** 22 px stroke icons over 12 px 700 labels, muted. The active tab turns its label bone and its icon count blue.
 
-### Count table (signature)
+### Sync state (`SyncPill`)
 
-Requested against counted, side by side: صنف | مطلوب (or الفاتورة) | اتسلّم (or اتعدّ) | state dot. Counts are marker-blue 800; a counted value that disagrees is red. The dot is a 20 px circle with a glyph. Sub-lines (batch, expiry, price change, reasons) sit under the name in 12 px, amber when they need attention.
+A borderless label with a 16 px drawn glyph at inline-end of the station bar:
+- **synced:** ok-ink with a tick ring ("متزامن");
+- **pending:** amber with a dashed ring ("N مستنية النت");
+- **failed:** short-ink with an exclamation ring, and it becomes a 44 px tappable button ("فشل الإرسال").
+
+The label cross-fades in from 35% over `--dur-sync`. The state is driven by write acknowledgement, not `navigator.onLine`.
 
 ### Seal (signature)
 
-A flat SVG, 104 px: double ring, "معتمد", date (LTR), document number. Posted is violet, cancelled is red with "ملغي". It plays the stamp animation once on mount. The 30 ms haptic is not in the seal: `postedHaptic()` (`src/ui/haptics.ts`) fires when a post succeeds, so opening an old posted document does not buzz. A number longer than 11 characters is squeezed to fit the ring.
+- **Form:** a 104 px flat SVG disc tilted -14 degrees, with double bone rings, "معتمد", the date (LTR) and the document number. Posted is the solid violet disc. Cancelled is the solid red disc with ink-on-fill rings and text.
+- **Stamp:** on mount it plays the stamp: scale 1.35 to 1, a fade in and a 3 degree settle over `--dur-seal`, with emphasized-decelerate easing and a ring flash. The 30 ms haptic fires from `postedHaptic()` when a post succeeds, not from the seal.
 
-### Sync pill
+### Bottom sheet (and `ReasonSheet`)
 
-Header pill, 12 px text. Dashed border while changes wait ("N مستنية النت"), solid when synced ("متزامن"), red dashed on a tinted ground and tappable when sending failed ("فشل الإرسال"). Driven by write acknowledgement, not `navigator.onLine`.
+- **Form:** a panel with 16 px top corners and the sheet shadow over the scrim. It has a 40 x 4 `control-line` handle in a 44 px drag zone and a 15 px 800 title.
+- **Behaviour:** Escape or a swipe down closes it. Focus is trapped and returned.
+- **Motion:** it slides in over `--dur-sheet-in` (decelerate) and out over `--dur-sheet-out` (accelerate). Under reduced motion it is a 120 ms fade.
 
-### Bottom sheet
+### Motion
 
-White, 20 px top corners, 40 x 4 handle, 32% scrim, Escape or swipe down (80 px) to close, focus trapped and returned. Used for the receipt and batch data, substitutes, reasons, and item pickers.
+Only `transform` and `opacity` animate, with the StatusDot tick as the one exception. Every file that moves answers `prefers-reduced-motion` (enforced by test). The token values change under reduced motion in `tokens.css` itself.
 
-### Scanner
-
-A 178 px viewfinder is itself the tap target, with a medium rectangle and a dimmed surround. A known GTIN outlines green (`#5fe0a0`) with a tick, an unknown one red (`#ff8a80`) with a cross, plus a beep and a vibration. Manual entry sits directly under it.
-
-## Motion
-
-Only `transform` and `opacity` animate (the tick is the one named exception, below). Every moment has a `prefers-reduced-motion` answer, and `tests/unit/ui/designRules.test.ts` enforces both rules on the CSS. Tokens in `src/ui/tokens.css`; reduced-motion values shown after the arrow.
-
-| Moment | Effect | Duration token | Easing | Reduced motion |
+| Moment | Effect | Token | Easing | Reduced motion |
 |---|---|---|---|---|
-| Posting: seal stamp | scale 1.35 to 1, opacity 0 to 1, 3 deg settle, ring flash; 30 ms haptic on a successful post | `--dur-seal` 420 ms (ring 500 ms) → 150 ms | emphasized-decelerate | fade only |
-| Scan success | green or red outline, opacity 0 to 1, scale 1.04 to 1; scanner freezes 250 ms | `--dur-scan` 200 ms → none | decelerate | outline appears at once |
-| Count match | check draws with `stroke-dashoffset` | `--dur-tick` 220 ms → none | standard | static tick |
-| Count mismatch | counted number shakes 4 px left and right twice (translateX) | `--dur-shake` 240 ms → none | standard | static red number, glyph and "ناقص" text |
-| Changed row | tint layer fades in once and persists; fades out on open | `--dur-row-in` 180 ms, `--dur-row-out` 120 ms → none | standard | tint appears and goes at once |
-| Pending to synced | dashed border layer cross-fades to a solid one; label fades in from 35% | `--dur-sync` 250 ms → none | standard | instant swap |
-| Bottom sheet | translateY 100% to 0 over the scrim; reverse on close | `--dur-sheet-in` 300 ms, `--dur-sheet-out` 200 ms → 120 ms | decelerate in, accelerate out | 120 ms fade, no slide |
-| Quantity change | displayed number cross-fades (never an input) | `--dur-number` 120 ms → none | standard | instant |
-| Pressed target | scale 0.97 | `--dur-press` 80 ms → none | linear | opacity 0.82 |
+| Seal stamp | scale 1.35 to 1, fade, 3 deg settle, ring flash | `--dur-seal` | emphasized-decelerate | 150 ms fade |
+| Scan result | outline and chip fade and scale in | `--dur-scan` | decelerate | instant |
+| Count-match tick | stroke draws once, on change only | `--dur-tick` | standard | static tick |
+| Count mismatch | numeral shakes 4 px twice (translateX, symmetric) | `--dur-shake` | standard | still red numeral, cross, "ناقص" |
+| Changed row | tint layer fades in, fades out on open | `--dur-row-in` / `--dur-row-out` | standard | appears and goes at once |
+| Sync label | cross-fade from 35% | `--dur-sync` | standard | instant |
+| Bottom sheet | translateY 100% to 0 and back | `--dur-sheet-in` / `--dur-sheet-out` | decelerate in, accelerate out | 120 ms fade |
+| Quantity change | displayed number cross-fades | `--dur-number` | standard | instant |
+| Press | scale 0.97 (steps 0.94) | `--dur-press` | linear | opacity 0.82, or raised panel on rows |
 
-Easing tokens were checked on 2026-10-13 against the official Material 3 motion tokens (material-web `_md-sys-motion.scss`) and match exactly: `--ease-standard` `cubic-bezier(0.2, 0, 0, 1)` is `easing-standard`; `--ease-decelerate` `(0, 0, 0, 1)` is `easing-standard-decelerate`; `--ease-accelerate` `(0.3, 0, 1, 1)` is `easing-standard-accelerate`; `--ease-emphasized-decelerate` `(0.05, 0.7, 0.1, 1)` is `easing-emphasized-decelerate`. Of the durations, 200 (short4), 250 (medium1) and 300 (medium2) sit on the Material grid; the others (420, 220, 180, 120, 240, 80) are the spec's own.
-
-**The Tick Exception.** The count-match tick animates `stroke-dashoffset`, as `ui-inspiration.md` prescribes. It is a 16 px SVG stroke, so it costs nothing, and it is the only non-transform, non-opacity animation in the app.
-
-## RTL Rules
-
-- The document is `dir="rtl"`, `lang="ar"`. CSS uses logical properties only (`margin-inline-start`, `inset-inline-end`, `padding-block`, `border-start-start-radius`); a unit test (`designRules.test.ts`) fails on `left`, `right`, `margin-left` and the like.
-- Mirror direction and order. Do not mirror numbers, the camera, ticks, clocks or charts.
-- Codes, GTINs, batch numbers, dates, sizes (`2.5x30`) and quantities are LTR isolates: wrap them in `<Bdi>` (`dir="ltr"`, `unicode-bidi: isolate`) or use `Num`, which isolates its own value.
-- Quantity and code fields are `ParsedField`s: `dir` and `inputMode` (numeric or decimal) are set per field, so numbers type LTR on a numeric keyboard. Free-text fields (search, reasons) use `dir="auto"`.
-- The sync pill sits at inline-end of the header, so it follows the language.
-- Printed documents are checked separately from screens (RTL sheet view, A4).
-- Seal and shake: the shake is symmetric on purpose, so it reads the same either way.
+The easings are the Material 3 standard, standard-decelerate, standard-accelerate and emphasized-decelerate curves, checked exactly on 2026-10-13.
 
 ## Do's and Don'ts
 
 ### Do:
 
-- **Do** pair every colour state with a glyph or a word (tick, cross, exclamation, "ناقص").
-- **Do** keep 44 px minimum tap targets and put primary actions in the thumb zone.
-- **Do** use only the type scale (12, 13, 15, 18, 22, 28 px). 12 px is the floor.
-- **Do** use `--control-line` for the edge of anything the user types into, and `--line` for decoration.
-- **Do** wrap codes and numbers in `<Bdi>` or `<Num>`; wrap long Arabic text instead of cutting it.
-- **Do** animate only transform and opacity, from the duration and easing tokens, and add a reduced-motion fallback in the same file.
-- **Do** run `E2E_EMULATORS=1 npx playwright test tests/e2e/layout.spec.ts` after any layout change.
+- **Do** give each screen exactly one reversed (bone) primary, `size="main"`, fixed in the thumb zone above the bottom nav. Sheets may carry their own.
+- **Do** show every state by form as well as hue: filled, hollow, struck, ringed, or a drawn glyph.
+- **Do** take a tile or filter hollow at zero (2 px hair edge, muted text).
+- **Do** put `ink-on-fill` on state fills and the state's ink on the ground or a panel.
+- **Do** use `control-line` for the edge of anything typed into or checked, and `hair` only for decoration and hollow edges.
+- **Do** set counts and balances large and 800, with their labels small and muted.
+- **Do** join a ready open line by itself (next item, review, leaving, backgrounding), and keep an unready one out with a note saying what it needs.
+- **Do** draw symbols as SVG (`Glyph`, badge glyphs, nav icons), never as font characters.
+- **Do** animate only transform and opacity from the motion tokens, with a reduced-motion answer in the same file.
+- **Do** wrap codes and numbers in `<Bdi>` or `<Num>`, and wrap long Arabic labels rather than cutting them.
 
 ### Don't:
 
-- **Don't** use violet for anything but the posted state; the seal is not a badge, a button style or a loader.
-- **Don't** add textures, paper curls, hand-drawn lines, gradients, glass, confetti, bounce or looping shimmer.
-- **Don't** use a side stripe (`border-inline-start` above 1 px as an accent) on cards or rows.
+- **Don't** use violet for anything but the posted seal and the one button that posts.
+- **Don't** add a light theme, `prefers-color-scheme`, gradients, glass, textures or soft white cards.
+- **Don't** reverse a second button on a screen, or let a disabled button read as available (it is dashed and muted).
+- **Don't** shadow anything but a bottom sheet.
+- **Don't** use a side stripe on rows or cards. A changed row is a tint plus a dot.
 - **Don't** use `left`, `right`, `margin-left` or `text-align: left` in CSS.
-- **Don't** put a keyed or remounting element around an `<input>`; `Num` is for displayed values only.
+- **Don't** set text below 12 px, or use the old whiteboard token names (`--board`, `--surface`, `--ink`, `--line`, `--marker`, `--miss`, `--match`, `--scrub` and similar; banned by test).
 - **Don't** rely on `navigator.onLine`, hover, or colour alone to tell the user something important.
-- **Don't** build a dashboard of KPI cards; the home screen is the open document, two actions, and a three-cell tally.

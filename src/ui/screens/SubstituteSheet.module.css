@@ -45,13 +45,6 @@
   border: 2px solid var(--count);
 }
 
-.radio {
-  flex: none;
-  inline-size: 20px;
-  block-size: 20px;
-  accent-color: var(--count);
-}
-
 .body {
   display: grid;
   flex: 1;

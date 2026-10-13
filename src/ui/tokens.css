@@ -44,6 +44,9 @@
 
   /* Layout */
   --nav-height: 68px;
+  --column: 560px; /* the working column: wider screens centre it rather than stretch it */
+  /* Where a fixed bar starts and ends: the screen edge on a phone, the column edge on a wide screen. */
+  --bar-inset: max(0px, calc((100% - var(--column)) / 2));
   --tap-min: 44px;
   --tap-main: 64px;
 
@@ -147,8 +150,79 @@ textarea {
   max-inline-size: 100%;
 }
 
+::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+
 a {
   color: var(--count-ink);
+}
+
+/* Radios and checkboxes: drawn, not the browser's grey. A 2px edge in --control-line (3:1 on the
+   ground, a panel and a raised panel), filled count blue with a drawn dot or tick when on. The tap
+   target is the label around it (44px or more); the global focus ring applies. */
+input[type='radio'],
+input[type='checkbox'] {
+  appearance: none;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  inline-size: 22px;
+  block-size: 22px;
+  margin: 0;
+  border: 2px solid var(--control-line);
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type='radio'] {
+  border-radius: 50%;
+}
+
+input[type='checkbox'] {
+  border-radius: 6px;
+}
+
+input[type='radio']:checked,
+input[type='checkbox']:checked {
+  border-color: var(--count);
+  background: var(--count);
+}
+
+input[type='radio']:checked::before {
+  content: '';
+  inline-size: 8px;
+  block-size: 8px;
+  border-radius: 50%;
+  background: var(--ink-on-fill);
+}
+
+input[type='checkbox']:checked::before {
+  content: '';
+  inline-size: 16px;
+  block-size: 16px;
+  background: var(--ink-on-fill);
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 8.5l3 3 6-7' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+}
+
+/* Off the table: a dashed edge, never a solid one. */
+input[type='radio']:disabled,
+input[type='checkbox']:disabled {
+  border-style: dashed;
+  border-color: var(--disabled-ink);
+  cursor: default;
+}
+
+input[type='radio']:disabled:checked,
+input[type='checkbox']:disabled:checked {
+  background: var(--disabled-bg);
+}
+
+input[type='radio']:disabled:checked::before,
+input[type='checkbox']:disabled:checked::before {
+  background: var(--disabled-ink);
 }
 
 ::selection {

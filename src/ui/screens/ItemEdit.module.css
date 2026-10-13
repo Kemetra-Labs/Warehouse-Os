@@ -68,16 +68,10 @@
   min-block-size: var(--tap-min);
 }
 
-.check input {
-  inline-size: 22px;
-  block-size: 22px;
-  accent-color: var(--count);
-}
-
 /* The one primary: save, reversed, in the thumb zone; cancel is a plain link beside it. */
 .actions {
   position: fixed;
-  inset-inline: 0;
+  inset-inline: var(--bar-inset);
   inset-block-end: calc(var(--nav-height) + env(safe-area-inset-bottom));
   z-index: 5;
   display: grid;

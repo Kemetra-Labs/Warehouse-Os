@@ -9,7 +9,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-3) max(var(--space-4), calc((100% - var(--column)) / 2 + var(--space-4)));
   padding-block-start: max(var(--space-3), env(safe-area-inset-top));
   border-block-end: 1px solid var(--hair);
   background: var(--ground);
@@ -33,12 +33,14 @@
 }
 
 .content {
+  max-inline-size: var(--column);
+  margin-inline: auto;
   padding: var(--space-4) var(--space-4) var(--space-3);
 }
 
 .nav {
   position: fixed;
-  inset-inline: 0;
+  inset-inline: var(--bar-inset);
   inset-block-end: 0;
   z-index: 10;
   display: grid;

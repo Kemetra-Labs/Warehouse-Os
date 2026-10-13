@@ -19,6 +19,19 @@ function markOf(row: LedgerRow): Mark {
   return row.status === STATUS_LABELS.REORDER ? 'reorder' : 'ok'
 }
 
+/** Out is a red square with a cross cut into it, so it never reads as the amber square by hue alone. */
+function ItemMark({ mark }: { readonly mark: Mark }) {
+  return (
+    <span className={`${styles.mark} ${styles[mark]}`} aria-hidden="true">
+      {mark === 'out' ? (
+        <svg viewBox="0 0 14 14" focusable="false">
+          <path d="M3.5 3.5l7 7M10.5 3.5l-7 7" />
+        </svg>
+      ) : null}
+    </span>
+  )
+}
+
 const CHANGED_LABEL = 'اتغيّر من جهاز تاني من آخر مرة فتحته'
 /** The highlight fades out over --dur-row-out (120 ms) once the item is opened; this outlasts it. */
 const LEAVE_MS = 200
@@ -63,7 +76,7 @@ export function ItemRow({ row, onOpen }: ItemRowProps) {
       ) : leaving ? (
         <span className={styles.dot} aria-hidden="true" />
       ) : null}
-      <span className={`${styles.mark} ${styles[markOf(row)]}`} aria-hidden="true" />
+      <ItemMark mark={markOf(row)} />
       <span className={styles.main}>
         <span className={styles.name}>{item.nameAr}</span>
         <span className={styles.meta}>

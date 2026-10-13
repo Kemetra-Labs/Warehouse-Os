@@ -53,7 +53,7 @@ function Notes({ line, item, businessDate, readOnly, actions }: RowInput) {
         </span>
       ) : null}
       {item === undefined && !readOnly ? (
-        <Button variant="primary" onClick={() => actions.onResolve(line.n)}>
+        <Button variant="secondary" onClick={() => actions.onResolve(line.n)}>
           اختار الصنف
         </Button>
       ) : null}

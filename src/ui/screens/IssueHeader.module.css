@@ -35,11 +35,18 @@
 }
 
 .remove {
+  display: grid;
+  place-items: center;
   min-inline-size: var(--tap-min);
   min-block-size: var(--tap-min);
+  padding: 0;
   border: 0;
   background: transparent;
   color: var(--muted);
-  font-size: var(--text-lg);
   cursor: pointer;
+}
+
+.remove svg {
+  inline-size: 18px;
+  block-size: 18px;
 }

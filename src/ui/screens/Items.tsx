@@ -23,6 +23,12 @@ const FILTERS: readonly { readonly id: ItemListFilter; readonly label: string }[
 
 const FILTER_IDS = new Set<string>(FILTERS.map((f) => f.id))
 
+/** The two filters that are states: a solid tile of their colour when there are some, hollow at zero. */
+const FILTER_TONES: Readonly<Partial<Record<ItemListFilter, 'short' | 'attn'>>> = {
+  out: 'short',
+  reorder: 'attn',
+}
+
 export interface ItemsViewProps {
   readonly rows: readonly LedgerRow[]
   readonly query: ListQuery
@@ -59,6 +65,8 @@ export function ItemsView({ rows, query, onQueryChange, onOpen }: ItemsViewProps
             key={f.id}
             type="button"
             className={styles.chip}
+            data-tone={counts[f.id] > 0 ? FILTER_TONES[f.id] : undefined}
+            data-zero={counts[f.id] === 0 && FILTER_TONES[f.id] !== undefined ? 'true' : undefined}
             aria-pressed={query.filter === f.id}
             onClick={() => onQueryChange({ ...query, filter: f.id })}
           >

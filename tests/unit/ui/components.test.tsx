@@ -79,6 +79,26 @@ describe('StatusDot', () => {
   })
 })
 
+describe('StatusDot tick', () => {
+  const tickClass = (): string | null => host.querySelector('path')?.getAttribute('class') ?? null
+
+  it('is whole from the start for a dot that opens as a match', () => {
+    render(<StatusDot state="match" />)
+    expect(tickClass()).toBeNull()
+  })
+
+  it('draws once when a dot turns into a match, and a re-render does not restart it', () => {
+    render(<StatusDot state="miss" />)
+    render(<StatusDot state="match" />)
+    const drawn = tickClass()
+    expect(drawn).toBeTruthy()
+    render(<StatusDot state="match" label="مطابق تاني" />)
+    expect(tickClass()).toBe(drawn)
+    render(<StatusDot state="miss" />)
+    expect(tickClass()).toBeNull()
+  })
+})
+
 describe('Seal', () => {
   it('labels posted and cancelled seals in Arabic', () => {
     render(<Seal date="12/10/2026" docNumber="دفعة 14" />)

@@ -77,6 +77,13 @@ describe('ItemRow', () => {
     expect(host.textContent).toContain('-3')
   })
 
+  it('draws out as a struck square, so it differs from reorder by form and not by hue alone', () => {
+    render(<ItemRow row={row({ balance: 0, status: 'نافد' })} />)
+    expect(host.querySelector('svg path')).not.toBeNull()
+    render(<ItemRow row={row()} />)
+    expect(host.querySelector('svg')).toBeNull()
+  })
+
   it('opens the item on tap, so its highlight can clear', () => {
     const onOpen = vi.fn()
     render(<ItemRow row={row({ changedSinceSeen: true })} onOpen={onOpen} />)

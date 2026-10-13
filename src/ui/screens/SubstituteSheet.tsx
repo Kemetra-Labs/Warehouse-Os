@@ -47,7 +47,6 @@ function Options({ candidates, chosenCode, onChoose }: ListProps) {
               <input
                 type="radio"
                 name="substitute"
-                className={styles.radio}
                 checked={c.item.code === chosenCode}
                 onChange={() => onChoose(c.item.code)}
               />
