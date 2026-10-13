@@ -177,6 +177,44 @@ describe('Receive: scanning', () => {
     expect(pending()).toBeNull()
   })
 
+  it('leaving the screen keeps a ready open line: it joins the receipt', async () => {
+    const cam = await mount()
+    act(() => cam.emit(ean(GTIN_A)))
+    type(field('الكمية في الفاتورة', pending()!), '3')
+    expect(latest.lines).toHaveLength(0)
+    act(() => root.render(<div />)) // e.g. a bottom-nav tab
+    expect(latest.lines).toHaveLength(1)
+    expect(latest.lines[0]).toMatchObject({ itemCode: 'AAA-01', invoicedQty: 3, countedQty: 1 })
+  })
+
+  it('the app going to the background joins a ready open line too', async () => {
+    const cam = await mount()
+    act(() => cam.emit(ean(GTIN_A)))
+    type(field('الكمية في الفاتورة', pending()!), '3')
+    const hidden = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden')
+    act(() => void document.dispatchEvent(new Event('visibilitychange')))
+    hidden.mockRestore()
+    expect(latest.lines).toHaveLength(1)
+    expect(pending()).toBeNull()
+    expect(saved()).toHaveLength(1)
+  })
+
+  it('leaving with a line that is not ready adds nothing', async () => {
+    const cam = await mount()
+    act(() => cam.emit(ean(GTIN_A))) // no invoiced quantity yet
+    act(() => root.render(<div />))
+    expect(latest.lines).toHaveLength(0)
+  })
+
+  it('going to the review and then leaving adds the line once', async () => {
+    const cam = await mount()
+    act(() => cam.emit(ean(GTIN_A)))
+    type(field('الكمية في الفاتورة', pending()!), '1')
+    click(buttonByText(host, 'راجع واعتمد'))
+    act(() => root.render(<div />))
+    expect(latest.lines).toHaveLength(1)
+  })
+
   it('counts with a big −/+ and typing the number still works', async () => {
     const cam = await mount()
     act(() => cam.emit(ean(GTIN_A)))

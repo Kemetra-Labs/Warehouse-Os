@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   findDuplicateDelivery,
   type ExistingReceipt,
   type ReceiptDraft,
 } from '../../domain/receipt'
-import { joinProblem, patchLine, resolveLine } from '../../domain/receiptEdit'
+import { joinPending, joinProblem, patchLine, resolveLine } from '../../domain/receiptEdit'
 import {
   interpretClass,
   interpretScan,
@@ -76,6 +76,34 @@ export function useReceiveFlow(input: ReceiveFlowInput): ReceiveFlow {
   const [resolving, setResolving] = useState<ResolveTarget | null>(null)
 
   const [pendingKey, setPendingKey] = useState(0)
+
+  /** The last rendered receipt and open line: leaving the screen comes after the last render. */
+  const latest = useRef({ draft, pending, onChange })
+  useEffect(() => {
+    latest.current = { draft, pending, onChange }
+  })
+
+  // The card calls a ready line "it will be added", so leaving the screen (a nav tab, back) or the
+  // app going to the background joins it, as the next scan would. A line that is not ready stays
+  // out: it was never shown as added.
+  useEffect(() => {
+    const keepReady = (): void => {
+      const { draft: d, pending: p, onChange: save } = latest.current
+      const joined = p ? joinPending(d, p) : null
+      if (!joined) return
+      latest.current = { draft: joined, pending: null, onChange: save }
+      save(joined)
+      setPending(null)
+    }
+    const onHidden = (): void => {
+      if (document.visibilityState === 'hidden') keepReady()
+    }
+    document.addEventListener('visibilitychange', onHidden)
+    return () => {
+      document.removeEventListener('visibilitychange', onHidden)
+      keepReady()
+    }
+  }, [])
 
   /** Writes one step: the receipt once (when a line joined or counted), then the open line. */
   const commit = (step: Extract<Step, { kind: 'step' }>): boolean => {
@@ -152,6 +180,8 @@ export function useReceiveFlow(input: ReceiveFlowInput): ReceiveFlow {
       if (step.kind === 'blocked') return setNotice(reviewNotice(step.problem))
       if (step.draft !== draft) onChange(step.draft)
       setPending(null)
+      // The screen unmounts in this same render: the leaving effect must not join the line again.
+      latest.current = { draft: step.draft, pending: null, onChange }
       onReview()
     },
     startBatch(item) {

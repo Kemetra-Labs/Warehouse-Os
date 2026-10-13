@@ -18,7 +18,8 @@ export interface DraftAutosave<T> {
 
 /**
  * Keeps the draft in Firestore (offline-first: the write queues locally, never awaited by the
- * UI). A new document with nothing in it is not saved. Leaving the screen saves what is pending.
+ * UI). A new document with nothing in it is not saved. Leaving the screen, or the app going to
+ * the background, saves what is pending.
  * `adapter` must be a stable reference (a module constant).
  */
 export function useDraftAutosave<T>(
@@ -44,6 +45,15 @@ export function useDraftAutosave<T>(
   }, [id, skipBlank, adapter, clear])
 
   useEffect(() => flush, [flush])
+
+  // A phone may freeze or close a backgrounded app before the timer fires: save at once instead.
+  useEffect(() => {
+    const onHidden = (): void => {
+      if (document.visibilityState === 'hidden') flush()
+    }
+    document.addEventListener('visibilitychange', onHidden)
+    return () => document.removeEventListener('visibilitychange', onHidden)
+  }, [flush])
 
   return {
     schedule: useCallback(
