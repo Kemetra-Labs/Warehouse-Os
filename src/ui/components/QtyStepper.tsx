@@ -51,14 +51,16 @@ export interface InlineQtyProps {
   readonly value: number
   readonly label: string
   readonly onCommit: (value: number) => void
+  /** As on `QtyStepper`: told whether the text now in the field is a whole number. */
+  readonly onValidChange?: (valid: boolean) => void
 }
 
 /**
  * A small whole-number field that sits inside a sentence ("اتعدّ من [6] في الفاتورة"). Zero shows
  * empty with a dash, so a quantity that is still missing reads as missing.
  */
-export function InlineQty({ value, label, onCommit }: InlineQtyProps) {
-  const qty = useQtyText(value, onCommit)
+export function InlineQty({ value, label, onCommit, onValidChange }: InlineQtyProps) {
+  const qty = useQtyText(value, onCommit, onValidChange)
   return (
     <label className={styles.inline}>
       <span className={styles.sr}>{label}</span>

@@ -74,6 +74,8 @@ export function Receive(props: ReceiveProps) {
           businessDate={draft.businessDate}
           problem={flow.problem}
           onChange={flow.patchPending}
+          onCountedValidChange={flow.setCountedValid}
+          onInvoicedValidChange={flow.setInvoicedValid}
           onPickItem={() => flow.askResolve({ kind: 'pending' })}
           onDiscard={flow.discardPending}
         />
