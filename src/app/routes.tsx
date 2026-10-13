@@ -2,7 +2,11 @@ import { lazy, Suspense } from 'react'
 import { Route, Routes } from 'react-router'
 import { Shell } from './Shell'
 import { Home } from '../ui/screens/Home'
-import { ItemsScreen, MovementsScreen, ReportsScreen } from './screens'
+import { ItemCard } from '../ui/screens/ItemCard'
+import { ItemEdit } from '../ui/screens/ItemEdit'
+import { Items } from '../ui/screens/Items'
+import { Settings } from '../ui/screens/Settings'
+import { MovementsScreen, ReportsScreen } from './screens'
 
 // Lazy: keeps SheetJS (xlsx) out of the main bundle until the import screen is opened.
 const ImportParity = lazy(() => import('../ui/screens/ImportParity'))
@@ -18,7 +22,12 @@ export function AppRoutes() {
     <Routes>
       <Route element={<Shell />}>
         <Route index element={<Home />} />
-        <Route path="items" element={<ItemsScreen />} />
+        {/* Not lazy: the items, the card and the form must open offline without a new chunk. */}
+        <Route path="items" element={<Items />} />
+        <Route path="items/new" element={<ItemEdit />} />
+        <Route path="items/:code" element={<ItemCard />} />
+        <Route path="items/:code/edit" element={<ItemEdit />} />
+        <Route path="settings" element={<Settings />} />
         <Route path="movements" element={<MovementsScreen />} />
         <Route path="reports" element={<ReportsScreen />} />
         <Route

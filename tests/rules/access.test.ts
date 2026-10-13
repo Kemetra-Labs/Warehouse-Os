@@ -1,11 +1,19 @@
 // @vitest-environment node
-import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import {
   assertFails,
   assertSucceeds,
   type RulesTestEnvironment,
 } from '@firebase/rules-unit-testing'
-import { deleteDoc, doc, getDoc, setDoc, updateDoc } from 'firebase/firestore'
+import {
+  deleteDoc,
+  doc,
+  getDoc,
+  serverTimestamp,
+  setDoc,
+  updateDoc,
+  writeBatch,
+} from 'firebase/firestore'
 import { createEnv, ownerDb, validItem } from './helpers'
 
 let env: RulesTestEnvironment
@@ -114,6 +122,39 @@ describe('rules test 9: items', () => {
     await assertFails(updateDoc(doc(db, 'items/SCR-07'), { authorityCode: '1234567' }))
     await assertFails(updateDoc(doc(db, 'items/SCR-07'), { authorityCode: 70000409 }))
     await assertFails(updateDoc(doc(db, 'items/SCR-07'), { somethingElse: 'x' }))
+  })
+
+  it('accepts the exact write of the authority-code import: a batch of {authorityCode, updatedAt}', async () => {
+    const db = ownerDb(env)
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'items/SCR-10'), validItem('SCR-10', { page: 10 }))
+      await setDoc(doc(ctx.firestore(), 'items/SCR-11'), validItem('SCR-11', { page: 11 }))
+    })
+    const stamp = (): Record<string, unknown> => ({ updatedAt: serverTimestamp() })
+    const good = writeBatch(db)
+    good.update(doc(db, 'items/SCR-10'), { authorityCode: '70000410', ...stamp() })
+    good.update(doc(db, 'items/SCR-11'), { authorityCode: '150004772', ...stamp() })
+    await assertSucceeds(good.commit())
+    const kept = (await getDoc(doc(db, 'items/SCR-10'))).data()
+    expect(kept).toMatchObject({ authorityCode: '70000410', priceMinor: 12550, page: 10 })
+
+    // One bad code fails the whole batch, so nothing is half-applied.
+    const bad = writeBatch(db)
+    bad.update(doc(db, 'items/SCR-10'), { authorityCode: '70000411', ...stamp() })
+    bad.update(doc(db, 'items/SCR-11'), { authorityCode: '12345', ...stamp() })
+    await assertFails(bad.commit())
+    expect((await getDoc(doc(db, 'items/SCR-10'))).data()?.authorityCode).toBe('70000410')
+  })
+
+  it('does not let the authority-code write turn into a code or page change', async () => {
+    const db = ownerDb(env)
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'items/SCR-12'), validItem('SCR-12', { page: 12 }))
+    })
+    await assertFails(
+      updateDoc(doc(db, 'items/SCR-12'), { code: 'SCR-13', authorityCode: '70000412' }),
+    )
+    await assertFails(updateDoc(doc(db, 'items/SCR-12'), { page: 0, authorityCode: '70000412' }))
   })
 
   it('accepts a new item created with an authority code', async () => {

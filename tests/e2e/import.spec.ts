@@ -38,7 +38,8 @@ test.describe('import the workbook', () => {
     })
 
     await page.goto('/import')
-    await page.locator('input[type="file"]').setInputFiles(FIXTURE)
+    // The first file input is the workbook's; the authority-code import has its own below it.
+    await page.locator('input[type="file"]').first().setInputFiles(FIXTURE)
 
     const result = page.getByRole('region', { name: 'نتيجة المطابقة' })
     await expect(result).toContainText('8 / 8')

@@ -17,6 +17,8 @@ export interface ParsedFieldProps<T> {
   readonly changed?: boolean
   readonly hint?: ReactNode
   readonly placeholder?: string
+  /** The id of a `<datalist>` that suggests values. */
+  readonly list?: string
 }
 
 /**
@@ -34,6 +36,7 @@ export function ParsedField<T>({
   changed = false,
   hint,
   placeholder,
+  list,
 }: ParsedFieldProps<T>) {
   const [text, setText] = useState(() => format(value))
   const [synced, setSynced] = useState(value)
@@ -65,6 +68,7 @@ export function ParsedField<T>({
         autoComplete="off"
         value={text}
         placeholder={placeholder}
+        list={list}
         aria-invalid={!parse(text).ok}
         onChange={(e) => onInput(e.target.value)}
       />
