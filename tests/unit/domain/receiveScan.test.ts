@@ -297,3 +297,38 @@ describe('stepReview: review takes the open line with it', () => {
     expect(step.kind === 'blocked' && step.problem).toContain('اختار الصنف')
   })
 })
+
+describe('a blocked open line (a quantity field holds text that is not a whole number)', () => {
+  const day = '2026-10-12'
+  const WHY = 'اكتب رقم صحيح'
+  const ready = { ...newLine(1), itemCode: 'AAA-01', invoicedQty: 4, countedQty: 4 }
+  const hitB = {
+    kind: 'item',
+    item: B,
+    gtin: null,
+    authorityCode: null,
+    batchNo: null,
+    expiry: null,
+  } as const
+
+  it('stepHit refuses another item and leaves the line and the receipt alone', () => {
+    expect(stepHit(newDraft(day), ready, hitB, WHY)).toEqual({ kind: 'busy', problem: WHY })
+  })
+
+  it('stepHit still counts the same item on the open line', () => {
+    const same = { ...hitB, item: A }
+    const step = stepHit(newDraft(day), ready, same, WHY)
+    expect(step.kind === 'step' && step.pending?.countedQty).toBe(5)
+    expect(step.kind === 'step' && step.draft.lines).toHaveLength(0)
+  })
+
+  it('stepBatch and stepReview refuse', () => {
+    expect(stepBatch(newDraft(day), ready, A, WHY)).toEqual({ kind: 'busy', problem: WHY })
+    expect(stepReview(newDraft(day), ready, WHY)).toEqual({ kind: 'blocked', problem: WHY })
+  })
+
+  it('with no open line the reason changes nothing', () => {
+    const d = newDraft(day)
+    expect(stepReview(d, null, WHY)).toEqual({ kind: 'ok', draft: d })
+  })
+})

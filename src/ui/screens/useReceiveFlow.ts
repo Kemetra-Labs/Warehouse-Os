@@ -50,6 +50,10 @@ export interface ReceiveFlow {
   onCode(code: ScanCode): ScanFeedback
   onSearch(cls: SearchClass): void
   patchPending(patch: Partial<ReceiptLine>): void
+  /** The counted field now holds a whole number (true) or text that is not one (false). */
+  setCountedValid(valid: boolean): void
+  /** The invoiced field now holds a whole number (true) or text that is not one (false). */
+  setInvoicedValid(valid: boolean): void
   discardPending(): void
   review(): void
   startBatch(item: Item): void
@@ -64,6 +68,7 @@ const busyNotice = (problem: string): string =>
   `كمّل السطر المفتوح الأول: ${problem}. وبعدين امسح الصنف اللي بعده.`
 const reviewNotice = (problem: string): string =>
   `كمّل السطر المفتوح الأول: ${problem}. أو امسحه وكمّل للمراجعة.`
+const INVALID_QTY = 'اكتب رقم صحيح'
 const unknownNotice = (gtin: string): string =>
   `الباركود ${gtin} مش معروف. اختار الصنف مرة واحدة والبرنامج هيفتكره.`
 
@@ -76,11 +81,20 @@ export function useReceiveFlow(input: ReceiveFlowInput): ReceiveFlow {
   const [resolving, setResolving] = useState<ResolveTarget | null>(null)
 
   const [pendingKey, setPendingKey] = useState(0)
+  // Text that is not a whole number commits nothing, so the open line keeps the last good number
+  // while the field shows something else. While either field is in that state the line never joins.
+  const [countedValid, setCountedValid] = useState(true)
+  const [invoicedValid, setInvoicedValid] = useState(true)
+  const blocked = pending && !(countedValid && invoicedValid) ? INVALID_QTY : null
+  const resetValid = (): void => {
+    setCountedValid(true)
+    setInvoicedValid(true)
+  }
 
   /** The last rendered receipt and open line: leaving the screen comes after the last render. */
-  const latest = useRef({ draft, pending, onChange })
+  const latest = useRef({ draft, pending, blocked, onChange })
   useEffect(() => {
-    latest.current = { draft, pending, onChange }
+    latest.current = { draft, pending, blocked, onChange }
   })
 
   // The card calls a ready line "it will be added", so leaving the screen (a nav tab, back) or the
@@ -88,12 +102,13 @@ export function useReceiveFlow(input: ReceiveFlowInput): ReceiveFlow {
   // out: it was never shown as added.
   useEffect(() => {
     const keepReady = (): void => {
-      const { draft: d, pending: p, onChange: save } = latest.current
-      const joined = p ? joinPending(d, p) : null
+      const { draft: d, pending: p, blocked: b, onChange: save } = latest.current
+      const joined = p && b === null ? joinPending(d, p) : null
       if (!joined) return
-      latest.current = { draft: joined, pending: null, onChange: save }
+      latest.current = { draft: joined, pending: null, blocked: null, onChange: save }
       save(joined)
       setPending(null)
+      resetValid()
     }
     const onHidden = (): void => {
       if (document.visibilityState === 'hidden') keepReady()
@@ -111,11 +126,14 @@ export function useReceiveFlow(input: ReceiveFlowInput): ReceiveFlow {
     if (step.draft !== draft) onChange(step.draft)
     if (opened) setPendingKey((k) => k + 1)
     setPending(step.pending)
+    if (opened || step.pending === null) resetValid()
+    // Otherwise the same line counted one more: the counted field now shows that number again.
+    else setCountedValid(true)
     return opened
   }
 
   const applyHit = (hit: LineHit): ScanFeedback => {
-    const step = stepHit(draft, pending, hit)
+    const step = stepHit(draft, pending, hit, blocked)
     setNotice(null)
     if (step.kind === 'busy') {
       setNotice(busyNotice(step.problem))
@@ -161,7 +179,7 @@ export function useReceiveFlow(input: ReceiveFlowInput): ReceiveFlow {
     if (line) onChange(patchLine(draft, target.n, resolveLine(line, item)))
   }
 
-  const problem = pending ? joinProblem(pending, draft.businessDate) : null
+  const problem = pending ? (blocked ?? joinProblem(pending, draft.businessDate)) : null
 
   return {
     pending,
@@ -174,18 +192,24 @@ export function useReceiveFlow(input: ReceiveFlowInput): ReceiveFlow {
     onCode: (code) => applyOutcome(interpretScan(items, code)),
     onSearch: (cls) => void applyOutcome(interpretClass(items, cls, 'typed')),
     patchPending: (patch) => setPending((p) => (p ? { ...p, ...patch } : p)),
-    discardPending: () => setPending(null),
+    setCountedValid,
+    setInvoicedValid,
+    discardPending() {
+      resetValid()
+      setPending(null)
+    },
     review() {
-      const step = stepReview(draft, pending)
+      const step = stepReview(draft, pending, blocked)
       if (step.kind === 'blocked') return setNotice(reviewNotice(step.problem))
       if (step.draft !== draft) onChange(step.draft)
       setPending(null)
+      resetValid()
       // The screen unmounts in this same render: the leaving effect must not join the line again.
-      latest.current = { draft: step.draft, pending: null, onChange }
+      latest.current = { draft: step.draft, pending: null, blocked: null, onChange }
       onReview()
     },
     startBatch(item) {
-      const step = stepBatch(draft, pending, item)
+      const step = stepBatch(draft, pending, item, blocked)
       if (step.kind === 'busy') return setNotice(busyNotice(step.problem))
       setNotice(null)
       commit(step)

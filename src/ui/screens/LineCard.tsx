@@ -19,6 +19,10 @@ export interface LineCardProps {
   /** Pending only: what the line still needs before it can join; null when it is ready. */
   readonly problem?: string | null
   readonly onChange: (patch: Partial<ReceiptLine>) => void
+  /** Pending only: whether the counted field now holds a whole number (false: text that is not one). */
+  readonly onCountedValidChange?: (valid: boolean) => void
+  /** Pending only: the same for the invoiced field. */
+  readonly onInvoicedValidChange?: (valid: boolean) => void
   readonly onPickItem: () => void
   readonly onDiscard?: () => void
   readonly onRemove?: () => void
@@ -127,6 +131,7 @@ function PendingBody(props: LineCardProps) {
         value={line.countedQty}
         label="اللي اتعدّ"
         onCommit={(countedQty) => onChange({ countedQty })}
+        onValidChange={props.onCountedValidChange}
         caption={
           <>
             <span aria-hidden="true">اتعدّ من </span>
@@ -134,6 +139,7 @@ function PendingBody(props: LineCardProps) {
               value={line.invoicedQty}
               label="الكمية في الفاتورة"
               onCommit={(invoicedQty) => onChange({ invoicedQty })}
+              onValidChange={props.onInvoicedValidChange}
             />
             <span aria-hidden="true"> في الفاتورة</span>
           </>

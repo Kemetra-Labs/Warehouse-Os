@@ -159,12 +159,18 @@ export type Step =
   /** The open line cannot join yet, so nothing changes; `problem` is what it still needs. */
   | { readonly kind: 'busy'; readonly problem: string }
 
-/** The open line, if it is ready, joined onto the draft; otherwise the problem that keeps it open. */
+/**
+ * The open line, if it is ready, joined onto the draft; otherwise the problem that keeps it open.
+ * `blocked` is a reason the screen knows and the line does not (a quantity field holding text that
+ * is not a whole number): while it is set, the open line never joins.
+ */
 function settle(
   draft: ReceiptDraft,
   pending: ReceiptLine | null,
+  blocked: string | null,
 ): { readonly draft: ReceiptDraft; readonly joined: boolean } | { readonly problem: string } {
   if (pending === null) return { draft, joined: false }
+  if (blocked !== null) return { problem: blocked }
   const joined = joinPending(draft, pending)
   if (joined) return { draft: joined, joined: true }
   return { problem: joinProblem(pending, draft.businessDate) ?? '' }
@@ -175,9 +181,14 @@ function settle(
  * other item first finishes the open line: a ready one joins the receipt on its own, an unready
  * one stays open and the new item is refused (`busy`). The hit is then planned against the draft
  * that already holds the joined line, so it can count on it. One draft comes out, so the caller
- * writes once.
+ * writes once. `blocked` keeps the open line from joining (see `settle`); counting on it still works.
  */
-export function stepHit(draft: ReceiptDraft, pending: ReceiptLine | null, hit: LineHit): Step {
+export function stepHit(
+  draft: ReceiptDraft,
+  pending: ReceiptLine | null,
+  hit: LineHit,
+  blocked: string | null = null,
+): Step {
   const first = planHit(draft, pending, hit)
   if (first.kind === 'bump-pending' && pending) {
     return {
@@ -187,7 +198,7 @@ export function stepHit(draft: ReceiptDraft, pending: ReceiptLine | null, hit: L
       joined: false,
     }
   }
-  const settled = settle(draft, pending)
+  const settled = settle(draft, pending, blocked)
   if ('problem' in settled) return { kind: 'busy', problem: settled.problem }
   const plan = planHit(settled.draft, null, hit)
   if (plan.kind === 'start') {
@@ -204,8 +215,13 @@ export function stepHit(draft: ReceiptDraft, pending: ReceiptLine | null, hit: L
 }
 
 /** "تشغيلة تانية": finishes the open line the same way, then opens an empty line for the item. */
-export function stepBatch(draft: ReceiptDraft, pending: ReceiptLine | null, item: Item): Step {
-  const settled = settle(draft, pending)
+export function stepBatch(
+  draft: ReceiptDraft,
+  pending: ReceiptLine | null,
+  item: Item,
+  blocked: string | null = null,
+): Step {
+  const settled = settle(draft, pending, blocked)
   if ('problem' in settled) return { kind: 'busy', problem: settled.problem }
   const line = { ...lineFromItem(settled.draft.lines.length + 1, item), countedQty: 0 }
   return { kind: 'step', draft: settled.draft, pending: line, joined: settled.joined }
@@ -216,8 +232,12 @@ export type ReviewStep =
   | { readonly kind: 'blocked'; readonly problem: string }
 
 /** Going to review takes a ready open line along; an unready one blocks it and says why. */
-export function stepReview(draft: ReceiptDraft, pending: ReceiptLine | null): ReviewStep {
-  const settled = settle(draft, pending)
+export function stepReview(
+  draft: ReceiptDraft,
+  pending: ReceiptLine | null,
+  blocked: string | null = null,
+): ReviewStep {
+  const settled = settle(draft, pending, blocked)
   return 'problem' in settled
     ? { kind: 'blocked', problem: settled.problem }
     : { kind: 'ok', draft: settled.draft }

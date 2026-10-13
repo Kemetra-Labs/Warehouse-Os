@@ -489,6 +489,120 @@ describe('Receive: line rules', () => {
   })
 })
 
+describe('Receive: text that is not a whole number', () => {
+  const INVALID = 'اكتب رقم صحيح'
+  const FIELDS = ['اللي اتعدّ', 'الكمية في الفاتورة'] as const
+
+  /** An open, ready line whose `label` field then holds text that is not a whole number. */
+  const openWithBadText = async (label: string, mountDraft: ReceiptDraft = newDraft(DAY)) => {
+    const cam = await mount(mountDraft)
+    act(() => cam.emit(ean(GTIN_A)))
+    type(field('الكمية في الفاتورة', pending()!), '4')
+    expect(pending()?.textContent).toContain('جاهز')
+    type(field(label, pending()!), '2.5')
+    return cam
+  }
+
+  describe.each(FIELDS)('in "%s"', (label) => {
+    it('keeps the line open and says what is wrong instead of "جاهز"', async () => {
+      await openWithBadText(label)
+      expect(field(label, pending()!)?.getAttribute('aria-invalid')).toBe('true')
+      expect(pending()?.textContent).toContain(INVALID)
+      expect(pending()?.textContent).not.toContain('جاهز')
+      expect(buttonByText(host, 'راجع واعتمد')?.textContent).toBe('راجع واعتمد · 0 سطور')
+    })
+
+    it('the next scan does not join the line, and says to finish it first', async () => {
+      const cam = await openWithBadText(label)
+      later()
+      act(() => cam.emit(ean('6001234567891')))
+      expect(latest.lines).toHaveLength(0)
+      expect(pending()?.textContent).toContain('AAA-01')
+      const notice = host.querySelector('[data-testid="notice"]')?.textContent
+      expect(notice).toContain('كمّل السطر')
+      expect(notice).toContain(INVALID)
+    })
+
+    it('picking the next item from the suggestions does not join it either', async () => {
+      await openWithBadText(label)
+      const box = host.querySelector('[role="search"] input') as HTMLInputElement
+      type(box, '4')
+      click(host.querySelectorAll('[role="option"]')[0] ?? null)
+      expect(latest.lines).toHaveLength(0)
+      expect(pending()?.textContent).toContain('AAA-01')
+      expect(host.querySelector('[data-testid="notice"]')?.textContent).toContain('كمّل السطر')
+    })
+
+    it('"راجع واعتمد" is refused', async () => {
+      await openWithBadText(label)
+      click(buttonByText(host, 'راجع واعتمد'))
+      expect(onReview).not.toHaveBeenCalled()
+      expect(latest.lines).toHaveLength(0)
+      expect(host.querySelector('[data-testid="notice"]')?.textContent).toContain(INVALID)
+    })
+
+    it('"تشغيلة تانية" on a saved line does not join the open line', async () => {
+      await openWithBadText(label, draftWith([goodLine(1, ITEM_B)]))
+      click(buttonByText(saved()[0]!, 'تشغيلة تانية'))
+      expect(latest.lines).toHaveLength(1)
+      expect(pending()?.textContent).toContain('AAA-01')
+      expect(host.querySelector('[data-testid="notice"]')?.textContent).toContain(INVALID)
+    })
+
+    it('leaving the screen adds nothing', async () => {
+      await openWithBadText(label)
+      act(() => root.render(<div />))
+      expect(latest.lines).toHaveLength(0)
+    })
+
+    it('the app going to the background adds nothing and keeps the line open', async () => {
+      await openWithBadText(label)
+      const hidden = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden')
+      act(() => void document.dispatchEvent(new Event('visibilitychange')))
+      hidden.mockRestore()
+      expect(latest.lines).toHaveLength(0)
+      expect(pending()).not.toBeNull()
+    })
+
+    it('typing a whole number again makes the line ready and it joins as usual', async () => {
+      await openWithBadText(label)
+      type(field(label, pending()!), label === 'اللي اتعدّ' ? '5' : '6')
+      expect(pending()?.textContent).toContain('جاهز')
+      click(buttonByText(host, 'راجع واعتمد'))
+      expect(latest.lines).toHaveLength(1)
+      expect(onReview).toHaveBeenCalledOnce()
+    })
+
+    it('a new line starts valid after the old one was discarded', async () => {
+      const cam = await openWithBadText(label)
+      click(buttonByText(pending()!, 'امسح السطر'))
+      later()
+      act(() => cam.emit(ean(GTIN_A)))
+      type(field('الكمية في الفاتورة', pending()!), '4')
+      expect(pending()?.textContent).toContain('جاهز')
+      click(buttonByText(host, 'راجع واعتمد'))
+      expect(latest.lines).toHaveLength(1)
+    })
+  })
+
+  it('a scan of the same item counts on the open line and replaces the bad counted text', async () => {
+    const cam = await openWithBadText('اللي اتعدّ')
+    later()
+    act(() => cam.emit(ean(GTIN_A)))
+    expect(field('اللي اتعدّ', pending()!)?.value).toBe('2')
+    expect(pending()?.textContent).toContain('جاهز')
+  })
+
+  it('a bad invoiced text does not hide a bad counted text that is fixed first', async () => {
+    await openWithBadText('الكمية في الفاتورة')
+    type(field('اللي اتعدّ', pending()!), '2.5')
+    type(field('اللي اتعدّ', pending()!), '3')
+    expect(pending()?.textContent).toContain(INVALID)
+    type(field('الكمية في الفاتورة', pending()!), '4')
+    expect(pending()?.textContent).toContain('جاهز')
+  })
+})
+
 describe('Receive: header sheet', () => {
   it('edits the header and refuses to duplicate a delivery note', async () => {
     const fake = fakeScanSource()
