@@ -5,6 +5,8 @@ import { HomeScreen, ItemsScreen, MovementsScreen, ReportsScreen, UnsentScreen }
 
 // Lazy: keeps SheetJS (xlsx) out of the main bundle until the import screen is opened.
 const ImportParity = lazy(() => import('../ui/screens/ImportParity'))
+// Lazy: the scanner and the ZXing fallback load only when a receipt is opened.
+const ReceiptFlow = lazy(() => import('../ui/screens/ReceiptFlow'))
 
 export function AppRoutes() {
   return (
@@ -19,6 +21,14 @@ export function AppRoutes() {
           element={
             <Suspense fallback={<p>جاري التحميل...</p>}>
               <ImportParity />
+            </Suspense>
+          }
+        />
+        <Route
+          path="receive/:id?"
+          element={
+            <Suspense fallback={<p>جاري التحميل...</p>}>
+              <ReceiptFlow />
             </Suspense>
           }
         />

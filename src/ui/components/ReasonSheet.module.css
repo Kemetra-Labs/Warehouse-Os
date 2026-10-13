@@ -1,0 +1,34 @@
+.form {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.summary {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.field {
+  display: grid;
+  gap: var(--space-1);
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.input {
+  min-block-size: var(--tap-min);
+  padding-inline: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: var(--text-md);
+}

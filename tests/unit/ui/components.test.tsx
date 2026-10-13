@@ -53,6 +53,20 @@ describe('CountTable', () => {
   })
 })
 
+describe('CountTable labels', () => {
+  it('can relabel the columns for the receiving double count', () => {
+    render(
+      <CountTable
+        caption="استلام"
+        labels={{ requested: 'الفاتورة', delivered: 'اتعدّ' }}
+        rows={[{ key: '1', name: 'مسمار', requested: 50, delivered: 48 }]}
+      />,
+    )
+    const heads = [...host.querySelectorAll('th')].map((h) => h.textContent)
+    expect(heads.slice(0, 3)).toEqual(['صنف', 'الفاتورة', 'اتعدّ'])
+  })
+})
+
 describe('StatusDot', () => {
   it('has an aria-label and a glyph for every state', () => {
     for (const state of ['match', 'miss', 'warn'] as const) {
@@ -97,6 +111,26 @@ describe('SearchBox', () => {
         ?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
     })
     expect(onResolve).toHaveBeenCalledWith({ kind: 'code', code: 'NAL-04' })
+  })
+})
+
+describe('SearchBox clearOnSubmit', () => {
+  it('empties the field after a submit so the next lookup starts clean', () => {
+    const onResolve = vi.fn()
+    render(<SearchBox onResolve={onResolve} clearOnSubmit />)
+    const input = host.querySelector('input') as HTMLInputElement
+    act(() => {
+      const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
+      setter?.call(input, '10')
+      input.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+    act(() => {
+      host
+        .querySelector('form')
+        ?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
+    })
+    expect(onResolve).toHaveBeenCalledWith({ kind: 'page', page: 10 })
+    expect(input.value).toBe('')
   })
 })
 

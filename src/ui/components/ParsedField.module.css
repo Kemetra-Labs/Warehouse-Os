@@ -1,0 +1,53 @@
+.field {
+  display: grid;
+  min-inline-size: 0;
+  gap: 2px;
+  padding: var(--space-1) var(--space-3) var(--space-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.field:focus-within {
+  border-color: var(--marker);
+  outline: 1px solid var(--marker);
+}
+
+.label {
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.input {
+  inline-size: 100%;
+  min-inline-size: 0;
+  min-block-size: 28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: var(--text-md);
+  font-weight: 800;
+  outline: none;
+}
+
+.input[aria-invalid='true'] {
+  color: var(--miss);
+}
+
+.hint {
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+/* A changed value: amber tint plus the previous value in the hint, never colour alone. */
+.changed {
+  border-color: var(--amber-line);
+  background: var(--tint-amber);
+}
+
+.changed .label,
+.changed .hint {
+  color: var(--amber);
+}

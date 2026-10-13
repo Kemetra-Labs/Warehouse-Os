@@ -1,0 +1,121 @@
+.root {
+  position: relative;
+}
+
+/* The whole viewfinder is the tap target (Scandit guidance, ui-inspiration #1). */
+.view {
+  position: relative;
+  display: block;
+  inline-size: 100%;
+  block-size: 178px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: radial-gradient(ellipse at 50% 45%, #3b4a47, #151c1b 75%);
+  color: #d8efe8;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.video {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+/* Medium rectangle, dimmed outside it (ui-inspiration #4). */
+.frame {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  inline-size: min(210px, 70%);
+  block-size: 96px;
+  border-radius: var(--radius-sm);
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.9),
+    0 0 0 999px rgba(0, 0, 0, 0.25);
+}
+
+.hint {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: var(--space-2);
+  font-size: var(--text-xs);
+  text-align: center;
+}
+
+.outline {
+  position: absolute;
+  inset-inline: 12%;
+  inset-block: 24%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  border: 3px solid currentColor;
+  border-radius: var(--radius-sm);
+  animation: confirm var(--dur-scan) var(--ease-decelerate) both;
+}
+
+.outline > span {
+  margin-block-start: var(--space-1);
+  padding: 2px var(--space-2);
+  border-radius: 99px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: var(--text-xs);
+  font-weight: 800;
+}
+
+.known {
+  color: #5fe0a0;
+}
+
+.unknown {
+  color: #ff8a80;
+}
+
+.glyph {
+  position: absolute;
+  inset-block-end: var(--space-2);
+  inline-size: 28px;
+  block-size: 28px;
+  padding: 4px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.live {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  margin: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@keyframes confirm {
+  from {
+    opacity: 0;
+    transform: scale(1.04);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Reduced motion: the outline simply appears. */
+@media (prefers-reduced-motion: reduce) {
+  .outline {
+    animation: none;
+  }
+}

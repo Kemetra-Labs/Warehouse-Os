@@ -128,31 +128,33 @@ US1 → US2 → US3 → US7. P2 stories follow: US4 → US5 → US6.
 - [X] T047 [US2] Implement `src/domain/receipt.ts` so T044 passes
 - [X] T048 [US2] Extend `firestore.rules.template` with the transitions for `receipts` and `issueBatches` so T045 passes
 - [X] T049 [US2] Implement `src/data/repos/receipts.ts`: draft CRUD, plus one atomic post batch (movements, item price, GTIN link, status) written through the outbox
-- [ ] T050 [P] [US2] Implement the scanner in `src/scan/detector.ts` (barcode-detector ponyfill; EAN-13/8, Code-128 and DataMatrix) and `src/scan/Scanner.tsx`. Requirements:
+- [X] T050 [P] [US2] Implement the scanner in `src/scan/detector.ts` (barcode-detector ponyfill; EAN-13/8, Code-128 and DataMatrix) and `src/scan/Scanner.tsx`. Requirements:
   - the whole view is the tap target, with continuous mode;
   - a beep and `navigator.vibrate`;
   - a green outline with a tick for known codes and a red outline with a cross for unknown ones;
   - a reduced-motion fallback;
   - the camera hides when no camera is available.
-- [ ] T051 [US2] Build the receive screen in `src/ui/screens/Receive.tsx`. Requirements:
+  - Note: `qr_code` is added to the formats, because the delivery-note QR (FR-030b) needs it. A read is routed by its format first: a QR is the delivery number, everything else goes through `classify()`. The ZXing WASM is served from our own origin (`zxing-wasm` is now a direct dependency) so it is precached for offline use.
+- [X] T051 [US2] Build the receive screen in `src/ui/screens/Receive.tsx`. Requirements:
   - header chips (supplier, delivery note, invoice number and date, supply request, supply order); scanning the note's QR fills the delivery-note number, and an existing receipt with that number opens instead (FR-030b);
   - the scanner and the always-visible SearchBox;
   - a line card with batch, expiry, invoiced and counted quantities, and price (flagged when it changes);
   - an expired batch shows a clear warning and asks for a reason before the line is added;
   - each scan increments the counted quantity.
-- [ ] T052 [US2] Build the receipt review screen in `src/ui/screens/ReceiptReview.tsx`. Requirements:
+- [X] T052 [US2] Build the receipt review screen in `src/ui/screens/ReceiptReview.tsx`. Requirements:
   - the double-count table (الفاتورة | اتعدّ);
   - the difference-reason prompt;
   - the unknown-GTIN resolver;
   - اعتماد stays disabled until the review is valid;
   - the seal appears on post.
-- [ ] T053 [US2] Write an E2E receiving test in `tests/e2e/receive.spec.ts` covering:
+- [X] T053 [US2] Write an E2E receiving test in `tests/e2e/receive.spec.ts` covering:
   - a fake-camera EAN-13 scan;
   - a typed page number;
   - an unknown GTIN;
   - a count difference;
   - a price change;
   - posting.
+  - Note: the full flow runs only with `E2E_EMULATORS=1` against the emulators (ran locally and passed). It creates the `test-owner` Auth account and seeds items over the emulator REST API. Without the emulators the app stops at sign-in (AuthGate wraps every route), so the ungated part only checks that `/receive` renders an Arabic heading; scanner behaviour without a camera is covered by the jsdom tests in `tests/unit/scan` and `tests/unit/ui`. No auth bypass was added.
 
 **Checkpoint**: a receipt can be completed on the phone against the emulator, and balances and prices are correct.
 
