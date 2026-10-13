@@ -44,6 +44,6 @@
   margin-block-start: var(--space-2);
 }
 
-.controls button {
+.controls button:not([aria-label]) {
   font-size: var(--text-sm);
 }

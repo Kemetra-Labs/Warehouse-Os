@@ -97,6 +97,23 @@ describe('ItemsView', () => {
     expect(buttonByText(host, 'تحتاج طلب')?.textContent).toContain('1')
   })
 
+  it('fills the two state filters when they have items and hollows them at zero', () => {
+    render(
+      <ItemsView
+        rows={ROWS.slice(0, 1)}
+        query={START}
+        onQueryChange={() => undefined}
+        onOpen={() => undefined}
+      />,
+    )
+    expect(buttonByText(host, 'نافد')?.getAttribute('data-zero')).toBe('true')
+    expect(buttonByText(host, 'نافد')?.getAttribute('data-tone')).toBeNull()
+    render(<Harness onOpen={() => undefined} />)
+    expect(buttonByText(host, 'نافد')?.getAttribute('data-tone')).toBe('short')
+    expect(buttonByText(host, 'تحتاج طلب')?.getAttribute('data-tone')).toBe('attn')
+    expect(buttonByText(host, 'الكل')?.getAttribute('data-tone')).toBeNull()
+  })
+
   it('filters by category, and the category list has each category once', () => {
     render(<Harness onOpen={() => undefined} />)
     const select = host.querySelector('select')

@@ -33,7 +33,7 @@
 /* The one primary of the screen, in the thumb zone above the bottom navigation. */
 .footer {
   position: fixed;
-  inset-inline: 0;
+  inset-inline: var(--bar-inset);
   inset-block-end: calc(var(--nav-height) + env(safe-area-inset-bottom));
   z-index: 5;
   display: grid;

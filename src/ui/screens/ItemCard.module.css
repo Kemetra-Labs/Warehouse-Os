@@ -212,7 +212,7 @@
 /* The thumb-zone actions, fixed above the navigation: return or adjust is the reversed one. */
 .actions {
   position: fixed;
-  inset-inline: 0;
+  inset-inline: var(--bar-inset);
   inset-block-end: calc(var(--nav-height) + env(safe-area-inset-bottom));
   z-index: 5;
   display: grid;

@@ -47,7 +47,7 @@
   display: grid;
   gap: 2px;
   padding: 10px var(--space-1);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   background: var(--panel);
 }
 
@@ -114,7 +114,7 @@
 /* The approve button stays in the thumb zone above the bottom navigation. */
 .footer {
   position: fixed;
-  inset-inline: 0;
+  inset-inline: var(--bar-inset);
   inset-block-end: calc(var(--nav-height) + env(safe-area-inset-bottom));
   z-index: 5;
   display: grid;

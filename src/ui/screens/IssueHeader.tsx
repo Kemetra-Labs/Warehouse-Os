@@ -6,6 +6,8 @@ import { addPermit, parsePermit, removePermit } from '../../domain/issueEdit'
 import { Bdi } from '../components/Bdi'
 import { BottomSheet } from '../components/BottomSheet'
 import { Button } from '../components/Button'
+import { Glyph } from '../components/Glyph'
+import { HeaderSummary } from './HeaderSummary'
 import extra from './IssueHeader.module.css'
 import styles from './ReceiveHeader.module.css'
 
@@ -59,7 +61,7 @@ function PermitAdder({ draft, onChange }: IssueHeaderProps) {
               aria-label={`مسح الإذن ${p}`}
               onClick={() => onChange(removePermit(draft, p))}
             >
-              ×
+              <Glyph kind="cross" />
             </button>
           </li>
         ))}
@@ -102,31 +104,22 @@ function BatchForm({ draft, onChange, onDone }: IssueHeaderProps & { onDone: () 
   )
 }
 
-/** Representative, date and permit numbers as chips; a tap edits them all. */
+/** Representative, permit count and date as one line; the button edits them all. */
 export function IssueHeader(props: IssueHeaderProps) {
   const [open, setOpen] = useState(false)
   const { draft } = props
   const repMissing = draft.rep.trim() === ''
   return (
     <>
-      <div className={styles.chips}>
-        <button
-          type="button"
-          className={`${styles.chip} ${repMissing ? styles.missing : ''}`}
-          onClick={() => setOpen(true)}
-        >
-          المندوب <b>{repMissing ? '—' : draft.rep}</b>
-        </button>
-        <button type="button" className={styles.chip} onClick={() => setOpen(true)}>
-          الأذون <b>{draft.permits.length}</b>
-        </button>
-        <button type="button" className={styles.chip} onClick={() => setOpen(true)}>
-          التاريخ <b>{formatDay(draft.businessDate)}</b>
-        </button>
-        <button type="button" className={styles.edit} onClick={() => setOpen(true)}>
-          بيانات الدفعة
-        </button>
-      </div>
+      <HeaderSummary
+        items={[
+          { label: 'المندوب', value: draft.rep, empty: repMissing, required: true },
+          { label: 'الأذون', value: draft.permits.length },
+          { label: 'التاريخ', value: formatDay(draft.businessDate) },
+        ]}
+        editLabel="بيانات الدفعة"
+        onEdit={() => setOpen(true)}
+      />
       <BottomSheet open={open} title="بيانات الدفعة" onClose={() => setOpen(false)}>
         <BatchForm {...props} onDone={() => setOpen(false)} />
       </BottomSheet>

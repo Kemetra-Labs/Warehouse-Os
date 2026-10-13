@@ -182,6 +182,8 @@ describe('colour tokens', () => {
   it.each([
     ['control-line', 'panel'],
     ['control-line', 'ground'],
+    ['control-line', 'panel-2'],
+    ['count', 'panel-2'],
     ['ok', 'ground'],
     ['short', 'ground'],
     ['attn', 'ground'],

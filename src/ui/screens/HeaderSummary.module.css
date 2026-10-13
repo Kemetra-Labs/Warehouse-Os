@@ -1,0 +1,58 @@
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-3);
+}
+
+/* One muted line of fields; the values are bone, so the eye finds them. */
+.line {
+  flex: 1 1 14em;
+  min-inline-size: 0;
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.line b {
+  color: var(--bone);
+  font-weight: 800;
+}
+
+/* A field the paper note always has, still empty: amber, a dashed underline, a dash for the value. */
+.missing,
+.missing b {
+  color: var(--attn);
+}
+
+.missing {
+  text-decoration: underline dashed;
+  text-underline-offset: 4px;
+}
+
+.edit {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-block-size: var(--tap-min);
+  padding-inline: var(--space-3);
+  border: 2px solid var(--control-line);
+  border-radius: 99px;
+  background: transparent;
+  color: var(--bone);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.edit svg {
+  inline-size: 16px;
+  block-size: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}

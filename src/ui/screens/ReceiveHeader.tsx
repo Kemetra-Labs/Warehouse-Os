@@ -9,6 +9,7 @@ import {
 import { Bdi } from '../components/Bdi'
 import { BottomSheet } from '../components/BottomSheet'
 import { Button } from '../components/Button'
+import { HeaderSummary, type SummaryItem } from './HeaderSummary'
 import styles from './ReceiveHeader.module.css'
 
 export interface ReceiveHeaderProps {
@@ -20,24 +21,29 @@ export interface ReceiveHeaderProps {
   readonly onOpenExisting: (id: string) => void
 }
 
-interface Chip {
-  readonly label: string
-  readonly value: string
-  /** The three fields the paper note always has; shown as missing when empty. */
-  readonly required?: boolean
-}
+const field = (label: string, value: string, required: boolean): SummaryItem => ({
+  label,
+  value: <Bdi>{value}</Bdi>,
+  empty: value === '',
+  required,
+})
 
-function chipsOf(draft: ReceiptDraft): Chip[] {
+/**
+ * The header fields for the summary line. The supplier is already in the screen's title, so it
+ * only appears here while it is missing; the fields the paper note always has show a dash in
+ * amber when empty; the two optional numbers show only once they are filled.
+ */
+function summaryOf(draft: ReceiptDraft): SummaryItem[] {
   const invoice = [draft.invoiceNo, formatDay(draft.invoiceDate ?? '')].filter((p) => p !== '')
-  const all: Chip[] = [
-    { label: 'الشركة', value: draft.supplier, required: true },
-    { label: 'إذن', value: draft.deliveryNo, required: true },
-    { label: 'فاتورة', value: invoice.join(' · '), required: true },
-    { label: 'طلب إمداد', value: draft.supplyRequestNo ?? '' },
-    { label: 'أمر توريد', value: draft.supplyOrderNo ?? '' },
-    { label: 'تاريخ الاستلام', value: formatDay(draft.businessDate), required: true },
+  const all: SummaryItem[] = [
+    field('إذن', draft.deliveryNo, true),
+    field('فاتورة', invoice.join(' · '), true),
+    field('طلب إمداد', draft.supplyRequestNo ?? '', false),
+    field('أمر توريد', draft.supplyOrderNo ?? '', false),
+    field('تاريخ الاستلام', formatDay(draft.businessDate), true),
   ]
-  return all.filter((c) => c.required || c.value !== '')
+  const supplier = draft.supplier.trim() === '' ? [field('الشركة', '', true)] : []
+  return [...supplier, ...all.filter((c) => c.required === true || c.empty !== true)]
 }
 
 interface FormValues {
@@ -134,26 +140,16 @@ function HeaderForm({
   )
 }
 
-/** Supplier, delivery note, invoice, supply request and order as chips; a tap edits them all. */
+/** Delivery note, invoice, supply request, order and date as one line; the button edits them all. */
 export function ReceiveHeader(props: ReceiveHeaderProps) {
   const [open, setOpen] = useState(false)
   return (
     <>
-      <div className={styles.chips}>
-        {chipsOf(props.draft).map((chip) => (
-          <button
-            key={chip.label}
-            type="button"
-            className={`${styles.chip} ${chip.required && chip.value === '' ? styles.missing : ''}`}
-            onClick={() => setOpen(true)}
-          >
-            {chip.label} <b>{chip.value === '' ? '—' : <Bdi>{chip.value}</Bdi>}</b>
-          </button>
-        ))}
-        <button type="button" className={styles.edit} onClick={() => setOpen(true)}>
-          بيانات الإذن
-        </button>
-      </div>
+      <HeaderSummary
+        items={summaryOf(props.draft)}
+        editLabel="بيانات الإذن"
+        onEdit={() => setOpen(true)}
+      />
       <BottomSheet open={open} title="بيانات الإذن" onClose={() => setOpen(false)}>
         <HeaderForm {...props} onDone={() => setOpen(false)} />
       </BottomSheet>

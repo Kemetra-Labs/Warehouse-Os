@@ -13,7 +13,7 @@
 
 .sheet {
   position: absolute;
-  inset-inline: 0;
+  inset-inline: var(--bar-inset);
   inset-block-end: 0;
   max-block-size: 90dvh;
   overflow-y: auto;

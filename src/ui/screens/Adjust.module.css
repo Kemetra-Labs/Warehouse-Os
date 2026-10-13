@@ -70,13 +70,6 @@
   font-weight: 800;
 }
 
-.option input {
-  flex: none;
-  inline-size: 20px;
-  block-size: 20px;
-  accent-color: var(--count);
-}
-
 .field {
   display: grid;
   gap: var(--space-1);
@@ -173,7 +166,7 @@
 /* The one primary: save, reversed, in the thumb zone above the navigation. */
 .footer {
   position: fixed;
-  inset-inline: 0;
+  inset-inline: var(--bar-inset);
   inset-block-end: calc(var(--nav-height) + env(safe-area-inset-bottom));
   z-index: 5;
   display: grid;

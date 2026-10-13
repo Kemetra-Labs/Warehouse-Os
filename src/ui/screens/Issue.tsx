@@ -178,9 +178,10 @@ export function Issue(props: IssueProps) {
   }
 
   /**
-   * راجع واعتمد / اعتماد. An open line only joins on this tap: its row then shows the batch and
-   * expiry it was given (earliest first, changeable there) before anything is posted, since a
-   * posted movement can only be reversed, never removed. With no open line, it posts.
+   * راجع واعتمد / اعتماد. With a line open, this tap only joins it (as the next item, leaving the
+   * screen or backgrounding the app also would): its row then shows the batch and expiry it was
+   * given (earliest first, changeable there) before anything is posted, since a posted movement
+   * can only be reversed, never removed. With no open line, it posts.
    */
   const approve = (): void => {
     const hadOpen = flow.open !== null
@@ -218,10 +219,12 @@ export function Issue(props: IssueProps) {
           <h1 id="issue-title" className={styles.title}>
             {readOnly ? 'دفعة صرف' : 'صرف للمندوب'} {draft.number}
           </h1>
-          <p className={styles.meta}>
-            {draft.rep || 'من غير مندوب'} · {formatDay(draft.businessDate)} · {draft.permits.length}{' '}
-            إذن
-          </p>
+          {readOnly ? (
+            <p className={styles.meta}>
+              {draft.rep || 'من غير مندوب'} · {formatDay(draft.businessDate)} ·{' '}
+              {draft.permits.length} إذن
+            </p>
+          ) : null}
         </div>
         {seal ? (
           <Seal

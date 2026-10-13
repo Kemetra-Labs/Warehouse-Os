@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { cleanGtinInput, GTIN_PATTERN } from '../../domain/items'
 import { Bdi } from '../components/Bdi'
 import { Button } from '../components/Button'
+import { Glyph } from '../components/Glyph'
 import styles from './ItemGtins.module.css'
 
 export interface ItemGtinsProps {
@@ -44,7 +45,7 @@ export function ItemGtins({ gtins, onChange }: ItemGtinsProps) {
               aria-label={`مسح الباركود ${g}`}
               onClick={() => onChange(gtins.filter((x) => x !== g))}
             >
-              ×
+              <Glyph kind="cross" />
             </button>
           </li>
         ))}

@@ -5,6 +5,7 @@ import type { IssuedLine, Item } from '../../domain/types'
 import { Bdi } from '../components/Bdi'
 import { Button } from '../components/Button'
 import type { CountRow } from '../components/CountTable'
+import { Glyph } from '../components/Glyph'
 import type { DotState } from '../components/StatusDot'
 import styles from './IssueRows.module.css'
 
@@ -139,14 +140,14 @@ function RequestNotes({ row, item, direct, input }: RequestNotesProps) {
             disabled={row.requestedQty <= 1}
             onClick={() => actions.onQty(code, row.requestedQty - 1)}
           >
-            −
+            <Glyph kind="minus" />
           </Button>
           <Button
             size="square"
             aria-label="زوّد المطلوب"
             onClick={() => actions.onQty(code, row.requestedQty + 1)}
           >
-            +
+            <Glyph kind="plus" />
           </Button>
           <Button variant="danger" onClick={() => actions.onRemove(code)}>
             مسح

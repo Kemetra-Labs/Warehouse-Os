@@ -34,14 +34,20 @@
 }
 
 .remove {
+  display: grid;
+  place-items: center;
   inline-size: var(--tap-min);
   block-size: var(--tap-min);
+  padding: 0;
   border: 0;
   background: transparent;
   color: var(--short-ink);
-  font-family: inherit;
-  font-size: var(--text-lg);
   cursor: pointer;
+}
+
+.remove svg {
+  inline-size: 18px;
+  block-size: 18px;
 }
 
 .none {
