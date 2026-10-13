@@ -4,13 +4,13 @@
   gap: 2px;
   padding: var(--space-1) var(--space-3) var(--space-2);
   border: 1px solid var(--control-line);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
+  border-radius: var(--radius-md);
+  background: var(--panel);
 }
 
 .field:focus-within {
-  border-color: var(--marker);
-  outline: 1px solid var(--marker);
+  border-color: var(--count);
+  outline: 1px solid var(--count);
 }
 
 .label {
@@ -25,7 +25,7 @@
   padding: 0;
   border: 0;
   background: transparent;
-  color: var(--ink);
+  color: var(--bone);
   font-family: inherit;
   font-size: var(--text-md);
   font-weight: 800;
@@ -33,7 +33,7 @@
 }
 
 .input[aria-invalid='true'] {
-  color: var(--miss);
+  color: var(--short-ink);
 }
 
 .hint {

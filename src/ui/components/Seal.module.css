@@ -8,18 +8,25 @@
   direction: rtl;
 }
 
+/* The disc is the state colour; the rings and the text on it are bone (or ink on the red). */
 .posted {
+  --seal-ink: var(--bone);
   color: var(--seal);
 }
 
 .cancelled {
-  color: var(--miss);
+  --seal-ink: var(--ink-on-fill);
+  color: var(--short);
+}
+
+.disc {
+  fill: currentColor;
 }
 
 .ringOuter,
 .ringInner {
   fill: none;
-  stroke: currentColor;
+  stroke: var(--seal-ink);
 }
 
 .ringOuter {
@@ -31,13 +38,13 @@
 }
 
 .title {
-  fill: currentColor;
+  fill: var(--seal-ink);
   font-size: 18px;
   font-weight: 800;
 }
 
 .meta {
-  fill: currentColor;
+  fill: var(--seal-ink);
   font-size: 12px;
 }
 

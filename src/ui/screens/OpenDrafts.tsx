@@ -2,6 +2,18 @@ import { Link } from 'react-router'
 import { useData } from '../../data/DataProvider'
 import styles from './OpenDrafts.module.css'
 
+/** "كمّل" and a chevron that points the way RTL reads on (towards the left). */
+function Resume() {
+  return (
+    <span className={styles.go}>
+      كمّل
+      <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+        <path d="M10 3L5 8l5 5" />
+      </svg>
+    </span>
+  )
+}
+
 /** The issue batches that were left open, at the top of home (US3: the open batch in front of you). */
 export function OpenBatches() {
   const { issueBatches } = useData()
@@ -17,10 +29,11 @@ export function OpenBatches() {
         {drafts.map((b) => (
           <li key={b.id}>
             <Link to={`/issue/${b.id}`} className={styles.draft}>
-              <span>
+              <span className={styles.draftTitle}>
                 دفعة صرف {b.number} · {b.rep || 'من غير مندوب'}
               </span>
               <small>{b.requested.length} صنف · مسودة</small>
+              <Resume />
             </Link>
           </li>
         ))}
@@ -44,10 +57,11 @@ export function OpenDrafts() {
         {drafts.map((r) => (
           <li key={r.id}>
             <Link to={`/receive/${r.id}`} className={styles.draft}>
-              <span>{r.supplier || 'من غير شركة'}</span>
+              <span className={styles.draftTitle}>{r.supplier || 'من غير شركة'}</span>
               <small>
                 إذن {r.deliveryNo || '—'} · {r.lines.length} سطور · مسودة
               </small>
+              <Resume />
             </Link>
           </li>
         ))}

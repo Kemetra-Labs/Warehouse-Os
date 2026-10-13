@@ -19,7 +19,8 @@
   overflow-y: auto;
   padding: 0 var(--space-4) var(--space-4);
   padding-block-end: max(var(--space-4), env(safe-area-inset-bottom));
-  background: var(--surface);
+  background: var(--panel);
+  color: var(--bone);
   border-start-start-radius: var(--radius-sheet);
   border-start-end-radius: var(--radius-sheet);
   box-shadow: var(--shadow-sheet);
@@ -48,7 +49,7 @@
   inline-size: 40px;
   block-size: 4px;
   border-radius: 4px;
-  background: var(--disabled-bg);
+  background: var(--control-line);
 }
 
 .title {

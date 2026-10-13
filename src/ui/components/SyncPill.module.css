@@ -1,81 +1,52 @@
 .pill {
-  --pill-line: var(--scrub-line);
-  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
+  gap: 6px;
   min-block-size: 28px;
-  padding: var(--space-1) var(--space-2);
-  border: 1.5px solid transparent;
-  border-radius: 99px;
+  border: 0;
   background: transparent;
-  color: var(--on-scrub);
+  color: var(--ok-ink);
   font-family: inherit;
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
+  font-weight: 700;
   white-space: nowrap;
 }
 
-/* Dashed (pending) turns solid (synced) by cross-fading two border layers, so only opacity
-   animates. Both layers sit over the pill's own transparent border. */
-.pill::before,
-.pill::after {
-  content: '';
-  position: absolute;
-  inset: -1.5px;
-  border-radius: inherit;
-  pointer-events: none;
-  transition: opacity var(--dur-sync) var(--ease-standard);
-}
-
-.pill::before {
-  border: 1.5px dashed var(--pill-line);
-  opacity: 1;
-}
-
-.pill::after {
-  border: 1.5px solid var(--pill-line);
-  opacity: 0;
-}
-
-.synced::before {
-  opacity: 0;
-}
-
-.synced::after {
-  opacity: 1;
+.pending {
+  color: var(--attn);
 }
 
 .failed {
-  --pill-line: var(--miss);
-  background: var(--tint-miss);
-  color: var(--miss);
-  font-weight: 700;
+  color: var(--short-ink);
   cursor: pointer;
 }
 
 button.pill {
   min-block-size: var(--tap-min);
+  padding-inline: var(--space-2);
+  border-radius: var(--radius-sm);
 }
 
 .glyph {
   inline-size: 16px;
   block-size: 16px;
+  flex: none;
   fill: none;
   stroke: currentColor;
-  stroke-width: 2.4;
+  stroke-width: 2;
   stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
-/* The count cross-fades when the label changes (keyed element remounts). It starts at 35% so a
-   quick run of flips never leaves the pill empty. */
+/* The label cross-fades when it changes (keyed element remounts). It starts at 35% so a quick
+   run of flips never leaves the pill empty. */
 .label {
   animation: label-in var(--dur-sync) var(--ease-standard) both;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pill::before,
-  .pill::after {
-    transition: none;
+  .label {
+    animation: none;
   }
 }
 

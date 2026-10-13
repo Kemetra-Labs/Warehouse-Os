@@ -73,16 +73,40 @@ function counts(draft: ReceiptDraft) {
   }
 }
 
+/** Three big numbers (pieces, lines, value in pounds), then what changed or differs. */
 function Summary({ draft }: { readonly draft: ReceiptDraft }) {
   const c = counts(draft)
+  const notes = [
+    `${c.prices} سعر اتحدّث`,
+    c.differing > 0 ? `فرق في ${c.differing}` : '',
+    c.unresolved > 0 ? `${c.unresolved} صنف مش معروف` : '',
+  ].filter((n) => n !== '')
   return (
-    <p className={styles.summary} data-testid="summary">
-      {c.pieces} قطعة · {draft.lines.length} سطور · {c.prices} سعر اتحدّث
-      {c.differing > 0 ? ` · فرق في ${c.differing}` : ''}
-      {c.unresolved > 0 ? ` · ${c.unresolved} صنف مش معروف` : ''}
-      <br />
-      القيمة {formatMoney(receiptTotalMinor(draft.lines))} ج
-    </p>
+    <div className={styles.summary} data-testid="summary">
+      <div className={styles.stats}>
+        <div>
+          <b>{c.pieces}</b>
+          <span>قطعة</span>
+        </div>
+        <div>
+          <b>{draft.lines.length}</b>
+          <span>سطور</span>
+        </div>
+        <div>
+          <b className={styles.money}>{formatMoney(receiptTotalMinor(draft.lines))}</b>
+          <span>جنيه</span>
+        </div>
+      </div>
+      <p className={styles.notes}>{notes.join(' · ')}</p>
+    </div>
+  )
+}
+
+function BackIcon() {
+  return (
+    <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+      <path d="M6 3l5 5-5 5" />
+    </svg>
   )
 }
 
@@ -158,6 +182,12 @@ export function ReceiptReview(props: ReceiptReviewProps) {
 
   return (
     <section className={styles.screen} aria-labelledby="review-title">
+      {readOnly ? null : (
+        <button type="button" className={styles.back} onClick={props.onBack}>
+          <BackIcon />
+          ارجع للعدّ
+        </button>
+      )}
       <header className={styles.head}>
         <div>
           <h1 id="review-title" className={styles.title}>
@@ -210,8 +240,7 @@ export function ReceiptReview(props: ReceiptReviewProps) {
             </div>
           ) : null}
           <div className={styles.actions}>
-            <Button onClick={props.onBack}>ارجع للعدّ</Button>
-            <Button variant="seal" disabled={blocked} onClick={() => void post()}>
+            <Button variant="seal" size="main" disabled={blocked} onClick={() => void post()}>
               اعتماد
             </Button>
           </div>

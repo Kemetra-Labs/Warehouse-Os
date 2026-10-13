@@ -57,7 +57,7 @@ export function CountTable({ rows, caption, labels = {} }: CountTableProps) {
         {rows.map((row) => {
           const state = rowState(row)
           return (
-            <tr key={row.key}>
+            <tr key={row.key} data-state={state}>
               <td>
                 {row.name}
                 {row.sub ? <span className={styles.sub}>{row.sub}</span> : null}

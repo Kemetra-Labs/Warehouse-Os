@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { ItemRow as LedgerRow } from '../../data/deriveLedger'
+import { STATUS_LABELS } from '../../domain/types'
 import { Bdi } from './Bdi'
 import { Num } from './Num'
 import styles from './ItemRow.module.css'
@@ -8,6 +9,14 @@ export interface ItemRowProps {
   readonly row: LedgerRow
   /** Opening the item clears its "changed since seen" highlight (FR-072). */
   readonly onOpen?: (itemCode: string) => void
+}
+
+type Mark = 'out' | 'reorder' | 'ok'
+
+/** The state as a shape: a solid red square (out or below zero), a solid amber one (reorder), a hollow ring (fine). */
+function markOf(row: LedgerRow): Mark {
+  if (row.balance <= 0 || row.pendingSettlement) return 'out'
+  return row.status === STATUS_LABELS.REORDER ? 'reorder' : 'ok'
 }
 
 const CHANGED_LABEL = 'اتغيّر من جهاز تاني من آخر مرة فتحته'
@@ -54,6 +63,7 @@ export function ItemRow({ row, onOpen }: ItemRowProps) {
       ) : leaving ? (
         <span className={styles.dot} aria-hidden="true" />
       ) : null}
+      <span className={`${styles.mark} ${styles[markOf(row)]}`} aria-hidden="true" />
       <span className={styles.main}>
         <span className={styles.name}>{item.nameAr}</span>
         <span className={styles.meta}>

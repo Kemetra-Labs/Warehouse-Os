@@ -4,9 +4,10 @@
 }
 
 .title {
-  margin: 0;
-  font-size: var(--text-lg);
-  font-weight: 800;
+  margin: var(--space-2) 0 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: 700;
 }
 
 .list {

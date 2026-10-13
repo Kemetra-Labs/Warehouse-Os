@@ -1,5 +1,5 @@
 import type { ReceiptDraft } from './receipt'
-import { lineFromItem, unresolvedLine } from './receiptEdit'
+import { joinPending, joinProblem, lineFromItem, patchLine, unresolvedLine } from './receiptEdit'
 import { classify, findByGtin, findByNumber, resolve, type SearchClass } from './search'
 import type { Item, ReceiptLine } from './types'
 
@@ -146,4 +146,79 @@ export function planHit(draft: ReceiptDraft, pending: ReceiptLine | null, hit: L
   const same = [...draft.lines].reverse().find((l) => isSameTarget(l, hit))
   if (same) return { kind: 'bump-line', n: same.n }
   return { kind: 'start', line: startLine(draft.lines.length + 1, hit) }
+}
+
+/** What an automatic join leaves behind: the receipt and the open line after one step. */
+export type Step =
+  | {
+      readonly kind: 'step'
+      readonly draft: ReceiptDraft
+      readonly pending: ReceiptLine | null
+      readonly joined: boolean
+    }
+  /** The open line cannot join yet, so nothing changes; `problem` is what it still needs. */
+  | { readonly kind: 'busy'; readonly problem: string }
+
+/** The open line, if it is ready, joined onto the draft; otherwise the problem that keeps it open. */
+function settle(
+  draft: ReceiptDraft,
+  pending: ReceiptLine | null,
+): { readonly draft: ReceiptDraft; readonly joined: boolean } | { readonly problem: string } {
+  if (pending === null) return { draft, joined: false }
+  const joined = joinPending(draft, pending)
+  if (joined) return { draft: joined, joined: true }
+  return { problem: joinProblem(pending, draft.businessDate) ?? '' }
+}
+
+/**
+ * One scan, search pick or tap, as a pure step. The same box again counts on the open line. Any
+ * other item first finishes the open line: a ready one joins the receipt on its own, an unready
+ * one stays open and the new item is refused (`busy`). The hit is then planned against the draft
+ * that already holds the joined line, so it can count on it. One draft comes out, so the caller
+ * writes once.
+ */
+export function stepHit(draft: ReceiptDraft, pending: ReceiptLine | null, hit: LineHit): Step {
+  const first = planHit(draft, pending, hit)
+  if (first.kind === 'bump-pending' && pending) {
+    return {
+      kind: 'step',
+      draft,
+      pending: { ...pending, countedQty: pending.countedQty + 1 },
+      joined: false,
+    }
+  }
+  const settled = settle(draft, pending)
+  if ('problem' in settled) return { kind: 'busy', problem: settled.problem }
+  const plan = planHit(settled.draft, null, hit)
+  if (plan.kind === 'start') {
+    return { kind: 'step', draft: settled.draft, pending: plan.line, joined: settled.joined }
+  }
+  if (plan.kind === 'bump-line') {
+    const line = settled.draft.lines.find((l) => l.n === plan.n)
+    const next = line
+      ? patchLine(settled.draft, plan.n, { countedQty: line.countedQty + 1 })
+      : settled.draft
+    return { kind: 'step', draft: next, pending: null, joined: settled.joined }
+  }
+  return { kind: 'step', draft: settled.draft, pending: null, joined: settled.joined }
+}
+
+/** "تشغيلة تانية": finishes the open line the same way, then opens an empty line for the item. */
+export function stepBatch(draft: ReceiptDraft, pending: ReceiptLine | null, item: Item): Step {
+  const settled = settle(draft, pending)
+  if ('problem' in settled) return { kind: 'busy', problem: settled.problem }
+  const line = { ...lineFromItem(settled.draft.lines.length + 1, item), countedQty: 0 }
+  return { kind: 'step', draft: settled.draft, pending: line, joined: settled.joined }
+}
+
+export type ReviewStep =
+  | { readonly kind: 'ok'; readonly draft: ReceiptDraft }
+  | { readonly kind: 'blocked'; readonly problem: string }
+
+/** Going to review takes a ready open line along; an unready one blocks it and says why. */
+export function stepReview(draft: ReceiptDraft, pending: ReceiptLine | null): ReviewStep {
+  const settled = settle(draft, pending)
+  return 'problem' in settled
+    ? { kind: 'blocked', problem: settled.problem }
+    : { kind: 'ok', draft: settled.draft }
 }

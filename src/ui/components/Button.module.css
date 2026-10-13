@@ -1,8 +1,10 @@
 .button {
   min-block-size: var(--tap-min);
   padding-inline: var(--space-4);
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
+  border: 2px solid var(--hair);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--bone);
   font-family: inherit;
   font-size: var(--text-md);
   font-weight: 800;
@@ -14,32 +16,40 @@
   transform: scale(0.97);
 }
 
+/* The thumb-zone action: 64 px, bigger type. */
+.main {
+  min-block-size: var(--tap-main);
+  font-size: var(--text-lg);
+}
+
+/* The one next step: reversed, bone fill with ground-coloured text. */
 .primary {
-  background: var(--scrub-2);
-  color: var(--on-scrub);
+  border-color: var(--bone);
+  background: var(--bone);
+  color: var(--ground);
 }
 
 .secondary {
-  border-color: var(--scrub);
-  background: var(--surface);
-  color: var(--scrub);
+  border-color: var(--control-line);
 }
 
 .danger {
-  border-color: var(--miss);
-  background: var(--surface);
-  color: var(--miss);
+  border-color: var(--short-ink);
+  color: var(--short-ink);
 }
 
+/* Violet is the posted state only. */
 .seal {
+  border-color: var(--seal);
   background: var(--seal);
-  color: #fff;
+  color: var(--bone);
 }
 
+/* Disabled: a hollow, dashed edge and muted text, so it never reads as available. */
 .button:disabled {
-  border-color: transparent;
-  background: var(--disabled-bg);
-  color: var(--disabled-ink);
+  border: 2px dashed var(--hair);
+  background: transparent;
+  color: var(--muted);
   cursor: default;
 }
 

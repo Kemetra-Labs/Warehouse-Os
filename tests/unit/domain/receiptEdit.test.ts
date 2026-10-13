@@ -4,6 +4,8 @@ import {
   canAddLine,
   isBlankDraft,
   isExpired,
+  joinPending,
+  joinProblem,
   lacksExpiredReason,
   lineDiff,
   lineFromItem,
@@ -142,6 +144,53 @@ describe('expiry and add rules', () => {
 
   it('lineDiff is counted minus invoiced', () => {
     expect(lineDiff(line({ invoicedQty: 50, countedQty: 48 }))).toBe(-2)
+  })
+})
+
+describe('joinProblem / joinPending: when a line being filled in may join the receipt', () => {
+  const day = '2026-10-12'
+  const ready = (over: object = {}) => ({
+    ...newLine(1),
+    itemCode: 'AAA-01',
+    invoicedQty: 4,
+    countedQty: 4,
+    expiry: '2031-03',
+    ...over,
+  })
+
+  it('a resolved line with an invoiced quantity and a readable expiry is ready', () => {
+    expect(joinProblem(ready(), day)).toBeNull()
+  })
+
+  it('batch and expiry are not required: posting accepts a line without them', () => {
+    expect(joinProblem(ready({ batchNo: null, expiry: null }), day)).toBeNull()
+  })
+
+  it('a count that differs from the invoice is ready: the reason is asked for in the review', () => {
+    expect(joinProblem(ready({ countedQty: 3 }), day)).toBeNull()
+    expect(joinProblem(ready({ countedQty: 0 }), day)).toBeNull()
+  })
+
+  it.each([
+    ['an unresolved GTIN', { itemCode: null }, 'اختار الصنف'],
+    ['no invoiced quantity', { invoicedQty: 0 }, 'الكمية في الفاتورة'],
+    ['an unreadable expiry', { expiry: '13/2031' }, 'الصلاحية'],
+    ['an expired batch with no reason', { expiry: '2026-01' }, 'السبب'],
+  ])('%s stays open and says why', (_, over, hint) => {
+    const problem = joinProblem(ready(over), day)
+    expect(problem).toContain(hint)
+    expect(joinPending(newDraft(day), ready(over))).toBeNull()
+  })
+
+  it('an expired batch with a reason is ready', () => {
+    expect(joinProblem(ready({ expiry: '2026-01', expiredReason: 'تعويض' }), day)).toBeNull()
+  })
+
+  it('joinPending returns a new draft with the line numbered last, and leaves the old one alone', () => {
+    const base = addLine(newDraft(day), newLine(1))
+    const next = joinPending(base, ready({ n: 9 }))
+    expect(next?.lines.map((l) => l.n)).toEqual([1, 2])
+    expect(base.lines).toHaveLength(1)
   })
 })
 

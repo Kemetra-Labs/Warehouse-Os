@@ -1,23 +1,24 @@
+/* A square-ish badge with a glyph: the form carries the state as well as the fill. */
 .dot {
   display: inline-grid;
   place-items: center;
-  inline-size: 20px;
-  block-size: 20px;
-  border-radius: 50%;
+  inline-size: 28px;
+  block-size: 28px;
+  border-radius: 8px;
   vertical-align: middle;
-  color: var(--surface);
+  color: var(--ink-on-fill);
 }
 
 .match {
-  background: var(--match);
+  background: var(--ok);
 }
 
 .miss {
-  background: var(--miss);
+  background: var(--short);
 }
 
 .warn {
-  background: var(--amber);
+  background: var(--attn);
 }
 
 .dot svg {
@@ -25,7 +26,7 @@
   block-size: 18px;
   fill: none;
   stroke: currentColor;
-  stroke-width: 2.4;
+  stroke-width: 2.6;
   stroke-linecap: round;
   stroke-linejoin: round;
 }

@@ -4,13 +4,16 @@ import {
   type ExistingReceipt,
   type ReceiptDraft,
 } from '../../domain/receipt'
-import { addLine, lineFromItem, patchLine, resolveLine } from '../../domain/receiptEdit'
+import { joinProblem, patchLine, resolveLine } from '../../domain/receiptEdit'
 import {
   interpretClass,
   interpretScan,
-  planHit,
+  stepBatch,
+  stepHit,
+  stepReview,
   type LineHit,
   type ScanOutcome,
+  type Step,
 } from '../../domain/receiveScan'
 import type { SearchClass } from '../../domain/search'
 import type { Item, ReceiptLine } from '../../domain/types'
@@ -26,11 +29,19 @@ export interface ReceiveFlowInput {
   readonly selfId: string
   readonly onChange: (draft: ReceiptDraft) => void
   readonly onOpenExisting: (id: string) => void
+  /** Goes to the review step. Called only once the open line (if any) has joined the receipt. */
+  readonly onReview: () => void
 }
 
 export interface ReceiveFlow {
-  /** The line being filled in; it joins the receipt on "إضافة للإذن". */
+  /** The line being filled in. It joins the receipt by itself once it is ready and the next item, or the review, comes. */
   readonly pending: ReceiptLine | null
+  /** Changes whenever a different line is opened, so a line card can start fresh for it. */
+  readonly pendingKey: number
+  /** What the open line still needs before it can join; null when it is ready. */
+  readonly problem: string | null
+  /** The lines the review will show: the receipt's, plus the open one when it is ready. */
+  readonly lineCount: number
   readonly notice: string | null
   /** Items to choose from after an ambiguous scan or search; null when no choice is open. */
   readonly chooseItems: readonly Item[] | null
@@ -39,8 +50,8 @@ export interface ReceiveFlow {
   onCode(code: ScanCode): ScanFeedback
   onSearch(cls: SearchClass): void
   patchPending(patch: Partial<ReceiptLine>): void
-  addPending(): void
   discardPending(): void
+  review(): void
   startBatch(item: Item): void
   pickChosen(item: Item): void
   askResolve(target: ResolveTarget): void
@@ -49,34 +60,41 @@ export interface ReceiveFlow {
   closeResolve(): void
 }
 
-const BUSY_NOTICE = 'كمّل السطر المفتوح الأول (أضفه للإذن أو امسحه)، وبعدين امسح الصنف اللي بعده.'
+const busyNotice = (problem: string): string =>
+  `كمّل السطر المفتوح الأول: ${problem}. وبعدين امسح الصنف اللي بعده.`
+const reviewNotice = (problem: string): string =>
+  `كمّل السطر المفتوح الأول: ${problem}. أو امسحه وكمّل للمراجعة.`
 const unknownNotice = (gtin: string): string =>
   `الباركود ${gtin} مش معروف. اختار الصنف مرة واحدة والبرنامج هيفتكره.`
 
 /** The state machine of the receiving screen: what a scan or a search does to the receipt. */
 export function useReceiveFlow(input: ReceiveFlowInput): ReceiveFlow {
-  const { draft, items, existing, selfId, onChange, onOpenExisting } = input
+  const { draft, items, existing, selfId, onChange, onOpenExisting, onReview } = input
   const [pending, setPending] = useState<ReceiptLine | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [chooseItems, setChooseItems] = useState<readonly Item[] | null>(null)
   const [resolving, setResolving] = useState<ResolveTarget | null>(null)
 
+  const [pendingKey, setPendingKey] = useState(0)
+
+  /** Writes one step: the receipt once (when a line joined or counted), then the open line. */
+  const commit = (step: Extract<Step, { kind: 'step' }>): boolean => {
+    const opened = step.pending !== null && (pending === null || step.joined)
+    if (step.draft !== draft) onChange(step.draft)
+    if (opened) setPendingKey((k) => k + 1)
+    setPending(step.pending)
+    return opened
+  }
+
   const applyHit = (hit: LineHit): ScanFeedback => {
-    const plan = planHit(draft, pending, hit)
+    const step = stepHit(draft, pending, hit)
     setNotice(null)
-    if (plan.kind === 'busy') {
-      setNotice(BUSY_NOTICE)
+    if (step.kind === 'busy') {
+      setNotice(busyNotice(step.problem))
       return 'known'
     }
-    if (plan.kind === 'start') {
-      setPending(plan.line)
-      if (hit.kind === 'unknown-gtin') setNotice(unknownNotice(hit.gtin))
-    } else if (plan.kind === 'bump-pending') {
-      setPending((p) => (p ? { ...p, countedQty: p.countedQty + 1 } : p))
-    } else {
-      const line = draft.lines.find((l) => l.n === plan.n)
-      if (line) onChange(patchLine(draft, plan.n, { countedQty: line.countedQty + 1 }))
-    }
+    const opened = commit(step)
+    if (opened && hit.kind === 'unknown-gtin') setNotice(unknownNotice(hit.gtin))
     return hit.kind === 'item' ? 'known' : 'unknown'
   }
 
@@ -115,25 +133,32 @@ export function useReceiveFlow(input: ReceiveFlowInput): ReceiveFlow {
     if (line) onChange(patchLine(draft, target.n, resolveLine(line, item)))
   }
 
+  const problem = pending ? joinProblem(pending, draft.businessDate) : null
+
   return {
     pending,
+    pendingKey,
+    problem,
+    lineCount: draft.lines.length + (pending && problem === null ? 1 : 0),
     notice,
     chooseItems,
     resolving,
     onCode: (code) => applyOutcome(interpretScan(items, code)),
     onSearch: (cls) => void applyOutcome(interpretClass(items, cls, 'typed')),
     patchPending: (patch) => setPending((p) => (p ? { ...p, ...patch } : p)),
-    addPending() {
-      if (!pending) return
-      onChange(addLine(draft, pending))
-      setPending(null)
-      setNotice(null)
-    },
     discardPending: () => setPending(null),
+    review() {
+      const step = stepReview(draft, pending)
+      if (step.kind === 'blocked') return setNotice(reviewNotice(step.problem))
+      if (step.draft !== draft) onChange(step.draft)
+      setPending(null)
+      onReview()
+    },
     startBatch(item) {
-      if (pending) return setNotice(BUSY_NOTICE)
-      setPending({ ...lineFromItem(draft.lines.length + 1, item), countedQty: 0 })
+      const step = stepBatch(draft, pending, item)
+      if (step.kind === 'busy') return setNotice(busyNotice(step.problem))
       setNotice(null)
+      commit(step)
     },
     pickChosen(item) {
       setChooseItems(null)

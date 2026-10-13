@@ -9,6 +9,9 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-3);
+  /* The seal stamps in at 1.35x: let it overshoot into the page margin, not past the screen edge. */
+  overflow: clip;
+  overflow-clip-margin: var(--space-4);
 }
 
 .title {

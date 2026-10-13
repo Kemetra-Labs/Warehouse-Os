@@ -1,0 +1,126 @@
+.stepper {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) 56px;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.step {
+  display: grid;
+  place-items: center;
+  inline-size: 56px;
+  block-size: 56px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--panel-2);
+  color: var(--bone);
+  cursor: pointer;
+  transition: transform var(--dur-press) linear;
+}
+
+.step:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.step:disabled {
+  background: transparent;
+  box-shadow: inset 0 0 0 2px var(--hair);
+  color: var(--muted);
+  cursor: default;
+}
+
+.step svg {
+  inline-size: 24px;
+  block-size: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+}
+
+.center {
+  display: grid;
+  justify-items: center;
+  min-inline-size: 0;
+}
+
+.field {
+  display: block;
+  inline-size: 100%;
+}
+
+/* The numeral is the loud part: a large blue count, still an input you can type into. */
+.input {
+  inline-size: 100%;
+  min-block-size: 56px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--count);
+  font-family: inherit;
+  font-size: 40px;
+  font-weight: 800;
+  line-height: 1;
+  text-align: center;
+}
+
+.input:focus-visible {
+  outline-offset: -2px;
+}
+
+.input[aria-invalid='true'] {
+  color: var(--short-ink);
+}
+
+.caption {
+  color: var(--muted);
+  font-size: var(--text-xs);
+  text-align: center;
+}
+
+.sr {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .step:active:not(:disabled) {
+    transform: none;
+    opacity: 0.82;
+  }
+}
+
+/* The invoiced quantity inside the caption: an underlined number you can tap and type. */
+.inline {
+  display: inline-block;
+}
+
+.inlineInput {
+  inline-size: 3.2em;
+  min-block-size: var(--tap-min);
+  padding: 0;
+  border: 0;
+  border-block-end: 2px solid var(--control-line);
+  border-radius: 0;
+  background: transparent;
+  color: var(--bone);
+  font-family: inherit;
+  font-size: var(--text-md);
+  font-weight: 800;
+  text-align: center;
+}
+
+.inlineInput::placeholder {
+  color: var(--attn);
+}
+
+.inlineInput[aria-invalid='true'] {
+  border-block-end-color: var(--short);
+  color: var(--short-ink);
+}
