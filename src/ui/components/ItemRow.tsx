@@ -1,5 +1,7 @@
+import { useEffect, useState } from 'react'
 import type { ItemRow as LedgerRow } from '../../data/deriveLedger'
 import { Bdi } from './Bdi'
+import { Num } from './Num'
 import styles from './ItemRow.module.css'
 
 export interface ItemRowProps {
@@ -9,6 +11,25 @@ export interface ItemRowProps {
 }
 
 const CHANGED_LABEL = 'اتغيّر من جهاز تاني من آخر مرة فتحته'
+/** The highlight fades out over --dur-row-out (120 ms) once the item is opened; this outlasts it. */
+const LEAVE_MS = 200
+
+/** True for a moment after the "changed since seen" mark goes away, so it can fade out. */
+function useLeaving(changed: boolean): boolean {
+  const [was, setWas] = useState(changed)
+  const [leaving, setLeaving] = useState(false)
+  // Adjust state during render: the mark just went away, so start the fade-out.
+  if (was !== changed) {
+    setWas(changed)
+    setLeaving(was && !changed)
+  }
+  useEffect(() => {
+    if (!leaving) return
+    const t = setTimeout(() => setLeaving(false), LEAVE_MS)
+    return () => clearTimeout(t)
+  }, [leaving])
+  return leaving
+}
 
 /**
  * One item in a list: balance first, then name and status. A balance below zero reads
@@ -17,9 +38,11 @@ const CHANGED_LABEL = 'اتغيّر من جهاز تاني من آخر مرة ف
  */
 export function ItemRow({ row, onOpen }: ItemRowProps) {
   const { item, balance, status, pendingSettlement, changedSinceSeen } = row
+  const leaving = useLeaving(changedSinceSeen)
   const className = [
     styles.row,
     changedSinceSeen ? styles.changed : '',
+    leaving ? styles.leaving : '',
     pendingSettlement ? styles.negative : '',
   ]
     .filter(Boolean)
@@ -28,6 +51,8 @@ export function ItemRow({ row, onOpen }: ItemRowProps) {
     <>
       {changedSinceSeen ? (
         <span className={styles.dot} role="img" aria-label={CHANGED_LABEL} />
+      ) : leaving ? (
+        <span className={styles.dot} aria-hidden="true" />
       ) : null}
       <span className={styles.main}>
         <span className={styles.name}>{item.nameAr}</span>
@@ -37,7 +62,9 @@ export function ItemRow({ row, onOpen }: ItemRowProps) {
         {pendingSettlement ? <span className={styles.flag}>تسوية معلّقة</span> : null}
       </span>
       <span className={styles.balance} aria-label={`الرصيد ${balance}`}>
-        <Bdi>{balance}</Bdi>
+        <Bdi>
+          <Num value={balance} />
+        </Bdi>
       </span>
     </>
   )

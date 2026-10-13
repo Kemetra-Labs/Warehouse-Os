@@ -12,6 +12,13 @@ export interface SealProps {
   readonly animate?: boolean
 }
 
+/** A date or number longer than this is squeezed to fit inside the inner ring (60 of 100 units). */
+const FIT_CHARS = 11
+const FIT_WIDTH = 60
+
+const fit = (text: string): { textLength?: number; lengthAdjust?: 'spacingAndGlyphs' } =>
+  text.length > FIT_CHARS ? { textLength: FIT_WIDTH, lengthAdjust: 'spacingAndGlyphs' } : {}
+
 const TITLES: Readonly<Record<SealVariant, string>> = {
   posted: 'معتمد',
   cancelled: 'ملغي',
@@ -38,7 +45,7 @@ export function Seal({ variant = 'posted', date, docNumber, animate = true }: Se
       <text className={styles.meta} x="50" y="61" textAnchor="middle" direction="ltr">
         {date}
       </text>
-      <text className={styles.meta} x="50" y="74" textAnchor="middle">
+      <text className={styles.meta} x="50" y="74" textAnchor="middle" {...fit(docNumber)}>
         {docNumber}
       </text>
     </svg>

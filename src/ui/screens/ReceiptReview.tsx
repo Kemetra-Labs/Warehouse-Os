@@ -19,6 +19,7 @@ import { ItemPickerSheet } from '../components/ItemPickerSheet'
 import { PrintButton } from '../components/PrintButton'
 import { ReasonSheet } from '../components/ReasonSheet'
 import { Seal, type SealVariant } from '../components/Seal'
+import { postedHaptic } from '../haptics'
 import styles from './ReceiptReview.module.css'
 import { buildReviewRows, type ReasonField } from './reviewRows'
 
@@ -130,7 +131,10 @@ export function ReceiptReview(props: ReceiptReviewProps) {
     setErrors([])
     try {
       const result = await props.onPost()
-      if (result.ok) return setPhase({ kind: 'done' })
+      if (result.ok) {
+        postedHaptic()
+        return setPhase({ kind: 'done' })
+      }
       setErrors(result.issues.map((i) => i.message))
     } catch {
       setErrors([POST_FAILED])

@@ -23,7 +23,9 @@ export function SyncPill({ state, onRetry }: SyncPillProps) {
         <svg viewBox="0 0 18 18" className={styles.glyph} aria-hidden="true" focusable="false">
           <path d="M9 4.5v5.5M9 13v.5" />
         </svg>
-        <span key={label}>{label}</span>
+        <span key={label} className={styles.label}>
+          {label}
+        </span>
       </button>
     )
   }

@@ -1,0 +1,50 @@
+.num {
+  display: inline-block;
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+/* Quantity change: cross-fade, no roll (tabular numerals keep the width still). */
+.fade {
+  animation: num-fade var(--dur-number) var(--ease-standard) both;
+}
+
+/* Mismatch: translateX 4px twice. Reduced motion: no movement, the cell stays red with its glyph. */
+.shake {
+  animation: num-shake var(--dur-shake) var(--ease-standard) both;
+}
+
+@keyframes num-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes num-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-4px);
+  }
+  40% {
+    transform: translateX(4px);
+  }
+  60% {
+    transform: translateX(-4px);
+  }
+  80% {
+    transform: translateX(4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade,
+  .shake {
+    animation: none;
+  }
+}

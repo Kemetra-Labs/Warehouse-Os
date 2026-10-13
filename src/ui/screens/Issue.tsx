@@ -29,6 +29,7 @@ import { CountTable } from '../components/CountTable'
 import { PrintButton } from '../components/PrintButton'
 import { ReasonSheet } from '../components/ReasonSheet'
 import { Seal } from '../components/Seal'
+import { postedHaptic } from '../haptics'
 import { IssueAdd } from './IssueAdd'
 import { IssueHeader } from './IssueHeader'
 import styles from './Issue.module.css'
@@ -160,6 +161,7 @@ export function Issue(props: IssueProps) {
     try {
       const result = await props.onPost()
       if (result.ok) {
+        postedHaptic()
         return setPhase({
           kind: 'done',
           totals: draftTotals(draft, (code) => itemOf(code)?.priceMinor ?? 0),

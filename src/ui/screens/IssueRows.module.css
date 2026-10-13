@@ -28,7 +28,7 @@
   min-block-size: var(--tap-min);
   max-inline-size: 100%;
   padding-inline: var(--space-2);
-  border: 1px solid var(--line);
+  border: 1px solid var(--control-line);
   border-radius: var(--radius-sm);
   background: var(--surface);
   color: var(--ink);
