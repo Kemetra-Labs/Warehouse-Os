@@ -11,7 +11,8 @@
   --match: #2e7d4f;
   --seal: #5b2d8e; /* reserved for posted/approved state ONLY */
   --amber: #9a6200;
-  --line: #d5dfdc;
+  --line: #d5dfdc; /* decorative hairlines and card edges only (1.3:1) */
+  --control-line: #758985; /* the edge of an input or select: 3.7:1 on white, WCAG 1.4.11 */
 
   /* Surfaces and tints (derived from the palette above) */
   --surface: #ffffff;
@@ -26,7 +27,7 @@
   --amber-line: #e9c46a;
   --disabled-bg: #c9d6d3;
   --disabled-ink: #3c4f4b;
-  --scrim: rgba(18, 35, 33, 0.35);
+  --scrim: rgba(18, 35, 33, 0.32); /* M3 modal scrim: 32% */
 
   /* Radius and elevation */
   --radius-sm: 10px;
@@ -56,7 +57,10 @@
   --space-6: 32px;
   --space-7: 48px;
 
-  /* Motion: durations */
+  /* Motion: durations. Each one is a moment from docs/design/ui-inspiration.md. Where a value
+     sits on the Material 3 grid the token is named: scan 200 = short4, sync 250 = medium1,
+     sheet-in 300 = medium2. The rest (seal 420, tick 220, row-in 180, number 120, row-out 120,
+     shake 240, press 80) are the spec's own, between grid steps on purpose. */
   --dur-seal: 420ms;
   --dur-scan: 200ms;
   --dur-tick: 220ms;
@@ -65,8 +69,14 @@
   --dur-sync: 250ms;
   --dur-number: 120ms;
   --dur-press: 80ms;
+  --dur-shake: 240ms;
+  --dur-row-in: 180ms;
+  --dur-row-out: 120ms;
 
-  /* Motion: easings */
+  /* Motion: easings. Checked on 2026-10-13 against the official Material 3 tokens
+     (material-web, tokens/versions/v0_192/_md-sys-motion.scss); all four match exactly.
+     standard = md.sys.motion.easing.standard, decelerate = standard-decelerate,
+     accelerate = standard-accelerate, emphasized-decelerate = emphasized-decelerate. */
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --ease-decelerate: cubic-bezier(0, 0, 0, 1);
   --ease-emphasized-decelerate: cubic-bezier(0.05, 0.7, 0.1, 1);
@@ -74,6 +84,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  /* Reduced motion: movement becomes a short fade or an instant change (see each component). */
   :root {
     --dur-seal: 150ms;
     --dur-scan: 0ms;
@@ -83,6 +94,9 @@
     --dur-sync: 0ms;
     --dur-number: 0ms;
     --dur-press: 0ms;
+    --dur-shake: 0ms;
+    --dur-row-in: 0ms;
+    --dur-row-out: 0ms;
   }
 }
 
@@ -94,6 +108,8 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  /* Checkboxes and radios take the palette, not the browser blue. */
+  accent-color: var(--scrub-2);
 }
 
 body {
@@ -104,6 +120,24 @@ body {
   font-size: var(--text-md);
   font-variant-numeric: tabular-nums;
   line-height: 1.5;
+  /* A long code or size with no break opportunity (DHS_LCP_4.5_2.5x30) wraps instead of pushing
+     the screen wider than the phone. It also lets a narrow box split an ordinary word as a last
+     resort; none was seen on the 23 screens the layout test photographs. */
+  overflow-wrap: anywhere;
+}
+
+/* A form control never makes its grid or flex parent wider than the screen: a long option label
+   or a long typed value scrolls inside the control instead (found on the adjust screen, 412 px). */
+input,
+select,
+textarea {
+  caret-color: var(--marker);
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+
+a {
+  color: var(--marker);
 }
 
 ::selection {

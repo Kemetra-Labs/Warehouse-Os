@@ -4,6 +4,7 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     passWithNoTests: true,
+    benchmark: { include: ['tests/**/*.bench.ts'] },
     include: ['tests/**/*.test.{ts,tsx}'],
     exclude: ['tests/e2e/**', 'tests/rules/**', 'node_modules/**'],
     coverage: {

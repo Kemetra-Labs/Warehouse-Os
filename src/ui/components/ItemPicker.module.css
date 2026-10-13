@@ -6,7 +6,7 @@
 .input {
   min-block-size: var(--tap-min);
   padding-inline: var(--space-3);
-  border: 1px solid var(--line);
+  border: 1px solid var(--control-line);
   border-radius: var(--radius-sm);
   background: var(--surface);
   color: var(--ink);

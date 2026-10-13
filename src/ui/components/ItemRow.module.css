@@ -1,4 +1,6 @@
 .row {
+  position: relative;
+  isolation: isolate;
   display: flex;
   align-items: center;
   gap: var(--space-3);
@@ -16,12 +18,33 @@
 
 button.row {
   cursor: pointer;
+  transition: transform var(--dur-press) linear;
 }
 
-/* Changed since seen: a faint tint and a dot, never a side stripe. */
-.changed {
+button.row:active {
+  transform: scale(0.97);
+}
+
+/* Changed since seen: a faint tint and a dot, never a side stripe. The tint is its own layer so
+   that only opacity animates: it fades in once (180 ms), and out (120 ms) when the item opens. */
+.changed::before,
+.leaving::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
   background: var(--tint-marker);
-  animation: row-in 180ms var(--ease-standard) both;
+  pointer-events: none;
+}
+
+.changed::before {
+  animation: tint-in var(--dur-row-in) var(--ease-standard) both;
+}
+
+.leaving::before,
+.leaving .dot {
+  animation: tint-out var(--dur-row-out) var(--ease-standard) both;
 }
 
 .dot {
@@ -34,6 +57,7 @@ button.row {
 
 .main {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   flex: 1;
   min-inline-size: 0;
 }
@@ -64,17 +88,39 @@ button.row {
   color: var(--miss);
 }
 
-@keyframes row-in {
+@keyframes tint-in {
   from {
-    opacity: 0.4;
+    opacity: 0;
   }
   to {
     opacity: 1;
   }
 }
 
+@keyframes tint-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Reduced motion: the highlight appears and goes at once; a press changes the colour, not the size. */
 @media (prefers-reduced-motion: reduce) {
-  .changed {
+  .changed::before,
+  .leaving::before,
+  .leaving .dot {
     animation: none;
+  }
+
+  .leaving::before,
+  .leaving .dot {
+    display: none;
+  }
+
+  button.row:active {
+    transform: none;
+    background: var(--tint-neutral);
   }
 }

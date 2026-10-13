@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import styles from './CountTable.module.css'
+import { Num } from './Num'
 import { StatusDot, type DotState } from './StatusDot'
 
 export interface CountRow {
@@ -61,11 +62,13 @@ export function CountTable({ rows, caption, labels = {} }: CountTableProps) {
                 {row.name}
                 {row.sub ? <span className={styles.sub}>{row.sub}</span> : null}
               </td>
-              <td className={`${styles.num} ${styles.count}`}>{row.requested ?? '—'}</td>
+              <td className={`${styles.num} ${styles.count}`}>
+                <Num value={row.requested ?? '—'} />
+              </td>
               <td
                 className={`${styles.num} ${styles.count} ${state === 'miss' ? styles.miss : ''}`}
               >
-                {row.delivered}
+                <Num value={row.delivered} miss={state === 'miss'} />
               </td>
               <td className={styles.num}>
                 <StatusDot state={state} />

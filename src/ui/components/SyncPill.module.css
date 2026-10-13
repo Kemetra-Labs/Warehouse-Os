@@ -1,27 +1,52 @@
 .pill {
+  --pill-line: var(--scrub-line);
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
   min-block-size: 28px;
   padding: var(--space-1) var(--space-2);
-  border: 1.5px dashed var(--scrub-line);
+  border: 1.5px solid transparent;
   border-radius: 99px;
   background: transparent;
   color: var(--on-scrub);
   font-family: inherit;
   font-size: var(--text-xs);
   white-space: nowrap;
-  transition:
-    border-color var(--dur-sync) var(--ease-standard),
-    color var(--dur-sync) var(--ease-standard);
 }
 
-.synced {
-  border-style: solid;
+/* Dashed (pending) turns solid (synced) by cross-fading two border layers, so only opacity
+   animates. Both layers sit over the pill's own transparent border. */
+.pill::before,
+.pill::after {
+  content: '';
+  position: absolute;
+  inset: -1.5px;
+  border-radius: inherit;
+  pointer-events: none;
+  transition: opacity var(--dur-sync) var(--ease-standard);
+}
+
+.pill::before {
+  border: 1.5px dashed var(--pill-line);
+  opacity: 1;
+}
+
+.pill::after {
+  border: 1.5px solid var(--pill-line);
+  opacity: 0;
+}
+
+.synced::before {
+  opacity: 0;
+}
+
+.synced::after {
+  opacity: 1;
 }
 
 .failed {
-  border-color: var(--miss);
+  --pill-line: var(--miss);
   background: var(--tint-miss);
   color: var(--miss);
   font-weight: 700;
@@ -41,14 +66,22 @@ button.pill {
   stroke-linecap: round;
 }
 
-/* The count cross-fades when the label changes (keyed element remounts). */
+/* The count cross-fades when the label changes (keyed element remounts). It starts at 35% so a
+   quick run of flips never leaves the pill empty. */
 .label {
   animation: label-in var(--dur-sync) var(--ease-standard) both;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .pill::before,
+  .pill::after {
+    transition: none;
+  }
+}
+
 @keyframes label-in {
   from {
-    opacity: 0;
+    opacity: 0.35;
   }
   to {
     opacity: 1;

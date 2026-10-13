@@ -42,3 +42,11 @@
   color: var(--disabled-ink);
   cursor: default;
 }
+
+/* Reduced motion: a press changes the colour (opacity), not the size. */
+@media (prefers-reduced-motion: reduce) {
+  .button:active:not(:disabled) {
+    transform: none;
+    opacity: 0.82;
+  }
+}

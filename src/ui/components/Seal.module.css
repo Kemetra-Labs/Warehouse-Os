@@ -1,7 +1,8 @@
 .seal {
   --seal-tilt: -14deg;
-  inline-size: 92px;
-  block-size: 92px;
+  /* 104px puts the 12-unit date and number text at 12.5px on screen, above the 12px minimum. */
+  inline-size: 104px;
+  block-size: 104px;
   transform: rotate(var(--seal-tilt));
   font-family: var(--font-family);
   direction: rtl;
