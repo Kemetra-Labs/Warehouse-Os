@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import {
   assertFails,
   assertSucceeds,
@@ -15,7 +15,14 @@ import {
   updateDoc,
   writeBatch,
 } from 'firebase/firestore'
-import { createEnv, ownerDb, validItem, validMovement, validReceipt } from './helpers'
+import {
+  createEnv,
+  ownerDb,
+  validIssueBatch,
+  validItem,
+  validMovement,
+  validReceipt,
+} from './helpers'
 
 let env: RulesTestEnvironment
 
@@ -84,6 +91,145 @@ describe('rules test 5: reversals', () => {
     const db = ownerDb(env)
     await assertFails(setDoc(doc(db, 'movements/rev-imp-r12'), rev({ reverses: 'imp-r13' })))
     await assertFails(setDoc(doc(db, 'movements/rev-imp-r12'), rev({ reverses: null })))
+  })
+})
+
+describe('rules test 5b: a cancel is one atomic batch', () => {
+  const POSTED_AT = Timestamp.fromMillis(1_700_000_000_000)
+
+  const reversal = (original: string, over: Record<string, unknown> = {}) =>
+    validMovement({
+      type: 'تسوية',
+      qty: -5,
+      reverses: original,
+      reason: 'استلام بالغلط',
+      source: { kind: 'receipt', id: 'doc1' },
+      ...over,
+    })
+
+  const posted = (make: typeof validReceipt): Record<string, unknown> =>
+    make({ status: 'posted', postedAt: POSTED_AT })
+
+  /** Starts from a posted document with two line movements, with the rules off. */
+  async function seedPosted(col: string, make: typeof validReceipt): Promise<void> {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore()
+      const kind = col === 'receipts' ? 'receipt' : 'issue'
+      await setDoc(doc(db, `${col}/doc1`), posted(make))
+      await setDoc(doc(db, 'items/SCR-01'), validItem('SCR-01', { priceMinor: 12550 }))
+      for (const n of [1, 2]) {
+        await setDoc(
+          doc(db, `movements/doc1-L${n}`),
+          validMovement({ source: { kind, id: 'doc1' }, postedAt: POSTED_AT }),
+        )
+      }
+    })
+  }
+
+  const cancelPatch = { status: 'cancelled', cancelReason: 'استلام بالغلط' }
+
+  const cancelBatch = (db: ReturnType<typeof ownerDb>, col: string, lines: readonly number[]) => {
+    const batch = writeBatch(db)
+    const kind = col === 'receipts' ? 'receipt' : 'issue'
+    for (const n of lines) {
+      batch.set(
+        doc(db, `movements/rev-doc1-L${n}`),
+        reversal(`doc1-L${n}`, { source: { kind, id: 'doc1' } }),
+      )
+    }
+    batch.update(doc(db, `${col}/doc1`), { ...cancelPatch, cancelledAt: serverTimestamp() })
+    return batch
+  }
+
+  async function exists(path: string): Promise<boolean> {
+    let found = false
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      found = (await getDoc(doc(ctx.firestore(), path))).exists()
+    })
+    return found
+  }
+
+  describe.each([
+    ['receipts', validReceipt],
+    ['issueBatches', validIssueBatch],
+  ] as const)('%s', (col, make) => {
+    it('accepts the reversals and the posted -> cancelled update together', async () => {
+      await seedPosted(col, make)
+      await assertSucceeds(cancelBatch(ownerDb(env), col, [1, 2]).commit())
+      expect(await exists('movements/rev-doc1-L1')).toBe(true)
+      expect(await exists('movements/rev-doc1-L2')).toBe(true)
+    })
+
+    it('refuses a second cancel as a whole: no new reversal is written either', async () => {
+      await seedPosted(col, make)
+      await assertSucceeds(cancelBatch(ownerDb(env), col, [1]).commit())
+      // Line 2 was never reversed, yet the document is already cancelled: the batch must fail.
+      await assertFails(cancelBatch(ownerDb(env), col, [2]).commit())
+      expect(await exists('movements/rev-doc1-L2')).toBe(false)
+      // And so must the very same batch again.
+      await assertFails(cancelBatch(ownerDb(env), col, [1]).commit())
+    })
+
+    it('fails as a whole when one reversal has no reason: the document stays posted', async () => {
+      await seedPosted(col, make)
+      const db = ownerDb(env)
+      const batch = writeBatch(db)
+      batch.set(doc(db, 'movements/rev-doc1-L1'), reversal('doc1-L1', { reason: '' }))
+      batch.update(doc(db, `${col}/doc1`), { ...cancelPatch, cancelledAt: serverTimestamp() })
+      await assertFails(batch.commit())
+      expect(await exists('movements/rev-doc1-L1')).toBe(false)
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        const snap = await getDoc(doc(ctx.firestore(), `${col}/doc1`))
+        expect(snap.get('status')).toBe('posted')
+      })
+    })
+
+    it('fails when the document is not posted (a draft cannot be cancelled)', async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), `${col}/doc1`), make())
+      })
+      await assertFails(cancelBatch(ownerDb(env), col, [1]).commit())
+      expect(await exists('movements/rev-doc1-L1')).toBe(false)
+    })
+  })
+
+  it('accepts the price restore in the same cancel batch (receipt)', async () => {
+    await seedPosted('receipts', validReceipt)
+    const db = ownerDb(env)
+    const batch = cancelBatch(db, 'receipts', [1, 2])
+    batch.update(doc(db, 'items/SCR-01'), { priceMinor: 12000, updatedAt: serverTimestamp() })
+    await assertSucceeds(batch.commit())
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const snap = await getDoc(doc(ctx.firestore(), 'items/SCR-01'))
+      expect(snap.get('priceMinor')).toBe(12000)
+    })
+  })
+
+  it('rejects a rev- movement that is not a تسوية', async () => {
+    const db = ownerDb(env)
+    for (const type of ['إضافة', 'صرف', 'مرتجع']) {
+      await assertFails(
+        setDoc(doc(db, 'movements/rev-imp-r12'), reversal('imp-r12', { type, qty: 5 })),
+      )
+    }
+  })
+
+  it('rejects `reverses` on a movement whose id is not rev-{original}', async () => {
+    const db = ownerDb(env)
+    // A stray adjustment must not be able to strike another movement out of the history.
+    await assertFails(
+      setDoc(
+        doc(db, 'movements/m1'),
+        validMovement({ type: 'تسوية', qty: -1, reverses: 'imp-r12' }),
+      ),
+    )
+    await assertFails(
+      setDoc(
+        doc(db, 'movements/m2'),
+        validMovement({ type: 'مرتجع', qty: 1, reverses: 'imp-r12' }),
+      ),
+    )
+    await assertSucceeds(setDoc(doc(db, 'movements/m3'), validMovement({ reverses: null })))
   })
 })
 

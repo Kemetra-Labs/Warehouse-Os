@@ -137,6 +137,11 @@ describe('retryUnsent', () => {
     commitIssue: () => Promise.resolve(),
     checkReceipt: () => Promise.resolve(false),
     checkIssue: () => Promise.resolve(false),
+    commitCancel: () => Promise.resolve(),
+    checkReceiptCancel: () => Promise.resolve(false),
+    checkIssueCancel: () => Promise.resolve(false),
+    commitManual: () => Promise.resolve(),
+    checkManual: () => Promise.resolve(false),
     ...over,
   })
 

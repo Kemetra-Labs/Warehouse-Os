@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { Route, Routes } from 'react-router'
 import { Shell } from './Shell'
+import { Adjust } from '../ui/screens/Adjust'
 import { Home } from '../ui/screens/Home'
 import { ItemCard } from '../ui/screens/ItemCard'
 import { ItemEdit } from '../ui/screens/ItemEdit'
@@ -27,6 +28,7 @@ export function AppRoutes() {
         <Route path="items/new" element={<ItemEdit />} />
         <Route path="items/:code" element={<ItemCard />} />
         <Route path="items/:code/edit" element={<ItemEdit />} />
+        <Route path="items/:code/adjust" element={<Adjust />} />
         <Route path="settings" element={<Settings />} />
         <Route path="movements" element={<MovementsScreen />} />
         <Route path="reports" element={<ReportsScreen />} />

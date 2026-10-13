@@ -13,8 +13,15 @@ import {
   type WriteBatch,
 } from 'firebase/firestore'
 import { cairoToday } from '../../domain/dates'
+import type { StoredMovement } from '../../domain/cancel'
 import { toDraftDoc, type ReceiptDraft } from '../../domain/receipt'
 import { receiptSchema, type Receipt } from '../../domain/types'
+import {
+  RECEIPT_CANCEL_KIND,
+  runReceiptCancel,
+  type CancelAttempt,
+  type ReceiptCancelRequest,
+} from '../cancelPost'
 import { stripUndefined } from '../convert'
 import { getFirebase } from '../firebase'
 import type { Listener, Unsubscribe } from '../listener'
@@ -27,6 +34,7 @@ import {
   type PostResult,
   type ReattachResult,
 } from '../receiptPost'
+import { cancelledOnServer, commitCancel } from './cancelCommit'
 import { listenCollection } from './shared'
 
 export type ReceiptDoc = Receipt & { readonly id: string }
@@ -132,4 +140,66 @@ export async function getReceipt(id: string): Promise<ReceiptDoc | null> {
   if (!snap.exists()) return null
   const parsed = receiptSchema.safeParse(snap.data({ serverTimestamps: 'estimate' }))
   return parsed.success ? { ...parsed.data, id } : null
+}
+
+/** True when the server (not the cache) holds the receipt as cancelled; gets the cancel's outbox id. */
+export const receiptCancelledOnServer = (entryId: string): Promise<boolean> =>
+  cancelledOnServer('receipts', entryId)
+
+export type CancelReceiptInput = Omit<ReceiptCancelRequest, 'today'>
+
+/**
+ * Cancels a posted receipt (إلغاء): reversals, the price restore and the status in one atomic
+ * batch. Returns as soon as the outbox holds it; `committed` settles when the server answers.
+ */
+export function cancelReceipt(
+  input: CancelReceiptInput,
+  outbox: Pick<Outbox, 'put' | 'markAcked' | 'reconcile'>,
+): Promise<CancelAttempt> {
+  return runReceiptCancel(
+    { ...input, today: cairoToday() },
+    { outbox, commit: commitCancel, checkServer: receiptCancelledOnServer },
+  )
+}
+
+export interface CancelReceiptDocInput {
+  readonly reason: string
+  /** Every movement the app knows. */
+  readonly movements: readonly StoredMovement[]
+  /** The items as they are now: a price is restored only while it is still the one the receipt set. */
+  readonly items: readonly { readonly code: string; readonly priceMinor: number }[]
+  readonly uid: string
+  readonly deviceId: string
+}
+
+/** Cancels the receipt as the app holds it: its price changes, status and movement count come from it. */
+export function cancelReceiptDoc(
+  receipt: ReceiptDoc,
+  input: CancelReceiptDocInput,
+  outbox: Pick<Outbox, 'put' | 'markAcked' | 'reconcile'>,
+): Promise<CancelAttempt> {
+  return cancelReceipt(
+    {
+      ...input,
+      receipt: { id: receipt.id, status: receipt.status },
+      label: receipt.deliveryNo.trim() === '' ? 'الاستلام' : `إذن ${receipt.deliveryNo.trim()}`,
+      priceUpdates: receipt.priceUpdates,
+      // A line that counted nothing wrote no movement.
+      expectedMovements: receipt.lines.filter((l) => l.countedQty > 0).length,
+    },
+    outbox,
+  )
+}
+
+/** App start: re-attach to receipt cancels that were pending when the app closed. */
+export async function reconcilePendingReceiptCancels(
+  outbox: Pick<Outbox, 'list' | 'markAcked' | 'markFailed'>,
+): Promise<ReattachResult[]> {
+  const { db } = getFirebase()
+  return reconcilePendingPosts(
+    outbox,
+    () => waitForPendingWrites(db),
+    receiptCancelledOnServer,
+    RECEIPT_CANCEL_KIND,
+  )
 }

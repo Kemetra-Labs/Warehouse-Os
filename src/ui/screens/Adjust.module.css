@@ -1,0 +1,132 @@
+.screen {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+}
+
+.screen nav a {
+  display: inline-grid;
+  place-items: center;
+  min-block-size: var(--tap-min);
+  color: var(--marker);
+  font-size: var(--text-sm);
+  font-weight: 800;
+}
+
+.head {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--text-xl);
+  font-weight: 800;
+}
+
+.meta {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.choice {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+
+.choice legend {
+  padding-inline: var(--space-1);
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-block-size: var(--tap-min);
+}
+
+.field {
+  display: grid;
+  gap: var(--space-1);
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.field input,
+.field select {
+  min-block-size: var(--tap-min);
+  padding-inline: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: var(--text-md);
+}
+
+.pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.preview {
+  margin: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  font-size: var(--text-sm);
+  text-align: center;
+}
+
+.issues,
+.error,
+.done {
+  margin: 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  font-weight: 800;
+}
+
+.issues {
+  padding-inline-start: calc(var(--space-3) + var(--space-4));
+  border: 1px solid var(--line);
+  background: var(--tint-miss);
+  color: var(--miss);
+}
+
+.error {
+  background: var(--tint-miss);
+  color: var(--miss);
+}
+
+.done {
+  display: grid;
+  gap: var(--space-2);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--match);
+}
+
+.done p {
+  margin: 0;
+}
+
+.done a {
+  color: var(--marker);
+}

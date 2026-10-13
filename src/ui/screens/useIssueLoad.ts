@@ -37,6 +37,7 @@ function sealedOf(doc: IssueBatchDoc): SealedBatch | null {
     seal: {
       variant: doc.status === 'cancelled' ? 'cancelled' : 'posted',
       day: at > 0 ? cairoToday(new Date(at)) : doc.businessDate,
+      reason: doc.cancelReason,
     },
     totals: postedTotals(doc),
   }

@@ -108,9 +108,14 @@ export function ItemCardView({ row, batches, history, today }: ItemCardViewProps
     <article className={styles.card} aria-labelledby="item-name">
       <nav className={styles.top} aria-label="تنقل">
         <Link to="/items">الأصناف</Link>
-        <Link to={`/items/${item.code}/edit`} className={styles.edit}>
-          تعديل
-        </Link>
+        <span className={styles.actions}>
+          <Link to={`/items/${item.code}/adjust`} className={styles.edit}>
+            مرتجع / تسوية
+          </Link>
+          <Link to={`/items/${item.code}/edit`} className={styles.edit}>
+            تعديل
+          </Link>
+        </span>
       </nav>
 
       <header className={styles.head}>
@@ -141,6 +146,11 @@ export function ItemCardView({ row, batches, history, today }: ItemCardViewProps
         <div className={styles.state}>
           <b>{row.status}</b>
           {row.pendingSettlement ? <span>تسوية معلّقة</span> : null}
+          {row.pendingSettlement ? (
+            <Link to={`/items/${item.code}/adjust`} className={styles.settle}>
+              سوّي الرصيد
+            </Link>
+          ) : null}
           <span>
             حد الطلب <Bdi>{row.reorder}</Bdi> ({reorderNote(row)})
           </span>

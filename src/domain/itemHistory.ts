@@ -74,7 +74,8 @@ export function describeDocument(m: Movement): DocumentInfo {
   }
   if (source.kind === 'issue') {
     return {
-      label: join([reference, docNumber === null ? null : `أذون ${docNumber}`]),
+      // A reversal carries neither a batch reference nor permits: it still names its batch.
+      label: join([reference ?? 'دفعة صرف', docNumber === null ? null : `أذون ${docNumber}`]),
       link: source.id === null ? null : `/issue/${source.id}`,
     }
   }

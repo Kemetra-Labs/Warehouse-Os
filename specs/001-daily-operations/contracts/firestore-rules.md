@@ -25,7 +25,7 @@ placeholder is replaced at deploy time (research R3).
 | Op | Allowed when |
 |---|---|
 | read | OWNER |
-| create | OWNER **and** the schema is valid (data-model; the "not in the future" date check is **client-only**, see data-model) **and** `postedAt == request.time` **and** `createdBy == request.auth.uid` **and** the type/qty sign rule holds (`qty > 0` unless type is تسوية, where `qty != 0`) **and**, if `id` starts with `rev-`, `reverses == id[4:]` **and** `reason` is non-empty. **No `exists()`/`get()` calls.** Item existence and original existence are checked on the client (research R2, access-call budget). |
+| create | OWNER **and** the schema is valid (data-model; the "not in the future" date check is **client-only**, see data-model) **and** `postedAt == request.time` **and** `createdBy == request.auth.uid` **and** the type/qty sign rule holds (`qty > 0` unless type is تسوية, where `qty != 0`) **and**, if `id` starts with `rev-`, the type is تسوية, `reverses == id[4:]` **and** `reason` is non-empty, **and**, if it does not, `reverses` is absent or null. **No `exists()`/`get()` calls.** Item existence and original existence are checked on the client (research R2, access-call budget). |
 | update | **never** |
 | delete | **never** |
 

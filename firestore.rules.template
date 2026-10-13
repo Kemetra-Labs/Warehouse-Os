@@ -47,13 +47,15 @@ service cloud.firestore {
 
     // ---------- movements/{id} (create-only) ----------
     // rev-{X}: a تسوية that names X in `reverses` and carries a non-empty reason.
+    // `reverses` belongs to rev-* movements only: no other movement may point at another one.
     function validReversal(d, id) {
-      return !id.matches('rev-.+')
-        || (d.type == 'تسوية'
+      return id.matches('rev-.+')
+        ? (d.type == 'تسوية'
             && d.get('reverses', null) is string
             && ('rev-' + d.get('reverses', null)) == id
             && d.get('reason', null) is string
-            && d.get('reason', null).size() > 0);
+            && d.get('reason', null).size() > 0)
+        : d.get('reverses', null) == null;
     }
 
     function validMovement(d, id) {

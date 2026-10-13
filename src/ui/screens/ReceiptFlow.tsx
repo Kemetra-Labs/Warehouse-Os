@@ -3,7 +3,8 @@ import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { useAuth } from '../../app/AuthProvider'
 import { useData } from '../../data/DataProvider'
 import { getDeviceId } from '../../data/deviceId'
-import { postReceipt, saveDraft } from '../../data/repos/receipts'
+import { cancelReceiptDoc, postReceipt, saveDraft } from '../../data/repos/receipts'
+import type { CancelAttempt } from '../../data/cancelPost'
 import type { PostResult } from '../../data/receiptPost'
 import { cairoToday } from '../../domain/dates'
 import type { ReceiptDraft } from '../../domain/receipt'
@@ -13,6 +14,11 @@ import { ReceiptReview, type SealInfo } from './ReceiptReview'
 import { useDraftAutosave, type AutosaveAdapter } from './useDraftAutosave'
 import { useReceiptLoad } from './useReceiptLoad'
 import styles from './Receive.module.css'
+
+const NOT_LOADED: CancelAttempt = {
+  ok: false,
+  problem: { code: 'incomplete', message: 'الإذن لسه بيتحمّل. استنى لحظة وجرّب تاني.' },
+}
 
 const RECEIPT_AUTOSAVE: AutosaveAdapter<ReceiptDraft> = { save: saveDraft, isBlank: isBlankDraft }
 
@@ -28,7 +34,7 @@ function ReceiptEditor({ id, initial, sealed, isNew }: EditorProps) {
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const { state } = useAuth()
-  const { items, receipts, outbox } = useData()
+  const { items, receipts, outbox, movements } = useData()
   const [draft, setDraft] = useState(initial)
   const autosave = useDraftAutosave(id, isNew, RECEIPT_AUTOSAVE)
   const existing = useMemo(
@@ -57,6 +63,17 @@ function ReceiptEditor({ id, initial, sealed, isNew }: EditorProps) {
     }
   }
 
+  const cancel = (reason: string): Promise<CancelAttempt> => {
+    if (state.status !== 'signedIn') return Promise.reject(new Error('not signed in'))
+    const receipt = receipts.find((r) => r.id === id)
+    if (!receipt) return Promise.resolve(NOT_LOADED)
+    return cancelReceiptDoc(
+      receipt,
+      { reason, movements, items, uid: state.user.uid, deviceId: getDeviceId() },
+      outbox,
+    )
+  }
+
   if (sealed || params.get('step') === 'review') {
     return (
       <ReceiptReview
@@ -69,6 +86,7 @@ function ReceiptEditor({ id, initial, sealed, isNew }: EditorProps) {
         onChange={update}
         onBack={() => setParams({})}
         onPost={post}
+        onCancel={cancel}
         onFinish={() => void navigate('/')}
       />
     )

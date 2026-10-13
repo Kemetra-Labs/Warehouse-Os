@@ -2,9 +2,10 @@ import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { useAuth } from '../../app/AuthProvider'
 import { useData } from '../../data/DataProvider'
+import type { CancelAttempt } from '../../data/cancelPost'
 import { getDeviceId } from '../../data/deviceId'
 import type { IssuePostResult } from '../../data/issuePost'
-import { postIssueBatch, saveIssueDraft } from '../../data/repos/issues'
+import { cancelIssueDoc, postIssueBatch, saveIssueDraft } from '../../data/repos/issues'
 import { cachedStock } from '../../data/stockView'
 import { useLedger } from '../../data/useLedger'
 import { cairoToday } from '../../domain/dates'
@@ -15,6 +16,11 @@ import { Issue } from './Issue'
 import { useDraftAutosave, type AutosaveAdapter } from './useDraftAutosave'
 import { useIssueLoad, type SealedBatch } from './useIssueLoad'
 import styles from './Receive.module.css'
+
+const NOT_LOADED: CancelAttempt = {
+  ok: false,
+  problem: { code: 'incomplete', message: 'الدفعة لسه بتتحمّل. استنى لحظة وجرّب تاني.' },
+}
 
 const ISSUE_AUTOSAVE: AutosaveAdapter<IssueDraft> = {
   save: saveIssueDraft,
@@ -32,7 +38,7 @@ interface EditorProps {
 function IssueEditor({ id, initial, sealed, isNew }: EditorProps) {
   const navigate = useNavigate()
   const { state } = useAuth()
-  const { items, outbox, issueBatches } = useData()
+  const { items, outbox, issueBatches, movements } = useData()
   const ledger = useLedger()
   const stock = useMemo(() => cachedStock(ledger), [ledger])
   const [draft, setDraft] = useState(initial)
@@ -59,6 +65,17 @@ function IssueEditor({ id, initial, sealed, isNew }: EditorProps) {
     }
   }
 
+  const cancel = (reason: string): Promise<CancelAttempt> => {
+    if (state.status !== 'signedIn') return Promise.reject(new Error('not signed in'))
+    const batch = issueBatches.find((b) => b.id === id)
+    if (!batch) return Promise.resolve(NOT_LOADED)
+    return cancelIssueDoc(
+      batch,
+      { reason, movements, uid: state.user.uid, deviceId: getDeviceId() },
+      outbox,
+    )
+  }
+
   return (
     <Issue
       draft={draft}
@@ -69,6 +86,7 @@ function IssueEditor({ id, initial, sealed, isNew }: EditorProps) {
       duplicateNumber={hasDuplicateNumber(issueBatches, id, draft.number)}
       onChange={update}
       onPost={post}
+      onCancel={cancel}
       onFinish={() => void navigate('/')}
     />
   )
