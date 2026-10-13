@@ -81,7 +81,7 @@ export type PostResult =
       readonly committed: Promise<PostOutcome>
     }
 
-function messageOf(err: unknown): string {
+export function messageOf(err: unknown): string {
   const code = typeof err === 'object' && err !== null ? (err as { code?: unknown }).code : null
   const text = err instanceof Error ? err.message : String(err)
   return typeof code === 'string' ? `${code}: ${text}` : text
@@ -116,10 +116,21 @@ export async function runPost(input: PostInput, deps: PostDeps): Promise<PostRes
     kind: RECEIPT_POST_KIND,
     payload: { receiptId: input.id, draft: input.draft, batch },
   })
-  return { ok: true, warnings: batch.warnings, committed: settle(input.id, plan, deps) }
+  return { ok: true, warnings: batch.warnings, committed: settlePost(input.id, plan, deps) }
 }
 
-async function settle(id: string, plan: CommitPlan, deps: PostDeps): Promise<PostOutcome> {
+export interface SettleDeps<TPlan> {
+  readonly outbox: Pick<Outbox, 'markAcked' | 'reconcile'>
+  readonly commit: (plan: TPlan) => Promise<void>
+  readonly checkServer: ServerCheck
+}
+
+/** Sends a queued post and clears its outbox entry on ack; on a rejection asks the server (R12). */
+export async function settlePost<TPlan>(
+  id: string,
+  plan: TPlan,
+  deps: SettleDeps<TPlan>,
+): Promise<PostOutcome> {
   try {
     await deps.commit(plan)
   } catch (err) {
@@ -176,10 +187,9 @@ export async function reconcilePendingPosts(
   outbox: Pick<Outbox, 'list' | 'markAcked' | 'markFailed'>,
   waitForPendingWrites: () => Promise<void>,
   checkServer: ServerCheck,
+  kind: string = RECEIPT_POST_KIND,
 ): Promise<ReattachResult[]> {
-  const pending = (await outbox.list()).filter(
-    (e) => e.kind === RECEIPT_POST_KIND && e.status === 'pending',
-  )
+  const pending = (await outbox.list()).filter((e) => e.kind === kind && e.status === 'pending')
   if (pending.length === 0) return []
   await waitForPendingWrites()
   const results: ReattachResult[] = []

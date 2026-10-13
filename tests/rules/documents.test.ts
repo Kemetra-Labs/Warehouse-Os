@@ -193,6 +193,30 @@ describe('receipt lines', () => {
   })
 })
 
+describe('issue batch posting', () => {
+  it('accepts the patch the app writes at posting: status, prices, values and postedAt', async () => {
+    const line = {
+      n: 1,
+      itemCode: 'SCR-02',
+      qty: 2,
+      batchNo: 'B1',
+      expiry: '2028-01',
+      forItemCode: 'SCR-01',
+      negativeReason: null,
+    }
+    await seed('issueBatches/i8', validIssueBatch({ issued: [line] }))
+    await assertSucceeds(
+      updateDoc(doc(ownerDb(env), 'issueBatches/i8'), {
+        status: 'posted',
+        requested: [{ itemCode: 'SCR-01', qty: 2, priceMinor: 12600 }],
+        requestedValueMinor: 25200,
+        issuedValueMinor: 25200,
+        postedAt: serverTimestamp(),
+      }),
+    )
+  })
+})
+
 describe('non-owners', () => {
   it('cannot touch documents', async () => {
     const other = env.authenticatedContext('someone-else').firestore()

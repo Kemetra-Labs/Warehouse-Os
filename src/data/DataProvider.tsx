@@ -4,6 +4,11 @@ import { DEFAULT_SETTINGS } from './convert'
 import type { MovementDoc } from './deriveLedger'
 import type { DataError } from './listener'
 import { createOutbox, type Outbox } from './outbox'
+import {
+  reconcilePendingIssueBatches,
+  subscribeIssueBatches,
+  type IssueBatchDoc,
+} from './repos/issues'
 import { subscribeItems } from './repos/items'
 import { subscribeMovements } from './repos/movements'
 import { reconcilePendingReceipts, subscribeReceipts, type ReceiptDoc } from './repos/receipts'
@@ -20,6 +25,10 @@ export interface DataValue {
   readonly settings: Settings
   /** Live receipts of every status; not part of the ready gate. */
   readonly receipts: readonly ReceiptDoc[]
+  /** Live issue batches of every status; not part of the ready gate. */
+  readonly issueBatches: readonly IssueBatchDoc[]
+  /** True once the issue-batch listener has answered at least once (numbering waits for it). */
+  readonly issueBatchesLoaded: boolean
   readonly outbox: Outbox
 }
 
@@ -44,6 +53,8 @@ export function DataProvider({ children }: { readonly children: ReactNode }) {
   const [movements, setMovements] = useState<readonly MovementDoc[]>([])
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS)
   const [receipts, setReceipts] = useState<readonly ReceiptDoc[]>([])
+  const [issueBatches, setIssueBatches] = useState<readonly IssueBatchDoc[]>([])
+  const [issueBatchesLoaded, setIssueBatchesLoaded] = useState(false)
   const [loaded, setLoaded] = useState<Loaded>({ items: false, movements: false, settings: false })
   const [error, setError] = useState<DataError | null>(null)
 
@@ -74,6 +85,14 @@ export function DataProvider({ children }: { readonly children: ReactNode }) {
         },
         onError: fail,
       }),
+      subscribeIssueBatches({
+        onData: (rows, meta) => {
+          setIssueBatches(rows)
+          setIssueBatchesLoaded(true)
+          syncStore.reportPending('issueBatches', meta.pendingCount)
+        },
+        onError: fail,
+      }),
       subscribeSettings({
         onData: (s, meta) => {
           setSettings(s)
@@ -87,8 +106,9 @@ export function DataProvider({ children }: { readonly children: ReactNode }) {
   }, [])
 
   useEffect(() => {
-    // Receipt posts that were pending when the app closed: re-attach, then ask the server (R12).
+    // Receipt and issue posts that were pending when the app closed: re-attach, then ask the server (R12).
     reconcilePendingReceipts(outbox).catch(() => undefined)
+    reconcilePendingIssueBatches(outbox).catch(() => undefined)
   }, [outbox])
 
   useEffect(() => {
@@ -115,8 +135,28 @@ export function DataProvider({ children }: { readonly children: ReactNode }) {
       : ready
         ? 'ready'
         : 'loading'
-    return { status, error, items, movements, settings, receipts, outbox }
-  }, [loaded, error, items, movements, settings, receipts, outbox])
+    return {
+      status,
+      error,
+      items,
+      movements,
+      settings,
+      receipts,
+      issueBatches,
+      issueBatchesLoaded,
+      outbox,
+    }
+  }, [
+    loaded,
+    error,
+    items,
+    movements,
+    settings,
+    receipts,
+    issueBatches,
+    issueBatchesLoaded,
+    outbox,
+  ])
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>
 }

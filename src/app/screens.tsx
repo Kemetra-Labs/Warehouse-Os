@@ -1,6 +1,4 @@
 import { Link } from 'react-router'
-import { useLedger } from '../data/useLedger'
-import { OpenDrafts } from '../ui/screens/OpenDrafts'
 import styles from './screens.module.css'
 
 function Placeholder({ title }: { readonly title: string }) {
@@ -9,45 +7,6 @@ function Placeholder({ title }: { readonly title: string }) {
       <h1 className={styles.title}>{title}</h1>
       <p className={styles.note}>الشاشة دي لسه تحت العمل.</p>
     </section>
-  )
-}
-
-interface CellProps {
-  readonly value: number
-  readonly label: string
-  readonly lit?: boolean
-}
-
-function Cell({ value, label, lit = false }: CellProps) {
-  return (
-    <div className={lit ? styles.lit : undefined}>
-      <b>{value}</b>
-      <span>{label}</span>
-    </div>
-  )
-}
-
-export function HomeScreen() {
-  const { tally, rows } = useLedger()
-  return (
-    <>
-      <Placeholder title="الرئيسية" />
-      {rows.length === 0 ? (
-        <p className={styles.note}>
-          المخزن لسه فاضي. <Link to="/import">استورد ملف الإكسيل</Link>
-        </p>
-      ) : null}
-      <section className={styles.tally} aria-label="ملخص المخزن">
-        <Cell value={tally.needsReorder} label="تحتاج طلب" />
-        <Cell value={tally.out} label="نافد" />
-        <Cell
-          value={tally.pendingSettlements}
-          label="تسويات معلّقة"
-          lit={tally.pendingSettlements > 0}
-        />
-      </section>
-      <OpenDrafts />
-    </>
   )
 }
 

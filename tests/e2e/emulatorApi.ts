@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import type { APIRequestContext } from '@playwright/test'
+import { expect, type APIRequestContext, type Page } from '@playwright/test'
 
 /**
  * Talks to the local Firebase emulators over REST, as the emulator's admin (`Bearer owner`
@@ -51,13 +51,15 @@ export interface SeedItem {
   readonly nameAr: string
   readonly priceMinor: number
   readonly gtins?: readonly string[]
+  /** Defaults to one shared test category; give an item its own to keep substitutes apart. */
+  readonly category?: string
 }
 
 function itemFields(item: SeedItem): Json {
   return {
     code: { stringValue: item.code },
     page: { integerValue: String(item.page) },
-    category: { stringValue: 'فئة اختبار' },
+    category: { stringValue: item.category ?? 'فئة اختبار' },
     nameAr: { stringValue: item.nameAr },
     nameEn: { stringValue: '' },
     material: { stringValue: '' },
@@ -83,6 +85,51 @@ export async function seedItems(request: APIRequestContext, items: readonly Seed
     })
     if (!res.ok())
       throw new Error(`seeding ${item.code} failed: ${res.status()} ${await res.text()}`)
+  }
+}
+
+export interface SeedStock {
+  /** The movement id; the same id on a re-run overwrites it. */
+  readonly id: string
+  readonly itemCode: string
+  readonly qty: number
+  readonly batchNo: string
+  readonly expiry: string
+  readonly priceMinor: number
+}
+
+function stockFields(row: SeedStock): Json {
+  const none = { nullValue: null }
+  return {
+    type: { stringValue: 'إضافة' },
+    itemCode: { stringValue: row.itemCode },
+    qty: { integerValue: String(row.qty) },
+    businessDate: { stringValue: '2026-01-01' },
+    postedAt: { timestampValue: new Date().toISOString() },
+    priceMinor: { integerValue: String(row.priceMinor) },
+    batchNo: { stringValue: row.batchNo },
+    expiry: { stringValue: row.expiry },
+    docNumber: none,
+    reference: none,
+    note: none,
+    supplier: none,
+    source: { mapValue: { fields: { kind: { stringValue: 'manual' }, id: none } } },
+    substituteFor: none,
+    reverses: none,
+    reason: none,
+    deviceId: { stringValue: 'e2e-seed' },
+    createdBy: { stringValue: 'test-owner' },
+  }
+}
+
+/** Gives items a balance: one إضافة movement each, written over the emulators' REST API. */
+export async function seedStock(request: APIRequestContext, rows: readonly SeedStock[]) {
+  for (const row of rows) {
+    const res = await request.patch(`${docsUrl()}/movements/${row.id}`, {
+      headers: ADMIN,
+      data: { fields: stockFields(row) },
+    })
+    if (!res.ok()) throw new Error(`seeding ${row.id} failed: ${res.status()} ${await res.text()}`)
   }
 }
 
@@ -119,6 +166,7 @@ type FieldValue = {
   stringValue?: string
   integerValue?: string
   arrayValue?: { values?: FieldValue[] }
+  mapValue?: { fields?: Record<string, FieldValue> }
 }
 export interface FirestoreDoc {
   readonly name: string
@@ -161,3 +209,19 @@ export const idOf = (doc: FirestoreDoc): string => doc.name.split('/').pop() ?? 
 export const intOf = (v: FieldValue | undefined): number => Number(v?.integerValue ?? Number.NaN)
 export const stringsOf = (v: FieldValue | undefined): string[] =>
   (v?.arrayValue?.values ?? []).map((x) => x.stringValue ?? '')
+
+export const stringOf = (v: FieldValue | undefined): string | null => v?.stringValue ?? null
+
+/** Signs in through the Auth emulator's account chooser popup as the account `uid`. */
+export async function signInAsOwner(page: Page, uid: string): Promise<void> {
+  await page.goto('/')
+  const popupPromise = page.waitForEvent('popup')
+  await page.getByRole('button', { name: 'الدخول بحساب جوجل' }).click()
+  const popup = await popupPromise
+  // The widget wires its click handlers when the page has parsed; clicking earlier does nothing.
+  await popup.waitForLoadState('domcontentloaded')
+  await popup.getByText(uid).first().click()
+  await expect(page.getByRole('link', { name: 'استلام طلبية جديدة' })).toBeVisible({
+    timeout: 20_000,
+  })
+}

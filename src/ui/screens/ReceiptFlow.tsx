@@ -3,15 +3,18 @@ import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { useAuth } from '../../app/AuthProvider'
 import { useData } from '../../data/DataProvider'
 import { getDeviceId } from '../../data/deviceId'
-import { postReceipt } from '../../data/repos/receipts'
+import { postReceipt, saveDraft } from '../../data/repos/receipts'
 import type { PostResult } from '../../data/receiptPost'
 import { cairoToday } from '../../domain/dates'
 import type { ReceiptDraft } from '../../domain/receipt'
+import { isBlankDraft } from '../../domain/receiptEdit'
 import { Receive } from './Receive'
 import { ReceiptReview, type SealInfo } from './ReceiptReview'
-import { useDraftAutosave } from './useDraftAutosave'
+import { useDraftAutosave, type AutosaveAdapter } from './useDraftAutosave'
 import { useReceiptLoad } from './useReceiptLoad'
 import styles from './Receive.module.css'
+
+const RECEIPT_AUTOSAVE: AutosaveAdapter<ReceiptDraft> = { save: saveDraft, isBlank: isBlankDraft }
 
 interface EditorProps {
   readonly id: string
@@ -27,7 +30,7 @@ function ReceiptEditor({ id, initial, sealed, isNew }: EditorProps) {
   const { state } = useAuth()
   const { items, receipts, outbox } = useData()
   const [draft, setDraft] = useState(initial)
-  const autosave = useDraftAutosave(id, isNew)
+  const autosave = useDraftAutosave(id, isNew, RECEIPT_AUTOSAVE)
   const existing = useMemo(
     () => receipts.map((r) => ({ id: r.id, deliveryNo: r.deliveryNo, status: r.status })),
     [receipts],

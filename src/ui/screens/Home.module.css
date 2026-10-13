@@ -1,0 +1,79 @@
+.screen {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--text-xl);
+  font-weight: 800;
+}
+
+.note {
+  margin: 0;
+  color: var(--muted);
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.action {
+  display: grid;
+  place-items: center;
+  min-block-size: 64px;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  color: var(--on-scrub);
+  font-size: var(--text-md);
+  font-weight: 800;
+  text-align: center;
+  text-decoration: none;
+}
+
+.receive {
+  background: var(--scrub-2);
+}
+
+.issue {
+  background: var(--marker);
+}
+
+.tally {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.tally > div {
+  display: grid;
+  padding: var(--space-3) var(--space-2);
+  text-align: center;
+}
+
+.tally > div + div {
+  border-inline-start: 1px solid var(--line);
+}
+
+.tally b {
+  font-size: var(--text-xl);
+}
+
+.tally span {
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.lit {
+  background: var(--tint-miss);
+}
+
+.lit b {
+  color: var(--miss);
+}
