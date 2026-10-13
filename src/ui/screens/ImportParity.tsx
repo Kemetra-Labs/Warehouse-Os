@@ -9,6 +9,7 @@ import { ImportError } from '../../excel/errors'
 import { importWorkbook } from '../../excel/importWorkbook'
 import { computeParity, type ParityReport } from '../../excel/parity'
 import type { ImportResult } from '../../excel/types'
+import { AuthorityImport } from './AuthorityImport'
 import { alreadyImportedMessage } from './importView'
 import { ParityResult } from './ParityResult'
 import styles from './ImportParity.module.css'
@@ -182,6 +183,8 @@ export default function ImportParity() {
           {stage.kind === 'writing' ? 'بيستورد...' : 'استورد'}
         </button>
       ) : null}
+
+      <AuthorityImport />
     </section>
   )
 }

@@ -96,15 +96,22 @@ export interface SeedStock {
   readonly batchNo: string
   readonly expiry: string
   readonly priceMinor: number
+  /** Defaults to `إضافة`. A `تسوية` may carry a signed `qty`. */
+  readonly type?: string
+  /** Defaults to 2026-01-01. */
+  readonly businessDate?: string
+  /** The id of the movement this one reverses (it then needs a `reason`). */
+  readonly reverses?: string
+  readonly reason?: string
 }
 
 function stockFields(row: SeedStock): Json {
   const none = { nullValue: null }
   return {
-    type: { stringValue: 'إضافة' },
+    type: { stringValue: row.type ?? 'إضافة' },
     itemCode: { stringValue: row.itemCode },
     qty: { integerValue: String(row.qty) },
-    businessDate: { stringValue: '2026-01-01' },
+    businessDate: { stringValue: row.businessDate ?? '2026-01-01' },
     postedAt: { timestampValue: new Date().toISOString() },
     priceMinor: { integerValue: String(row.priceMinor) },
     batchNo: { stringValue: row.batchNo },
@@ -115,14 +122,14 @@ function stockFields(row: SeedStock): Json {
     supplier: none,
     source: { mapValue: { fields: { kind: { stringValue: 'manual' }, id: none } } },
     substituteFor: none,
-    reverses: none,
-    reason: none,
+    reverses: row.reverses === undefined ? none : { stringValue: row.reverses },
+    reason: row.reason === undefined ? none : { stringValue: row.reason },
     deviceId: { stringValue: 'e2e-seed' },
     createdBy: { stringValue: 'test-owner' },
   }
 }
 
-/** Gives items a balance: one إضافة movement each, written over the emulators' REST API. */
+/** Gives items a balance: one movement each (an إضافة unless it says otherwise), over REST. */
 export async function seedStock(request: APIRequestContext, rows: readonly SeedStock[]) {
   for (const row of rows) {
     const res = await request.patch(`${docsUrl()}/movements/${row.id}`, {

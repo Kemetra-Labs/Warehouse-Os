@@ -187,8 +187,12 @@ test.describe('offline and sync across two devices', () => {
       await expect(issued.getByLabel('الرصيد 16')).toBeVisible()
       await expect(pill(laptop.page, 'متزامن')).toBeVisible()
 
-      // Opening an item clears its highlight, so it leaves the list; the other one stays lit.
+      // A tap opens the item card, and opening the card clears the highlight: back on home the
+      // opened item has left the list, and the other one stays lit.
       await received.click()
+      await expect(laptop.page.getByRole('heading', { level: 1 })).toHaveText(NAME_RECEIVED)
+      await expect(laptop.page.getByTestId('item-balance')).toHaveText('6')
+      await laptop.page.getByRole('link', { name: 'الرئيسية', exact: true }).click()
       await expect(received).toHaveCount(0)
       await expect(issued).toHaveAttribute('data-changed', 'true')
 
@@ -253,6 +257,12 @@ test.describe('offline and sync across two devices', () => {
       // Opening it on A clears A's highlight only; the flag stays while the balance is negative.
       const onA = balanceOf(a.page, NAME_NEGATIVE)
       await onA.click()
+      await expect(a.page.getByRole('heading', { level: 1 })).toHaveText(NAME_NEGATIVE)
+      await expect(a.page.getByTestId('item-balance')).toHaveText('-3')
+      await expect(a.page.getByRole('region', { name: 'الرصيد والحالة' })).toContainText(
+        'تسوية معلّقة',
+      )
+      await a.page.getByRole('link', { name: 'الرئيسية', exact: true }).click()
       await expect(onA).toHaveAttribute('data-changed', 'false')
       await expect(onA).toHaveAttribute('data-negative', 'true')
       await expect(balanceOf(b.page, NAME_NEGATIVE)).toHaveAttribute('data-changed', 'true')

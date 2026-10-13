@@ -7,6 +7,10 @@ export interface SearchBoxProps {
   readonly placeholder?: string
   /** Empty the field after each submit, so the next lookup starts clean (receiving, issuing). */
   readonly clearOnSubmit?: boolean
+  /** The text the field starts with (a list restoring its search after the user came back). */
+  readonly initialValue?: string
+  /** Called on every keystroke: a list can narrow as the user types. */
+  readonly onTextChange?: (text: string) => void
 }
 
 const KIND_LABELS: Readonly<Record<SearchClass['kind'], string>> = {
@@ -28,8 +32,10 @@ export function SearchBox({
   onResolve,
   placeholder = 'رقم الصفحة أو الباركود أو الكود أو الاسم',
   clearOnSubmit = false,
+  initialValue = '',
+  onTextChange,
 }: SearchBoxProps) {
-  const [value, setValue] = useState('')
+  const [value, setValue] = useState(initialValue)
   const hintId = useId()
   const hint = hintFor(value)
 
@@ -38,6 +44,11 @@ export function SearchBox({
     if (value.trim() === '') return
     onResolve(classify(value))
     if (clearOnSubmit) setValue('')
+  }
+
+  const change = (text: string): void => {
+    setValue(text)
+    onTextChange?.(text)
   }
 
   return (
@@ -53,7 +64,7 @@ export function SearchBox({
         placeholder={placeholder}
         aria-label="بحث عن صنف"
         aria-describedby={hintId}
-        onChange={(e) => setValue(e.target.value)}
+        onChange={(e) => change(e.target.value)}
       />
       <p id={hintId} className={styles.hint} aria-live="polite">
         {hint}

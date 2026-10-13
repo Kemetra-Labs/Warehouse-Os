@@ -22,7 +22,7 @@ function sheetOf(wb: XLSX.WorkBook, name: string): XLSX.WorkSheet {
   return ws
 }
 
-function parseWorkbook(buffer: ArrayBuffer): XLSX.WorkBook {
+export function parseWorkbook(buffer: ArrayBuffer): XLSX.WorkBook {
   // An .xlsx is a zip: reject anything else up front (SheetJS would read plain text as CSV).
   const bytes = new Uint8Array(buffer)
   if (bytes[0] !== 0x50 || bytes[1] !== 0x4b) throw unreadable()
