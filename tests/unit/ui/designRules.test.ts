@@ -118,36 +118,40 @@ describe('colour tokens', () => {
   for (const m of css.matchAll(/--([\w-]+):\s*(#[0-9a-fA-F]{6})/g)) t[m[1] ?? ''] = m[2] ?? ''
 
   // Text pairs need 4.5:1 (WCAG AA). Dim light is the working condition, so none is waived.
+  // Body text sits on the ground or a panel; the state inks are the text form of each state;
+  // ink-on-fill is the text on a state tile or a state badge.
   const TEXT: readonly (readonly [string, string])[] = [
-    ['ink', 'board'],
-    ['ink', 'surface'],
-    ['muted', 'board'],
-    ['muted', 'surface'],
+    ['bone', 'ground'],
+    ['bone', 'panel'],
+    ['bone', 'panel-2'],
+    ['muted', 'ground'],
+    ['muted', 'panel'],
+    ['muted', 'panel-2'],
     ['muted', 'tint-neutral'],
-    ['marker', 'surface'],
-    ['marker', 'board'],
-    ['marker', 'tint-marker'],
-    ['miss', 'surface'],
-    ['miss', 'board'],
-    ['miss', 'tint-miss'],
-    ['match', 'surface'],
-    ['match', 'board'],
-    ['seal', 'surface'],
-    ['seal', 'board'],
-    ['amber', 'surface'],
-    ['amber', 'board'],
-    ['amber', 'tint-amber'],
-    ['scrub', 'surface'],
-    ['scrub', 'board'],
-    ['on-scrub', 'scrub'],
-    ['on-scrub', 'scrub-2'],
-    ['on-scrub-muted', 'scrub'],
+    ['count-ink', 'ground'],
+    ['count-ink', 'panel'],
+    ['count-ink', 'panel-2'],
+    ['count-ink', 'tint-marker'],
+    ['short-ink', 'ground'],
+    ['short-ink', 'panel'],
+    ['short-ink', 'tint-miss'],
+    ['ok-ink', 'ground'],
+    ['ok-ink', 'panel'],
+    ['ok-ink', 'panel-2'],
+    ['attn', 'ground'],
+    ['attn', 'panel'],
+    ['attn', 'panel-2'],
+    ['attn', 'tint-amber'],
+    ['bone', 'tint-miss'],
+    ['bone', 'tint-amber'],
+    ['bone', 'tint-marker'],
     ['disabled-ink', 'disabled-bg'],
-    ['surface', 'match'],
-    ['surface', 'miss'],
-    ['surface', 'amber'],
-    ['surface', 'seal'],
-    ['on-scrub', 'marker'],
+    ['ink-on-fill', 'ok'],
+    ['ink-on-fill', 'short'],
+    ['ink-on-fill', 'attn'],
+    ['ink-on-fill', 'count'],
+    ['ground', 'bone'], // the reversed primary button
+    ['bone', 'seal'], // the posted seal and the approve button
   ]
   it.each(TEXT)('%s on %s is at least 4.5:1', (fg, bg) => {
     expect(t[fg], fg).toBeDefined()
@@ -155,13 +159,34 @@ describe('colour tokens', () => {
     expect(ratio(t[fg] ?? '', t[bg] ?? '')).toBeGreaterThanOrEqual(4.5)
   })
 
-  // Non-text parts that carry meaning need 3:1 (WCAG 1.4.11): the edge of an input, the dashed
-  // sync pill on the scrub header.
+  // Large text (the 40 px stepper numeral, the 46 px tile numerals) needs 3:1.
   it.each([
-    ['control-line', 'surface'],
-    ['control-line', 'board'],
-    ['scrub-line', 'scrub'],
+    ['count', 'panel'],
+    ['count', 'ground'],
+  ] as const)('%s numerals on %s are at least 3:1', (fg, bg) => {
+    expect(ratio(t[fg] ?? '', t[bg] ?? '')).toBeGreaterThanOrEqual(3)
+  })
+
+  // Non-text parts that carry meaning need 3:1 (WCAG 1.4.11): the edge of an input, a state fill
+  // against the ground it sits on.
+  it.each([
+    ['control-line', 'panel'],
+    ['control-line', 'ground'],
+    ['ok', 'ground'],
+    ['short', 'ground'],
+    ['attn', 'ground'],
+    ['count', 'ground'],
   ] as const)('%s against %s is at least 3:1', (fg, bg) => {
     expect(ratio(t[fg] ?? '', t[bg] ?? '')).toBeGreaterThanOrEqual(3)
+  })
+
+  it('is dark only: the document asks for dark form controls and scrollbars', () => {
+    expect(css).toMatch(/color-scheme:\s*dark/)
+    expect(css).not.toMatch(/prefers-color-scheme/)
+  })
+
+  it('has no gradients anywhere in the stylesheets', () => {
+    const found = FILES.filter((f) => /gradient\(/.test(f.css)).map((f) => f.name)
+    expect(found).toEqual([])
   })
 })

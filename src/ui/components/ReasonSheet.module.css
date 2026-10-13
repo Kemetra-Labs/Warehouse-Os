@@ -26,9 +26,9 @@
   min-block-size: var(--tap-min);
   padding-inline: var(--space-3);
   border: 1px solid var(--control-line);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  color: var(--ink);
+  border-radius: var(--radius-md);
+  background: var(--panel-2);
+  color: var(--bone);
   font-family: inherit;
   font-size: var(--text-md);
 }

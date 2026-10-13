@@ -20,8 +20,8 @@ export default defineConfig(({ mode }) => ({
         dir: 'rtl',
         display: 'standalone',
         start_url: '/',
-        theme_color: '#0f5f58',
-        background_color: '#f4f7f6',
+        theme_color: '#0e2a30',
+        background_color: '#0e2a30',
         icons: [
           { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png' },

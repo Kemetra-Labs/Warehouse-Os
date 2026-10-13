@@ -26,9 +26,12 @@ export interface ReceiveProps {
   readonly onReview: () => void
 }
 
-/** Receiving: scan or type each item, fill batch, expiry, counts and price, then review. */
+/**
+ * Receiving: scan or type each item, count it with −/+, and the line joins the receipt on its own
+ * when the next item comes or review is pressed. One primary button: راجع واعتمد.
+ */
 export function Receive(props: ReceiveProps) {
-  const { draft, items, scanSource, onChange, onReview } = props
+  const { draft, items, scanSource, onChange } = props
   const [cameraOff, setCameraOff] = useState(false)
   const flow = useReceiveFlow(props)
   const byCode = useMemo(() => new Map(items.map((i) => [i.code, i])), [items])
@@ -39,7 +42,7 @@ export function Receive(props: ReceiveProps) {
   return (
     <section className={styles.screen} aria-labelledby="receive-title">
       <h1 id="receive-title" className={styles.title}>
-        استلام · مسودة
+        استلام · {draft.supplier.trim() === '' ? 'مسودة' : draft.supplier.trim()}
       </h1>
       <ReceiveHeader
         draft={draft}
@@ -64,13 +67,14 @@ export function Receive(props: ReceiveProps) {
 
       {pending ? (
         <LineCard
+          key={flow.pendingKey}
           mode="pending"
           line={pending}
           item={itemOf(pending)}
           businessDate={draft.businessDate}
+          problem={flow.problem}
           onChange={flow.patchPending}
           onPickItem={() => flow.askResolve({ kind: 'pending' })}
-          onAdd={flow.addPending}
           onDiscard={flow.discardPending}
         />
       ) : null}
@@ -93,13 +97,13 @@ export function Receive(props: ReceiveProps) {
       ))}
 
       <footer className={styles.footer}>
-        <span>{draft.lines.length} سطور</span>
         <Button
           variant="primary"
-          disabled={draft.lines.length === 0 || pending !== null}
-          onClick={onReview}
+          size="main"
+          disabled={draft.lines.length === 0 && pending === null}
+          onClick={flow.review}
         >
-          مراجعة
+          راجع واعتمد · {flow.lineCount} سطور
         </Button>
       </footer>
 

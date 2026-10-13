@@ -97,6 +97,25 @@ export function canAddLine(line: ReceiptLine, businessDate: string): boolean {
   return !hasBadExpiry(line) && !lacksExpiredReason(line, businessDate)
 }
 
+/**
+ * Why a line being filled in cannot join the receipt yet, in Arabic; null when it can. The same
+ * conditions `validateForPost` blocks on, except the count difference: its reason is asked for in
+ * the review. Batch and expiry are not required (a line may be received without them), so a
+ * missing one never blocks. This is the one rule behind every automatic join.
+ */
+export function joinProblem(line: ReceiptLine, businessDate: string): string | null {
+  if (line.itemCode === null) return 'اختار الصنف الأول'
+  if (line.invoicedQty <= 0) return 'اكتب الكمية في الفاتورة'
+  if (hasBadExpiry(line)) return 'تاريخ الصلاحية مش مفهوم'
+  if (lacksExpiredReason(line, businessDate)) return 'الصلاحية منتهية. اكتب السبب'
+  return null
+}
+
+/** The draft with the open line on it, or null while the line is not ready to join. */
+export function joinPending(draft: ReceiptDraft, pending: ReceiptLine): ReceiptDraft | null {
+  return joinProblem(pending, draft.businessDate) === null ? addLine(draft, pending) : null
+}
+
 /** Counted minus invoiced: negative is short, positive is over. */
 export function lineDiff(line: ReceiptLine): number {
   return line.countedQty - line.invoicedQty

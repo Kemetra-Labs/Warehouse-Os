@@ -61,9 +61,8 @@ export async function receiveOneLine(page: Page, step: ReceiptStep): Promise<voi
   await field(card, 'الصلاحية').fill('03/2031')
   await field(card, 'الكمية في الفاتورة').fill(String(step.qty))
   await field(card, 'اللي اتعدّ').fill(String(step.qty))
-  await card.getByRole('button', { name: 'إضافة للإذن' }).click()
-  await expect(page.getByTestId('saved-line')).toHaveCount(1)
-  await page.getByRole('button', { name: 'مراجعة' }).click()
+  // No add step: the ready line joins the receipt when review opens.
+  await page.getByRole('button', { name: /راجع واعتمد/ }).click()
   await page.getByRole('button', { name: 'اعتماد', exact: true }).click()
   await expect(page.locator('svg[aria-label*="معتمد"]')).toBeVisible()
 }

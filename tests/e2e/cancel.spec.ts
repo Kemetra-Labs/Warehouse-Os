@@ -222,8 +222,7 @@ test.describe('cancel, return and adjust', () => {
     await field(card, 'الكمية في الفاتورة').fill('6')
     await field(card, 'اللي اتعدّ').fill('6')
     await field(card, 'السعر').fill('110')
-    await card.getByRole('button', { name: 'إضافة للإذن' }).click()
-    await page.getByRole('button', { name: 'مراجعة' }).click()
+    await page.getByRole('button', { name: /راجع واعتمد/ }).click()
     await page.getByRole('button', { name: 'اعتماد', exact: true }).click()
     await expect(sealOf(page, 'معتمد')).toBeVisible()
     await expect

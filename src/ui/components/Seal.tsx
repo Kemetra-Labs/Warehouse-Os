@@ -25,8 +25,9 @@ const TITLES: Readonly<Record<SealVariant, string>> = {
 }
 
 /**
- * Round approval seal. Violet (--seal) is reserved for the posted state; the cancelled
- * variant uses the mismatch red. A flat SVG: double ring, Arabic title, date, doc number.
+ * Round approval seal, a solid disc so it reads on the dark ground. Violet (--seal) is reserved
+ * for the posted state; the cancelled variant is the short red. A flat SVG: disc, double ring,
+ * Arabic title, date, doc number.
  */
 export function Seal({ variant = 'posted', date, docNumber, animate = true }: SealProps) {
   const title = TITLES[variant]
@@ -37,7 +38,8 @@ export function Seal({ variant = 'posted', date, docNumber, animate = true }: Se
       role="img"
       aria-label={`${title} ${date} ${docNumber}`}
     >
-      <circle className={styles.ringOuter} cx="50" cy="50" r="46" />
+      <circle className={styles.disc} cx="50" cy="50" r="48" />
+      <circle className={styles.ringOuter} cx="50" cy="50" r="45" />
       <circle className={styles.ringInner} cx="50" cy="50" r="40" />
       <text className={styles.title} x="50" y="46" textAnchor="middle">
         {title}

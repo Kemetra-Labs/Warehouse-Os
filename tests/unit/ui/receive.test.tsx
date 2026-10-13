@@ -95,12 +95,13 @@ describe('Receive: the screen', () => {
     }
   })
 
-  it('review needs at least one line', async () => {
+  it('has one primary, "راجع واعتمد · N سطور", and it needs at least one line', async () => {
     await mount(draftWith([]))
-    expect(buttonByText(host, 'مراجعة')?.disabled).toBe(true)
+    expect(buttonByText(host, 'راجع واعتمد')?.disabled).toBe(true)
     await mount(draftWith([goodLine(1, ITEM_A)]))
-    expect(buttonByText(host, 'مراجعة')?.disabled).toBe(false)
-    click(buttonByText(host, 'مراجعة'))
+    expect(buttonByText(host, 'راجع واعتمد')?.textContent).toBe('راجع واعتمد · 1 سطور')
+    expect(buttonByText(host, 'راجع واعتمد')?.disabled).toBe(false)
+    click(buttonByText(host, 'راجع واعتمد'))
     expect(onReview).toHaveBeenCalledOnce()
   })
 })
@@ -126,15 +127,18 @@ describe('Receive: scanning', () => {
     expect(field('اللي اتعدّ', pending()!)?.value).toBe('3')
   })
 
-  it('adding the line puts it on the receipt with what was typed', async () => {
+  it('there is no add button: a ready line joins the receipt when the next item is scanned', async () => {
     const cam = await mount()
     act(() => cam.emit(ean(GTIN_A)))
     const card = pending()!
+    expect(buttonByText(card, 'إضافة للإذن')).toBeNull()
     type(field('رقم التشغيلة', card), '0230271')
     type(field('الصلاحية', card), '03/2031')
     type(field('الكمية في الفاتورة', card), '4')
-    click(buttonByText(card, 'إضافة للإذن'))
-    expect(pending()).toBeNull()
+    expect(pending()?.textContent).toContain('جاهز')
+    expect(latest.lines).toHaveLength(0) // still open: nothing is added until something follows
+    later()
+    act(() => cam.emit(ean('6001234567891')))
     expect(latest.lines).toHaveLength(1)
     expect(latest.lines[0]).toMatchObject({
       n: 1,
@@ -146,6 +150,102 @@ describe('Receive: scanning', () => {
       scannedGtin: GTIN_A,
     })
     expect(saved()).toHaveLength(1)
+    expect(pending()?.textContent).toContain('AAA-02') // the new item opened its own line
+    expect(host.querySelector('[data-testid="notice"]')).toBeNull()
+  })
+
+  it('a ready line also joins when the next item is picked from the suggestions', async () => {
+    await mount()
+    const box = host.querySelector('[role="search"] input') as HTMLInputElement
+    type(box, '4')
+    click(host.querySelectorAll('[role="option"]')[0] ?? null)
+    type(field('الكمية في الفاتورة', pending()!), '2')
+    type(box, '1')
+    click(host.querySelectorAll('[role="option"]')[0] ?? null)
+    expect(latest.lines.map((l) => [l.itemCode, l.invoicedQty])).toEqual([['BBB-02', 2]])
+    expect(pending()?.textContent).toContain('AAA-01')
+  })
+
+  it('"راجع واعتمد" takes the ready open line with it and goes to the review', async () => {
+    const cam = await mount()
+    act(() => cam.emit(ean(GTIN_A)))
+    type(field('الكمية في الفاتورة', pending()!), '1')
+    click(buttonByText(host, 'راجع واعتمد'))
+    expect(latest.lines).toHaveLength(1)
+    expect(latest.lines[0]).toMatchObject({ itemCode: 'AAA-01', invoicedQty: 1, countedQty: 1 })
+    expect(onReview).toHaveBeenCalledOnce()
+    expect(pending()).toBeNull()
+  })
+
+  it('leaving the screen keeps a ready open line: it joins the receipt', async () => {
+    const cam = await mount()
+    act(() => cam.emit(ean(GTIN_A)))
+    type(field('الكمية في الفاتورة', pending()!), '3')
+    expect(latest.lines).toHaveLength(0)
+    act(() => root.render(<div />)) // e.g. a bottom-nav tab
+    expect(latest.lines).toHaveLength(1)
+    expect(latest.lines[0]).toMatchObject({ itemCode: 'AAA-01', invoicedQty: 3, countedQty: 1 })
+  })
+
+  it('the app going to the background joins a ready open line too', async () => {
+    const cam = await mount()
+    act(() => cam.emit(ean(GTIN_A)))
+    type(field('الكمية في الفاتورة', pending()!), '3')
+    const hidden = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden')
+    act(() => void document.dispatchEvent(new Event('visibilitychange')))
+    hidden.mockRestore()
+    expect(latest.lines).toHaveLength(1)
+    expect(pending()).toBeNull()
+    expect(saved()).toHaveLength(1)
+  })
+
+  it('leaving with a line that is not ready adds nothing', async () => {
+    const cam = await mount()
+    act(() => cam.emit(ean(GTIN_A))) // no invoiced quantity yet
+    act(() => root.render(<div />))
+    expect(latest.lines).toHaveLength(0)
+  })
+
+  it('going to the review and then leaving adds the line once', async () => {
+    const cam = await mount()
+    act(() => cam.emit(ean(GTIN_A)))
+    type(field('الكمية في الفاتورة', pending()!), '1')
+    click(buttonByText(host, 'راجع واعتمد'))
+    act(() => root.render(<div />))
+    expect(latest.lines).toHaveLength(1)
+  })
+
+  it('counts with a big −/+ and typing the number still works', async () => {
+    const cam = await mount()
+    act(() => cam.emit(ean(GTIN_A)))
+    const card = pending()!
+    const count = () => field('اللي اتعدّ', pending()!)?.value
+    const step = (label: string) =>
+      card.querySelector<HTMLButtonElement>(`button[aria-label="${label}"]`)
+    click(step('زوّد واحد'))
+    click(step('زوّد واحد'))
+    expect(count()).toBe('3')
+    click(step('نقّص واحد'))
+    expect(count()).toBe('2')
+    type(field('اللي اتعدّ', card), '7')
+    expect(count()).toBe('7')
+    type(field('اللي اتعدّ', card), '0')
+    expect(step('نقّص واحد')?.disabled).toBe(true)
+    type(field('الكمية في الفاتورة', card), '5')
+    expect(card.textContent).toContain('اتعدّ من')
+  })
+
+  it('what the barcode gave shows as filled chips; tapping one opens the fields', async () => {
+    const cam = await mount()
+    act(() =>
+      cam.emit({ rawValue: '(01)06001234567890(17)310300(10)B-100', format: 'data_matrix' }),
+    )
+    const card = pending()!
+    expect(field('رقم التشغيلة', card)).toBeNull()
+    expect(card.textContent).toContain('B-100')
+    expect(card.textContent).toContain('من الباركود')
+    click(buttonByText(card, 'تشغيلة'))
+    expect(field('رقم التشغيلة', pending()!)?.value).toBe('B-100')
   })
 
   it('a scan of an item already on the receipt counts on its line', async () => {
@@ -153,6 +253,23 @@ describe('Receive: scanning', () => {
     act(() => cam.emit(ean(GTIN_A)))
     expect(latest.lines[0]?.countedQty).toBe(3)
     expect(pending()).toBeNull()
+  })
+
+  it('an open line that cannot join stays open with its problem shown; nothing is added', async () => {
+    const cam = await mount()
+    act(() => cam.emit(ean(GTIN_A)))
+    expect(pending()?.textContent).toContain('اكتب الكمية في الفاتورة') // the problem, on the card
+    later()
+    act(() => cam.emit(ean('6001234567891')))
+    const notice = host.querySelector('[data-testid="notice"]')?.textContent
+    expect(notice).toContain('كمّل السطر')
+    expect(notice).toContain('الكمية في الفاتورة')
+    expect(pending()?.textContent).toContain('AAA-01')
+    expect(latest.lines).toHaveLength(0)
+    click(buttonByText(host, 'راجع واعتمد'))
+    expect(onReview).not.toHaveBeenCalled()
+    expect(latest.lines).toHaveLength(0)
+    expect(host.querySelector('[data-testid="notice"]')?.textContent).toContain('كمّل السطر')
   })
 
   it('another item scanned while a line is open does not drop the open line', async () => {
@@ -306,27 +423,49 @@ describe('Receive: line rules', () => {
     expect(pending()!.textContent).toContain('12.50')
   })
 
-  it('an expired batch warns, and the line cannot be added until a reason is written', async () => {
+  it('an expired batch warns and stays open until a reason is written, then it joins', async () => {
     const card = await open()
+    type(field('الكمية في الفاتورة', card), '1')
     type(field('الصلاحية', card), '01/2020')
     expect(pending()!.textContent).toContain('الصلاحية منتهية')
-    expect(buttonByText(pending()!, 'إضافة للإذن')?.disabled).toBe(true)
+    click(buttonByText(host, 'راجع واعتمد'))
+    expect(onReview).not.toHaveBeenCalled()
+    expect(latest.lines).toHaveLength(0)
     type(field('سبب الصلاحية المنتهية', pending()!), 'تعويض عن صنف ناقص')
-    expect(buttonByText(pending()!, 'إضافة للإذن')?.disabled).toBe(false)
-    click(buttonByText(pending()!, 'إضافة للإذن'))
+    click(buttonByText(host, 'راجع واعتمد'))
     expect(latest.lines[0]?.expiredReason).toBe('تعويض عن صنف ناقص')
+    expect(onReview).toHaveBeenCalledOnce()
   })
 
-  it('an expiry that cannot be read blocks adding the line', async () => {
+  it('an expiry that cannot be read keeps the line open and says so', async () => {
     const card = await open()
+    type(field('الكمية في الفاتورة', card), '1')
     type(field('الصلاحية', card), '13/2031')
-    expect(buttonByText(pending()!, 'إضافة للإذن')?.disabled).toBe(true)
     expect(pending()!.textContent).toContain('التاريخ مش مفهوم')
+    click(buttonByText(host, 'راجع واعتمد'))
+    expect(onReview).not.toHaveBeenCalled()
+    expect(latest.lines).toHaveLength(0)
+  })
+
+  it('an unresolved GTIN stays open until its item is chosen', async () => {
+    const cam = await mount()
+    act(() => cam.emit(ean('6221234567893')))
+    type(field('الكمية في الفاتورة', pending()!), '3')
+    click(buttonByText(host, 'راجع واعتمد'))
+    expect(onReview).not.toHaveBeenCalled()
+    expect(host.querySelector('[data-testid="notice"]')?.textContent).toContain('اختار الصنف')
+    click(buttonByText(pending()!, 'اختار الصنف'))
+    const dialog = host.querySelector('[role="dialog"]')!
+    type(dialog.querySelector('input'), '4')
+    click(buttonByText(dialog, 'صنف تجريبي دال'))
+    click(buttonByText(host, 'راجع واعتمد'))
+    expect(latest.lines[0]).toMatchObject({ itemCode: 'BBB-02', scannedGtin: '6221234567893' })
+    expect(onReview).toHaveBeenCalledOnce()
   })
 
   it('a pending line can be discarded', async () => {
     await open()
-    click(buttonByText(pending()!, 'مسح'))
+    click(buttonByText(pending()!, 'امسح السطر'))
     expect(pending()).toBeNull()
     expect(latest.lines).toHaveLength(0)
   })

@@ -112,27 +112,37 @@ test.describe('receive an order', () => {
     await field(card, 'الكمية في الفاتورة').fill('2')
     await field(card, 'السعر').fill('13')
     await expect(card.locator('[data-changed="true"]')).toContainText('12.50')
-    await card.getByRole('button', { name: 'إضافة للإذن' }).click()
+    await expect(card).toContainText('جاهز') // ready: no add button, it joins by itself
+    await expect(page.getByRole('button', { name: 'إضافة للإذن' })).toHaveCount(0)
 
-    // 3. A typed page number lists its item under the box (no Enter); tapping it starts the line.
-    //    50 invoiced, 48 counted: a difference.
+    // 3. A typed page number lists its item under the box (no Enter); tapping it joins the ready
+    //    line above and starts this one. 50 invoiced, 48 counted: a difference.
     const search = page.getByRole('search').getByRole('combobox')
     await search.fill('92')
     await page.getByRole('option', { name: /صنف استلام باء/ }).click()
     await expect(search).toHaveValue('')
     await expect(page.getByRole('listbox')).toHaveCount(0)
+    await expect(page.getByTestId('saved-line')).toHaveCount(1)
     card = await addScannedLine(page, 'صنف استلام باء')
     await field(card, 'رقم التشغيلة').fill('B-200')
     await field(card, 'الصلاحية').fill('11/2030')
     await field(card, 'الكمية في الفاتورة').fill('50')
     await field(card, 'اللي اتعدّ').fill('48')
-    await card.getByRole('button', { name: 'إضافة للإذن' }).click()
 
-    // 4. An unknown GTIN: pick the item once, and it is linked on posting.
+    // 4. An unknown GTIN joins the line above, then opens an unresolved line: pick the item once,
+    //    and it is linked on posting.
+    // The scanner ignores every code for 250 ms after a hit (src/scan/gate.ts). A real camera
+    // reads the box again on the next frame; the fake detector returns it once, so wait it out.
+    await page.waitForTimeout(300)
     await scan(page, UNKNOWN_GTIN)
+    await expect(page.getByTestId('saved-line')).toHaveCount(2)
     card = page.getByTestId('pending-line')
     await expect(card).toContainText('مش معروف')
     await expect(page.locator('[data-feedback="unknown"]')).toBeVisible()
+    // An unresolved line never joins silently: review is refused with the reason, and stays here.
+    await page.getByRole('button', { name: /راجع واعتمد/ }).click()
+    await expect(page.getByTestId('notice')).toContainText('اختار الصنف')
+    await expect(page.getByRole('columnheader', { name: 'الفاتورة' })).toHaveCount(0)
     await card.getByRole('button', { name: 'اختار الصنف' }).click()
     const sheet = page.getByRole('dialog')
     await sheet.getByRole('searchbox').fill('93')
@@ -142,11 +152,12 @@ test.describe('receive an order', () => {
     await field(card, 'الصلاحية').fill('01/2032')
     await field(card, 'الكمية في الفاتورة').fill('10')
     await field(card, 'اللي اتعدّ').fill('10')
-    await card.getByRole('button', { name: 'إضافة للإذن' }).click()
-    await expect(page.getByTestId('saved-line')).toHaveCount(3)
 
-    // 5. Review: the difference blocks اعتماد until it has a reason.
-    await page.getByRole('button', { name: 'مراجعة' }).click()
+    // 5. Review takes the last ready line with it. The difference blocks اعتماد until it has a
+    //    reason.
+    const review = page.getByRole('button', { name: /راجع واعتمد/ })
+    await expect(review).toHaveText(/3 سطور/)
+    await review.click()
     await expect(page.getByRole('columnheader', { name: 'الفاتورة' })).toBeVisible()
     await expect(page.getByRole('columnheader', { name: 'اتعدّ' })).toBeVisible()
     const post = page.getByRole('button', { name: 'اعتماد', exact: true })

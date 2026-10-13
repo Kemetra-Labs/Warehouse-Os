@@ -28,8 +28,9 @@ const barStyle = {
   alignItems: 'center',
   gap: 'var(--space-3)',
   padding: 'var(--space-3) var(--space-4)',
-  background: 'var(--scrub)',
-  color: '#fff',
+  background: 'var(--panel-2)',
+  color: 'var(--bone)',
+  borderBlockStart: '1px solid var(--hair)',
   zIndex: 100,
 } as const
 
@@ -38,8 +39,8 @@ const buttonStyle = {
   paddingInline: 'var(--space-4)',
   border: 0,
   borderRadius: 10,
-  background: '#fff',
-  color: 'var(--scrub)',
+  background: 'var(--bone)',
+  color: 'var(--ground)',
   fontFamily: 'inherit',
   fontWeight: 800,
 } as const

@@ -6,11 +6,11 @@
   gap: var(--space-3);
   inline-size: 100%;
   min-block-size: var(--tap-min);
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  color: var(--ink);
+  padding: var(--space-3) 14px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--panel);
+  color: var(--bone);
   font-family: inherit;
   font-size: var(--text-md);
   text-align: start;
@@ -52,7 +52,28 @@ button.row:active {
   inline-size: 10px;
   block-size: 10px;
   border-radius: 50%;
-  background: var(--marker);
+  background: var(--count);
+}
+
+/* The state as a shape, not only a colour: solid red, solid amber, hollow ring. */
+.mark {
+  flex: none;
+  inline-size: 12px;
+  block-size: 12px;
+  border-radius: 3px;
+}
+
+.out {
+  background: var(--short);
+}
+
+.reorder {
+  background: var(--attn);
+}
+
+.ok {
+  border: 2px solid var(--muted);
+  border-radius: 50%;
 }
 
 .main {
@@ -63,7 +84,7 @@ button.row:active {
 }
 
 .name {
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .meta {
@@ -79,13 +100,13 @@ button.row:active {
 
 .balance {
   flex: none;
-  color: var(--marker);
-  font-size: var(--text-lg);
+  color: var(--bone);
+  font-size: var(--text-xl);
   font-weight: 800;
 }
 
 .negative .balance {
-  color: var(--miss);
+  color: var(--short-ink);
 }
 
 @keyframes tint-in {
@@ -121,6 +142,6 @@ button.row:active {
 
   button.row:active {
     transform: none;
-    background: var(--tint-neutral);
+    background: var(--panel-2);
   }
 }

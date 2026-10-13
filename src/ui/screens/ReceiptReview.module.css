@@ -2,6 +2,34 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: var(--space-3);
+  /* Room for the fixed approve button under the last row. */
+  padding-block-end: calc(var(--tap-main) + var(--space-5));
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  justify-self: start;
+  min-block-size: var(--tap-min);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.back svg {
+  inline-size: 16px;
+  block-size: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .head {
@@ -9,13 +37,16 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-3);
+  /* The seal stamps in at 1.35x: let it overshoot into the page margin, not past the screen edge. */
+  overflow: clip;
+  overflow-clip-margin: var(--space-4);
 }
 
 .title {
   margin: 0;
+  color: var(--bone);
   font-size: var(--text-xl);
   font-weight: 800;
-  color: var(--scrub);
 }
 
 .meta {
@@ -24,13 +55,44 @@
   font-size: var(--text-sm);
 }
 
+/* Pieces, lines, value: three big numbers, then what changed. */
 .summary {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.stats > div {
+  display: grid;
+  padding: 10px;
+  border-radius: 10px;
+  background: var(--panel);
+  text-align: center;
+}
+
+.stats b {
+  font-size: var(--text-xl);
+  font-weight: 800;
+}
+
+.stats .money {
+  font-size: var(--text-lg);
+}
+
+.stats span {
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.notes {
   margin: 0;
-  padding: var(--space-3);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-md);
-  background: var(--surface);
-  font-size: var(--text-sm);
+  color: var(--muted);
+  font-size: var(--text-xs);
   text-align: center;
 }
 
@@ -41,10 +103,11 @@
   margin-block-start: 2px;
   color: var(--muted);
   font-size: var(--text-xs);
+  font-weight: 400;
 }
 
 .amber {
-  color: var(--amber);
+  color: var(--attn);
   font-weight: 800;
 }
 
@@ -60,9 +123,9 @@
 
 .issues {
   padding-inline-start: calc(var(--space-3) + var(--space-4));
-  border: 1px solid var(--line);
+  border: 1px solid var(--short);
   background: var(--tint-miss);
-  color: var(--miss);
+  color: var(--short-ink);
   font-weight: 800;
 }
 
@@ -71,7 +134,7 @@
   gap: var(--space-2);
   border: 1px solid var(--amber-line);
   background: var(--tint-amber);
-  color: var(--amber);
+  color: var(--attn);
   font-weight: 800;
 }
 
@@ -89,7 +152,7 @@
 
 .errors {
   background: var(--tint-miss);
-  color: var(--miss);
+  color: var(--short-ink);
   font-weight: 800;
 }
 
@@ -100,9 +163,8 @@
 .done {
   display: grid;
   gap: var(--space-2);
-  border: 1px solid var(--line);
-  background: var(--surface);
-  color: var(--match);
+  background: var(--panel);
+  color: var(--ok-ink);
   font-weight: 800;
 }
 
@@ -110,8 +172,13 @@
   margin: 0;
 }
 
+/* The one primary: the violet approve button, fixed in the thumb zone above the navigation. */
 .actions {
+  position: fixed;
+  inset-inline: 0;
+  inset-block-end: calc(var(--nav-height) + env(safe-area-inset-bottom));
+  z-index: 5;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--ground);
 }

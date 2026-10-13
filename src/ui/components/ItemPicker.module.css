@@ -4,14 +4,14 @@
 }
 
 .input {
-  min-block-size: var(--tap-min);
-  padding-inline: var(--space-3);
+  min-block-size: 52px;
+  padding-inline: var(--space-4);
   border: 1px solid var(--control-line);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  color: var(--ink);
+  border-radius: var(--radius-md);
+  background: var(--panel-2);
+  color: var(--bone);
   font-family: inherit;
-  font-size: var(--text-md);
+  font-size: 17px;
 }
 
 .list {
@@ -28,12 +28,12 @@
   justify-content: space-between;
   gap: var(--space-3);
   inline-size: 100%;
-  min-block-size: var(--tap-min);
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  color: var(--ink);
+  min-block-size: 48px;
+  padding: var(--space-2) var(--space-4);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--panel-2);
+  color: var(--bone);
   font-family: inherit;
   font-size: var(--text-md);
   text-align: start;
@@ -41,7 +41,7 @@
 }
 
 .name {
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .meta {
