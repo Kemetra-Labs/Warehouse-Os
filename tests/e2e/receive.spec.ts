@@ -9,6 +9,7 @@ import {
   stringsOf,
   type SeedItem,
 } from './emulatorApi'
+import { field, fillReceiptHeader, installFakeDetector } from './flows'
 
 /**
  * Receiving, end to end (US2): a fake-camera EAN-13 scan, a typed page number, an unknown GTIN,
@@ -46,33 +47,12 @@ const UNKNOWN_GTIN = '6221234567893'
 
 type ScanWindow = Window & { __scanQueue: { rawValue: string; format: string }[] }
 
-/** Replaces `BarcodeDetector` with one that reads from `window.__scanQueue`. */
-async function installFakeDetector(page: Page): Promise<void> {
-  await page.addInitScript(() => {
-    const w = window as unknown as ScanWindow
-    w.__scanQueue = []
-    class FakeBarcodeDetector {
-      static getSupportedFormats(): Promise<string[]> {
-        return Promise.resolve(['ean_13', 'ean_8', 'upc_a', 'code_128', 'data_matrix', 'qr_code'])
-      }
-      detect(): Promise<{ rawValue: string; format: string }[]> {
-        const next = w.__scanQueue.shift()
-        return Promise.resolve(next ? [next] : [])
-      }
-    }
-    Object.defineProperty(window, 'BarcodeDetector', { value: FakeBarcodeDetector })
-  })
-}
-
 const scan = (page: Page, rawValue: string, format = 'ean_13') =>
   page.evaluate(
     ([value, fmt]) =>
       (window as unknown as ScanWindow).__scanQueue.push({ rawValue: value!, format: fmt! }),
     [rawValue, format],
   )
-
-const field = (card: Locator, label: string): Locator =>
-  card.locator('label', { hasText: label }).locator('input').first()
 
 async function signIn(page: Page): Promise<void> {
   await page.goto('/')
@@ -85,16 +65,6 @@ async function signIn(page: Page): Promise<void> {
   await expect(page.getByRole('link', { name: 'استلام طلبية جديدة' })).toBeVisible({
     timeout: 20_000,
   })
-}
-
-async function fillHeader(page: Page, deliveryNo: string): Promise<void> {
-  await page.getByRole('button', { name: 'بيانات الإذن' }).click()
-  const sheet = page.getByRole('dialog')
-  await sheet.getByLabel('الشركة').fill('شركة اختبار')
-  await sheet.getByLabel('رقم الإذن').fill(deliveryNo)
-  await sheet.getByLabel('رقم الفاتورة').fill('INV-7')
-  await sheet.getByRole('button', { name: 'حفظ', exact: true }).click()
-  await expect(page.getByRole('dialog')).toHaveCount(0)
 }
 
 async function addScannedLine(page: Page, name: string): Promise<Locator> {
@@ -125,7 +95,7 @@ test.describe('receive an order', () => {
     await signIn(page)
     await page.getByRole('link', { name: 'استلام طلبية جديدة' }).click()
     await expect(page.getByRole('heading', { level: 1 })).toContainText('استلام')
-    await fillHeader(page, deliveryNo)
+    await fillReceiptHeader(page, deliveryNo)
 
     // 1. A fake-camera EAN-13 scan finds the item; a second scan adds one to the count.
     await scan(page, KNOWN_GTIN)

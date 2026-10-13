@@ -2,7 +2,7 @@ import { lazy, Suspense } from 'react'
 import { Route, Routes } from 'react-router'
 import { Shell } from './Shell'
 import { Home } from '../ui/screens/Home'
-import { ItemsScreen, MovementsScreen, ReportsScreen, UnsentScreen } from './screens'
+import { ItemsScreen, MovementsScreen, ReportsScreen } from './screens'
 
 // Lazy: keeps SheetJS (xlsx) out of the main bundle until the import screen is opened.
 const ImportParity = lazy(() => import('../ui/screens/ImportParity'))
@@ -10,6 +10,8 @@ const ImportParity = lazy(() => import('../ui/screens/ImportParity'))
 const ReceiptFlow = lazy(() => import('../ui/screens/ReceiptFlow'))
 // Lazy: the issue screen and its sheets load only when a batch is opened.
 const IssueFlow = lazy(() => import('../ui/screens/IssueFlow'))
+// Lazy: the unsent screen pulls in the Excel exporter only when it is opened.
+const Unsent = lazy(() => import('../ui/screens/Unsent'))
 
 export function AppRoutes() {
   return (
@@ -43,7 +45,14 @@ export function AppRoutes() {
             </Suspense>
           }
         />
-        <Route path="unsent" element={<UnsentScreen />} />
+        <Route
+          path="unsent"
+          element={
+            <Suspense fallback={<p>جاري التحميل...</p>}>
+              <Unsent />
+            </Suspense>
+          }
+        />
         <Route path="*" element={<Home />} />
       </Route>
     </Routes>

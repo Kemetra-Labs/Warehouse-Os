@@ -1,0 +1,24 @@
+.panel {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: 800;
+}
+
+.list {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.more {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}

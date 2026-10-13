@@ -1,25 +1,29 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useMemo, useSyncExternalStore } from 'react'
 import { useData } from './DataProvider'
 import { deriveLedger, type LedgerView } from './deriveLedger'
-import { loadSeen, markSeen } from './seenStore'
+import { getDeviceId } from './deviceId'
+import { getSeenStore } from './seenStore'
 
 export interface UseLedger extends LedgerView {
-  /** Clears the "changed since seen" highlight for an item (call when its card opens). */
+  /** Clears the "changed since seen" highlight for an item (call when it is opened). */
   markItemSeen(itemCode: string): void
 }
 
-/** Memoised derived state (research R4). The pure combiner lives in deriveLedger.ts. */
+const markItemSeen = (itemCode: string): void => getSeenStore().markSeen(itemCode)
+
+/**
+ * Memoised derived state (research R4). The pure combiner lives in deriveLedger.ts. The seen
+ * state is one shared store, so every mounted screen drops a highlight the moment an item opens.
+ */
 export function useLedger(): UseLedger {
   const { items, movements, settings } = useData()
-  const [seen, setSeen] = useState(() => loadSeen())
+  const store = getSeenStore()
+  const seen = useSyncExternalStore(store.subscribe, store.getState)
+  const ownDeviceId = useMemo(() => getDeviceId(), [])
 
   const view = useMemo(
-    () => deriveLedger({ items, movements, settings, seen }),
-    [items, movements, settings, seen],
+    () => deriveLedger({ items, movements, settings, seen, ownDeviceId }),
+    [items, movements, settings, seen, ownDeviceId],
   )
-  const markItemSeen = useCallback(
-    (itemCode: string) => setSeen((prev) => markSeen(prev, itemCode, Date.now())),
-    [],
-  )
-  return useMemo(() => ({ ...view, markItemSeen }), [view, markItemSeen])
+  return useMemo(() => ({ ...view, markItemSeen }), [view])
 }

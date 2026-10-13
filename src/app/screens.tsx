@@ -20,4 +20,3 @@ export const ReportsScreen = () => (
     </p>
   </>
 )
-export const UnsentScreen = () => <Placeholder title="مستندات لم تُرسل" />

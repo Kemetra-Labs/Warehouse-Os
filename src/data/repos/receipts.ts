@@ -90,7 +90,7 @@ function addWrites(db: Firestore, batch: WriteBatch, plan: CommitPlan): void {
 }
 
 /** One atomic batch. The draft is saved first so the receipt document exists to be updated. */
-function commitPlan(plan: CommitPlan): Promise<void> {
+export function commitPlan(plan: CommitPlan): Promise<void> {
   const { db } = getFirebase()
   // Queued in order ahead of the batch; a failure here makes the batch fail too (outbox handles it).
   void setDoc(doc(db, 'receipts', plan.receiptId), stripUndefined(plan.draftDoc)).catch(

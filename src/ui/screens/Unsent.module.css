@@ -1,0 +1,146 @@
+.screen {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--text-xl);
+  font-weight: 800;
+  color: var(--scrub);
+}
+
+.note,
+.muted {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.ok {
+  margin: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--match);
+  border-radius: var(--radius-sm);
+  color: var(--match);
+  font-weight: 800;
+}
+
+.list {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1.5px dashed var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.failed {
+  border-style: solid;
+  border-color: var(--miss);
+  background: var(--tint-miss);
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.name {
+  margin: 0;
+  font-size: var(--text-md);
+  font-weight: 800;
+}
+
+.meta {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.chip {
+  padding: 2px var(--space-2);
+  border: 1.5px dashed var(--scrub-2);
+  border-radius: 99px;
+  color: var(--scrub);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.failed .chip {
+  border-color: var(--miss);
+  color: var(--miss);
+}
+
+.reason {
+  margin: 0;
+  color: var(--miss);
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+.error {
+  margin: var(--space-2) 0 0;
+  color: var(--muted);
+  font-size: var(--text-xs);
+  overflow-wrap: anywhere;
+}
+
+.details summary {
+  display: flex;
+  align-items: center;
+  min-block-size: var(--tap-min);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.lines {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.lines th {
+  color: var(--muted);
+  font-size: var(--text-xs);
+  font-weight: 400;
+  text-align: start;
+}
+
+.lines th,
+.lines td {
+  padding: var(--space-1) var(--space-2);
+  border-block-end: 1px solid var(--hairline);
+}
+
+.empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.hidden {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}

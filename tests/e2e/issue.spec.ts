@@ -12,6 +12,7 @@ import {
   type SeedItem,
   type SeedStock,
 } from './emulatorApi'
+import { addRequest, fillBatchHeader } from './flows'
 
 /**
  * Issuing to the rep, end to end (US3): aggregation of the same item, a substitute for a short
@@ -84,36 +85,6 @@ const STOCK: readonly SeedStock[] = [
 ]
 
 const rowOf = (page: Page, name: string | RegExp): Locator => page.getByRole('row', { name })
-
-async function fillBatchHeader(page: Page, rep: string): Promise<void> {
-  await page.getByRole('button', { name: 'بيانات الدفعة' }).click()
-  const sheet = page.getByRole('dialog', { name: 'بيانات الدفعة' })
-  await sheet.getByLabel('اسم المندوب').fill(rep)
-  const permit = sheet.getByLabel(/رقم إذن المريض/)
-  await permit.fill('10x1')
-  await expect(sheet.getByRole('alert')).toContainText('أرقام بس')
-  await expect(sheet.getByRole('button', { name: 'إضافة إذن' })).toBeDisabled()
-  for (const number of ['1001', '1002']) {
-    await permit.fill(number)
-    await sheet.getByRole('button', { name: 'إضافة إذن' }).click()
-  }
-  await expect(sheet.getByRole('list', { name: 'أرقام الأذون' }).getByRole('listitem')).toHaveCount(
-    2,
-  )
-  await sheet.getByRole('button', { name: 'تم', exact: true }).click()
-  await expect(page.getByRole('dialog')).toHaveCount(0)
-}
-
-/** Searches by item code, says how many the permit asks for, and adds it to the batch. */
-async function addRequest(page: Page, itemCode: string, qty: number): Promise<void> {
-  const box = page.getByRole('search').getByRole('searchbox')
-  await box.fill(itemCode)
-  await box.press('Enter')
-  const card = page.getByTestId('pending-request')
-  await card.getByLabel('الكمية المطلوبة').fill(String(qty))
-  await card.getByRole('button', { name: 'إضافة للدفعة' }).click()
-  await expect(card).toHaveCount(0)
-}
 
 const cell = (row: Locator, n: number): Locator => row.getByRole('cell').nth(n)
 
