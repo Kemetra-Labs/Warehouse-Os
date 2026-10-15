@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { CancelAttempt } from '../../data/cancelPost'
 import { Button } from './Button'
 import styles from './CancelAction.module.css'
@@ -38,8 +38,12 @@ export function CancelAction({ noun, presets, summary, onCancel, onCancelled }: 
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // A second tap on the confirm button can arrive before `busy` re-renders the sheet.
+  const sending = useRef(false)
 
   const submit = (reason: string): void => {
+    if (sending.current) return
+    sending.current = true
     setBusy(true)
     setError(null)
     onCancel(reason)
@@ -49,6 +53,7 @@ export function CancelAction({ noun, presets, summary, onCancel, onCancelled }: 
       })
       .catch(() => setError(CANCEL_FAILED))
       .finally(() => {
+        sending.current = false
         setBusy(false)
         setOpen(false)
       })

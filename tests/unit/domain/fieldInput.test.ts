@@ -66,6 +66,15 @@ describe('parsePriceInput / formatPriceInput', () => {
     expect(parsePriceInput('x')).toBeNull()
   })
 
+  it('reads a comma only as a thousands separator, never as a decimal point', () => {
+    expect(parsePriceInput('1,250')).toBe(125000)
+    expect(parsePriceInput('١٬٢٥٠٫٥')).toBe(125050)
+    expect(parsePriceInput('12,5')).toBeNull()
+    expect(parsePriceInput('12,50')).toBeNull()
+    expect(parsePriceInput('1,5')).toBeNull()
+    expect(parsePriceInput('1,2345')).toBeNull()
+  })
+
   it('formats piastres without separators for editing', () => {
     expect(formatPriceInput(529000)).toBe('5290')
     expect(formatPriceInput(1250)).toBe('12.5')

@@ -39,6 +39,9 @@ function ReceiptEditor({ id, initial, sealed, isNew }: EditorProps) {
   const { state } = useAuth()
   const { items, receipts, outbox, movements } = useData()
   const [draft, setDraft] = useState(initial)
+  // Posting or cancelling here seals the receipt for the rest of this editor's life, so the
+  // browser back from `?step=review` can never bring the editable receive screen back.
+  const [seal, setSeal] = useState<SealInfo | null>(sealed)
   const autosave = useDraftAutosave(id, isNew, RECEIPT_AUTOSAVE)
   const existing = useMemo(
     () => receipts.map((r) => ({ id: r.id, deliveryNo: r.deliveryNo, status: r.status })),
@@ -58,7 +61,8 @@ function ReceiptEditor({ id, initial, sealed, isNew }: EditorProps) {
         { id, draft, items, existing, uid: state.user.uid, deviceId: getDeviceId() },
         outbox,
       )
-      if (!result.ok) autosave.resume()
+      if (result.ok) setSeal({ variant: 'posted', day: cairoToday() })
+      else autosave.resume()
       return result
     } catch (err) {
       autosave.resume()
@@ -72,9 +76,12 @@ function ReceiptEditor({ id, initial, sealed, isNew }: EditorProps) {
     if (!receipt) return Promise.resolve(NOT_LOADED)
     return cancelReceiptDoc(
       receipt,
-      { reason, movements, items, uid: state.user.uid, deviceId: getDeviceId() },
+      { reason, movements, items, receipts, uid: state.user.uid, deviceId: getDeviceId() },
       outbox,
-    )
+    ).then((attempt) => {
+      if (attempt.ok) setSeal({ variant: 'cancelled', day: cairoToday(), reason: reason.trim() })
+      return attempt
+    })
   }
 
   const print = (): Promise<void> => {
@@ -83,7 +90,7 @@ function ReceiptEditor({ id, initial, sealed, isNew }: EditorProps) {
     return downloadReceiptPrint({ receipt, items })
   }
 
-  if (sealed || params.get('step') === 'review') {
+  if (seal || params.get('step') === 'review') {
     return (
       <ReceiptReview
         draft={draft}
@@ -91,7 +98,7 @@ function ReceiptEditor({ id, initial, sealed, isNew }: EditorProps) {
         existing={existing}
         selfId={id}
         today={cairoToday()}
-        sealed={sealed}
+        sealed={seal}
         onChange={update}
         onBack={() => setParams({})}
         onPost={post}
@@ -117,7 +124,14 @@ function ReceiptEditor({ id, initial, sealed, isNew }: EditorProps) {
 /** The receiving route: `/receive` starts a draft, `/receive/:id` opens a draft or a posted receipt. */
 export default function ReceiptFlow() {
   const { id } = useParams()
-  const [newId] = useState(() => crypto.randomUUID())
+  const [newId, setNewId] = useState(() => crypto.randomUUID())
+  // Coming back to `/receive` from `/receive/:id` (back, or the receive tab) starts another new
+  // draft: reusing the first new id would open it blank and its next autosave would wipe it.
+  const [shownId, setShownId] = useState(id)
+  if (shownId !== id) {
+    setShownId(id)
+    if (id === undefined) setNewId(crypto.randomUUID())
+  }
   const load = useReceiptLoad(id)
 
   if (load.status === 'loading') return <p className={styles.note}>جاري التحميل...</p>

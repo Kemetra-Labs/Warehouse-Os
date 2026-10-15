@@ -125,11 +125,15 @@ export type HitPlan =
   /** Another line is still being filled in; finish or discard it first. */
   | { readonly kind: 'busy' }
 
-/** The same box again: same item (or same unknown GTIN), and the same batch when the scan has one. */
+/**
+ * The same box again: same item (or same unknown GTIN), and the same batch when the scan has one.
+ * An unknown GTIN stays unknown until the receipt is posted, so its line matches by the scanned
+ * GTIN even after the first box was given an item.
+ */
 function isSameTarget(line: ReceiptLine, hit: LineHit): boolean {
   const sameBatch = hit.batchNo === null || line.batchNo === hit.batchNo
   if (hit.kind === 'item') return line.itemCode === hit.item.code && sameBatch
-  return line.itemCode === null && line.scannedGtin === hit.gtin && sameBatch
+  return line.scannedGtin === hit.gtin && sameBatch
 }
 
 function startLine(n: number, hit: LineHit): ReceiptLine {

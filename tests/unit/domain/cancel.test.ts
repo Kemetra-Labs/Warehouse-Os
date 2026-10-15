@@ -104,6 +104,11 @@ describe('receipt cancel', () => {
     expect(plan.priceRestores).toEqual([])
   })
 
+  it('keeps the price when a later receipt received the item at the same price', () => {
+    const plan = mustPlan(planReceiptCancel({ ...input, receivedLater: [ITEM_A.code] }))
+    expect(plan.priceRestores).toEqual([])
+  })
+
   it('never touches a GTIN link: the plan has no item write but the price', () => {
     const plan = mustPlan(planReceiptCancel(input))
     expect(Object.keys(plan).sort()).toEqual(['patch', 'priceRestores', 'reversals'])

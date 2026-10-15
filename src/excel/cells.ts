@@ -2,10 +2,15 @@ import * as XLSX from 'xlsx'
 
 export type CellValue = string | number | boolean | null
 
-/** Raw cached value of a cell (`v`), or null when empty. Rows are 1-based like Excel. */
+/**
+ * Raw cached value of a cell (`v`), or null when empty. Rows are 1-based like Excel. An error
+ * cell (#N/A, #DIV/0!, ...) gives its error text: SheetJS keeps a numeric error code in `v`,
+ * which would otherwise read as a real quantity, price or balance.
+ */
 export function cellAt(ws: XLSX.WorkSheet, col: string, row: number): CellValue {
   const cell = ws[XLSX.utils.encode_cell({ c: XLSX.utils.decode_col(col), r: row - 1 })] as
     XLSX.CellObject | undefined
+  if (cell?.t === 'e') return cell.w ?? '#ERROR'
   const v = cell?.v
   if (v === undefined || v === null) return null
   return typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean' ? v : null

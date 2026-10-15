@@ -98,12 +98,28 @@ describe('createScanGate (continuous mode must not over-count)', () => {
     expect(gate.accept('B')).toBe(true)
   })
 
-  it('remembers only the latest accepted code, so A then B then A counts all three', () => {
+  it('counts a box showing two codes once while it stays in view', () => {
+    const { gate, at } = make()
+    let counted = 0
+    for (let ms = 1000; ms <= 4000; ms += 150) {
+      at(ms)
+      if (gate.accept('A')) counted += 1
+      if (gate.accept('B')) counted += 1
+    }
+    // A at once; B once the freeze is over; then both stay in view and never count again.
+    expect(counted).toBe(2)
+  })
+
+  it('counts each code again once it was away for the repeat time', () => {
     const { gate, at } = make()
     gate.accept('A')
     at(1300)
     expect(gate.accept('B')).toBe(true)
     at(1600)
+    expect(gate.accept('A')).toBe(false) // seen 600 ms ago
+    at(3200)
     expect(gate.accept('A')).toBe(true)
+    at(3500)
+    expect(gate.accept('B')).toBe(true)
   })
 })

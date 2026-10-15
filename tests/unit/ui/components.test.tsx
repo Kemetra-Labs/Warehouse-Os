@@ -300,6 +300,22 @@ describe('BottomSheet', () => {
     expect(onClose).toHaveBeenCalledOnce()
   })
 
+  it('keeps Tab inside when the last control is disabled', () => {
+    render(
+      <BottomSheet open title="سبب" onClose={() => undefined}>
+        <input aria-label="السبب" />
+        <button type="button" disabled>
+          حفظ
+        </button>
+      </BottomSheet>,
+    )
+    const input = host.querySelector('input')
+    act(() => input?.focus())
+    const event = press(input, 'Tab')
+    expect(event.defaultPrevented).toBe(true)
+    expect(document.activeElement).toBe(input)
+  })
+
   it('renders nothing when closed', () => {
     render(
       <BottomSheet open={false} title="بديل" onClose={() => undefined}>

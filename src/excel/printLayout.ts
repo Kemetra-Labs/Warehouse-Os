@@ -75,6 +75,32 @@ export function putSpan(
   if (style.box) {
     for (let col = from; col <= to; col += 1) sheet.getCell(row, col).border = BOX
   }
+  if (style.wrap && typeof value === 'string') fitWrappedSpan(sheet, row, from, to, value, style)
+}
+
+/** Points per printed line of wrapped text, at the default 11pt. */
+const LINE_HEIGHT_PT = 15
+
+/**
+ * Excel never grows a row to fit a wrapped merged cell, so a long cancel reason or name would
+ * print only its first line. Grows the row to the lines the text needs (a column width unit is
+ * about one character); a span that fits on one line keeps the row as it is.
+ */
+function fitWrappedSpan(
+  sheet: ExcelJS.Worksheet,
+  row: number,
+  from: number,
+  to: number,
+  text: string,
+  style: TextStyle,
+): void {
+  let width = 0
+  for (let col = from; col <= to; col += 1) width += sheet.getColumn(col).width ?? 9
+  const lines = Math.ceil(text.length / Math.max(1, Math.floor(width)))
+  if (lines <= 1) return
+  const height = lines * LINE_HEIGHT_PT * ((style.size ?? 11) / 11)
+  const current = sheet.getRow(row).height
+  if (current === undefined || current < height) sheet.getRow(row).height = height
 }
 
 /** An RTL, A4 portrait, fit-to-one-page-wide sheet with gridlines off (on screen and printed). */

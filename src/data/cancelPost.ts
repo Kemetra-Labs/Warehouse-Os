@@ -23,7 +23,8 @@ import {
   type CancelProblem,
   type ReceiptCancelInput,
 } from '../domain/cancel'
-import type { NewMovement } from '../domain/types'
+import type { NewMovement, Receipt } from '../domain/types'
+import { toMillis } from './convert'
 import type { Outbox, ServerCheck } from './outbox'
 import { settlePost, type PostOutcome } from './receiptPost'
 
@@ -114,6 +115,22 @@ async function send(
     payload,
   })
   return { ok: true, committed: settlePost(entryId, commitPlan, deps) }
+}
+
+/** What `itemsReceivedAfter` reads of a receipt. */
+export type PostedReceipt = Pick<Receipt, 'status' | 'postedAt' | 'lines'> & { readonly id: string }
+
+/** Items received by a posted receipt posted after `receipt` (local posts carry an estimate). */
+export function itemsReceivedAfter(
+  receipt: PostedReceipt,
+  receipts: readonly PostedReceipt[],
+): string[] {
+  const mine = toMillis(receipt.postedAt)
+  const codes = receipts
+    .filter((r) => r.id !== receipt.id && r.status === 'posted')
+    .filter((r) => mine === 0 || toMillis(r.postedAt) > mine)
+    .flatMap((r) => r.lines.filter((l) => l.countedQty > 0).map((l) => l.itemCode))
+  return [...new Set(codes.filter((c): c is string => c !== null))]
 }
 
 export interface ReceiptCancelRequest extends Omit<ReceiptCancelInput, 'status' | 'docId'> {

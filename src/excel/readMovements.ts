@@ -74,7 +74,9 @@ function dateOf(v: CellValue, row: number, date1904: boolean): string {
 function expiryOf(v: CellValue, row: number, date1904: boolean, warnings: string[]): string | null {
   if (v === null || v === '') return null
   const iso = typeof v === 'number' ? serialToIso(v, date1904) : (textOf(v) ?? '')
-  if (iso !== null && EXPIRY.test(iso)) return iso
+  // A year typed alone (2027) is a valid serial too, of a day in 1905: not a real expiry.
+  const year = iso === null ? 0 : Number(iso.slice(0, 4))
+  if (iso !== null && EXPIRY.test(iso) && year >= 2000 && year <= 2100) return iso
   warnings.push(`${MOVEMENTS_SHEET}، صف ${row}: تاريخ الانتهاء غير مفهوم واتتجاهل`)
   return null
 }
@@ -117,7 +119,9 @@ export function readMovements(
     const type = typeOf(cellAt(ws, 'D', row), row)
     if (numberOf(cellAt(ws, 'I', row)) === 0) {
       skippedZeroRows.push(row)
-      warnings.push(`${MOVEMENTS_SHEET}، صف ${row}: الكمية صفر، الحركة اتتجاهلت (مالهاش أثر على الرصيد)`)
+      warnings.push(
+        `${MOVEMENTS_SHEET}، صف ${row}: الكمية صفر، الحركة اتتجاهلت (مالهاش أثر على الرصيد)`,
+      )
       continue
     }
     const { date, remapped } = remapBusinessDate(dateOf(cellAt(ws, 'C', row), row, date1904))

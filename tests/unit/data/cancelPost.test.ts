@@ -9,6 +9,7 @@ import {
   docIdOfCancelEntry,
   runIssueCancel,
   runManualMovement,
+  itemsReceivedAfter,
   runReceiptCancel,
   type CancelCommitPlan,
   type CancelDeps,
@@ -387,5 +388,34 @@ describe('unsent: describe, rebuild and retry a cancel or an adjustment', () => 
     expect(await result.outcome).toBe('acked')
     expect(commitCancel.mock.calls[0]?.[0]).toMatchObject({ docId: 'r1' })
     expect(await outbox.list()).toEqual([])
+  })
+})
+
+describe('itemsReceivedAfter', () => {
+  const at = (ms: number) => ({ toMillis: () => ms })
+  const doc = (id: string, ms: number, codes: (string | null)[], status = 'posted') => ({
+    id,
+    status: status as 'posted',
+    postedAt: at(ms),
+    lines: codes.map((itemCode, i) => ({ ...goodLine(i + 1, ITEM_A), itemCode })),
+  })
+
+  it('lists the items of receipts posted later, and only posted ones', () => {
+    const mine = doc('r1', 2000, ['AAA-01'])
+    const receipts = [
+      mine,
+      doc('early', 1000, ['EARLY-1']),
+      doc('later', 3000, ['AAA-01', 'AAA-02', null]),
+      doc('gone', 4000, ['CXL-01'], 'cancelled'),
+      doc('draft', 5000, ['DRF-01'], 'draft'),
+    ]
+    expect(itemsReceivedAfter(mine, receipts)).toEqual(['AAA-01', 'AAA-02'])
+  })
+
+  it('skips a later line that counted nothing', () => {
+    const mine = doc('r1', 2000, ['AAA-01'])
+    const later = doc('later', 3000, ['AAA-02'])
+    const zero = { ...later, lines: later.lines.map((l) => ({ ...l, countedQty: 0 })) }
+    expect(itemsReceivedAfter(mine, [mine, zero])).toEqual([])
   })
 })

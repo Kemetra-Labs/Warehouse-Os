@@ -1,4 +1,6 @@
 import type * as XLSX from 'xlsx'
+import { toMinor } from '../domain/money'
+import { normalizeDigits, normalizeGtin } from '../domain/search'
 import { itemSchema } from '../domain/types'
 import { cellAt, lastRow, numberOf, textOf } from './cells'
 import { ImportError } from './errors'
@@ -30,14 +32,18 @@ function priceMinorOf(ws: XLSX.WorkSheet, row: number): number {
   if (raw === null || raw === '') return 0
   const price = numberOf(raw)
   if (price === null || price < 0) throw badRow(row, 'سعر القطعة غير صالح')
-  return Math.round(price * 100)
+  return toMinor(price)
 }
 
-/** `String(N)` when it has 8 or 13 digits (a numeric cell converts without loss). */
+/**
+ * The GTIN when it has 8 or 13 digits, normalised like a scan: a numeric cell drops the leading
+ * 0 of an EAN-13 (12 digits left), and a GTIN-14 with a leading 0 is the same EAN-13.
+ */
 function gtinOf(ws: XLSX.WorkSheet, row: number, rejected: RejectedGtin[]): readonly string[] {
   const value = textOf(cellAt(ws, 'N', row))
   if (value === null) return []
-  if (GTIN_PATTERN.test(value)) return [value]
+  const gtin = normalizeGtin(normalizeDigits(value))
+  if (GTIN_PATTERN.test(gtin)) return [gtin]
   rejected.push({ row, value })
   return []
 }

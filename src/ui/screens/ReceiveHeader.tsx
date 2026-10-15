@@ -106,14 +106,20 @@ function HeaderForm({
   onOpenExisting,
   onDone,
 }: ReceiveHeaderProps & { onDone: () => void }) {
-  const [values, setValues] = useState(() => valuesOf(draft))
+  const [opened] = useState(() => valuesOf(draft))
+  const [values, setValues] = useState(opened)
   const today = cairoToday()
 
   const submit = (e: FormEvent<HTMLFormElement>): void => {
     e.preventDefault()
-    const dup = findDuplicateDelivery(existing, values.deliveryNo, selfId)
+    // Only what was typed here: the scanner keeps reading behind the sheet, and a delivery
+    // note QR read meanwhile must not be undone by the values the sheet opened with.
+    const typed = FIELDS.filter((f) => values[f.key] !== opened[f.key])
+    const next = { ...valuesOf(draft) }
+    for (const f of typed) next[f.key] = values[f.key]
+    const dup = findDuplicateDelivery(existing, next.deliveryNo, selfId)
     if (dup) onOpenExisting(dup.id)
-    else onChange(applyValues(draft, values))
+    else onChange(applyValues(draft, next))
     onDone()
   }
 

@@ -187,6 +187,18 @@ describe('planHit', () => {
     const pending = { ...newLine(1), itemCode: null, scannedGtin: '6221234567893' }
     expect(planHit(draftWith(), pending, unknown)).toEqual({ kind: 'bump-pending' })
   })
+
+  it('the next box of a new barcode counts on its line after the first box was given an item', () => {
+    const unknown = {
+      kind: 'unknown-gtin',
+      gtin: '6221234567893',
+      batchNo: null,
+      expiry: null,
+    } as const
+    const linked = { ...newLine(1), itemCode: 'AAA-01', scannedGtin: '6221234567893' }
+    expect(planHit(draftWith(linked), null, unknown)).toEqual({ kind: 'bump-line', n: 1 })
+    expect(planHit(draftWith(), linked, unknown)).toEqual({ kind: 'bump-pending' })
+  })
 })
 
 describe('stepHit: the next scan finishes the open line by itself', () => {

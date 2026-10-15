@@ -93,7 +93,7 @@ describe('classify', () => {
     expect(classify('(01)06221234567890(17)261100(10)AB-9')).toEqual({
       kind: 'gtin',
       gtin: '6221234567890',
-      expiry: '2026-11-30',
+      expiry: '2026-11',
       batchNo: 'AB-9',
     })
   })
@@ -123,6 +123,9 @@ describe('parseGs1', () => {
     const r = parseGs1(`01062212345678901047${GS}17270331`)
     expect(r?.batchNo).toBe('47')
     expect(r?.expiry).toBe('2027-03-31')
+  })
+  it('reads day 00 as the whole month, stored like a typed MM/YYYY', () => {
+    expect(parseGs1('(01)06221234567890(17)261200')?.expiry).toBe('2026-12')
   })
   it('reads an exact day expiry', () => {
     expect(parseGs1('(01)06221234567890(17)270315')?.expiry).toBe('2027-03-15')
@@ -162,6 +165,11 @@ describe('searchItems', () => {
   })
   it('requires all words to match', () => {
     expect(searchItems(items, 'مسمار نخاعي').map((i) => i.code)).toEqual(['SCR-02'])
+  })
+  it('matches digits in a name whichever digits the name or the query uses', () => {
+    const named = [{ code: 'PLA-09', nameAr: 'شريحة ٣ ثقوب', nameEn: '' }]
+    expect(searchItems(named, 'شريحة 3').map((i) => i.code)).toEqual(['PLA-09'])
+    expect(searchItems(named, 'شريحه ٣').map((i) => i.code)).toEqual(['PLA-09'])
   })
   it('returns nothing for an empty query or no match', () => {
     expect(searchItems(items, '  ')).toEqual([])

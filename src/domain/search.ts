@@ -47,16 +47,19 @@ function lastDayOfMonth(year: number, month: number): number {
   return new Date(Date.UTC(year, month, 0)).getUTCDate()
 }
 
-/** YYMMDD -> YYYY-MM-DD. Day 00 means the last day of the month (GS1 rule). */
+/**
+ * YYMMDD -> YYYY-MM-DD. Day 00 means the whole month (GS1 rule), stored as `YYYY-MM` like a typed
+ * `MM/YYYY`, so a scanned and a typed expiry of the same batch are the same batch.
+ */
 function expiryFromYymmdd(v: string): string | null {
   if (!/^\d{6}$/.test(v)) return null
   const year = 2000 + Number(v.slice(0, 2))
   const month = Number(v.slice(2, 4))
-  let day = Number(v.slice(4, 6))
+  const day = Number(v.slice(4, 6))
   if (month < 1 || month > 12) return null
-  if (day === 0) day = lastDayOfMonth(year, month)
-  if (day > lastDayOfMonth(year, month)) return null
   const mm = String(month).padStart(2, '0')
+  if (day === 0) return `${year}-${mm}`
+  if (day > lastDayOfMonth(year, month)) return null
   return `${year}-${mm}-${String(day).padStart(2, '0')}`
 }
 
@@ -144,7 +147,7 @@ export function searchItems<
   const words = normalizeArabic(normalizeDigits(query)).split(/\s+/).filter(Boolean)
   if (words.length === 0) return []
   return items.filter((item) => {
-    const hay = normalizeArabic(`${item.nameAr} ${item.nameEn ?? ''}`)
+    const hay = normalizeArabic(normalizeDigits(`${item.nameAr} ${item.nameEn ?? ''}`))
     return words.every((w) => hay.includes(w))
   })
 }

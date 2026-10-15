@@ -169,11 +169,24 @@ function gtinError(gtins: readonly string[]): string | null {
   return repeated === undefined ? null : `الباركود ${repeated} مكرر في نفس الصنف`
 }
 
+/** The GS1 mod-10 check: the last digit of an EAN-8 or EAN-13 must match the others. */
+export function hasValidCheckDigit(gtin: string): boolean {
+  const digits = [...gtin].map(Number)
+  const check = digits.pop()
+  const sum = digits.reverse().reduce((acc, d, i) => acc + d * (i % 2 === 0 ? 3 : 1), 0)
+  return check === (10 - (sum % 10)) % 10
+}
+
 function gtinWarnings(draft: ItemDraft, items: readonly Item[], original: Item | null): string[] {
   const known = new Set(original?.gtins ?? [])
   const out: string[] = []
   for (const gtin of draft.gtins.map((g) => g.trim())) {
     if (gtin === '' || known.has(gtin)) continue
+    // A box's barcode always passes the check, so a typed one that fails has a typo in it and
+    // would never match a scan. A warning, not an error: the store's own labels may be odd.
+    if (GTIN_PATTERN.test(gtin) && !hasValidCheckDigit(gtin)) {
+      out.push(`الباركود ${gtin} رقمه الأخير مش مظبوط، غالبًا فيه رقم غلط. راجعه على العلبة`)
+    }
     const holder = items.find((i) => i.code !== original?.code && i.gtins.includes(gtin))
     if (holder) out.push(`الباركود ${gtin} متسجل قبل كده على الصنف ${holder.code}`)
   }

@@ -61,12 +61,14 @@ export function parseQtyInput(text: string): number | null {
   return /^\d+$/.test(s) ? Number(s) : null
 }
 
-/** A price in pounds (up to two decimals) as piastres. Null when it is not a price. */
+/**
+ * A price in pounds (up to two decimals) as piastres. Null when it is not a price. A comma is
+ * read only as a thousands separator (`5,290.5`); `12,5` is refused rather than read as 125.
+ */
 export function parsePriceInput(text: string): number | null {
-  const s = normalizeDigits(text)
-    .replace(/٫/g, '.')
-    .replace(/[,٬\s]/g, '')
-  return /^\d+(\.\d{1,2})?$/.test(s) ? toMinor(Number(s)) : null
+  const s = normalizeDigits(text).replace(/٫/g, '.').replace(/٬/g, ',').replace(/\s/g, '')
+  if (!/^(\d{1,3}(,\d{3})+|\d+)(\.\d{1,2})?$/.test(s)) return null
+  return toMinor(Number(s.replace(/,/g, '')))
 }
 
 /** Piastres as the plain number the price field shows while editing (no separators). */

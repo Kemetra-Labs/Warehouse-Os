@@ -18,7 +18,7 @@ export interface DraftAutosave<T> {
 
 /**
  * Keeps the draft in Firestore (offline-first: the write queues locally, never awaited by the
- * UI). A new document with nothing in it is not saved. Leaving the screen, or the app going to
+ * UI). A new document with nothing in it is not saved until it first had something. Leaving the screen, or the app going to
  * the background, saves what is pending.
  * `adapter` must be a stable reference (a module constant).
  */
@@ -30,6 +30,8 @@ export function useDraftAutosave<T>(
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const latest = useRef<T | null>(null)
   const paused = useRef(false)
+  // Once a new document is saved, emptying it again must be saved too, or the old lines return.
+  const savedOnce = useRef(false)
 
   const clear = useCallback((): void => {
     if (timer.current !== null) clearTimeout(timer.current)
@@ -40,7 +42,9 @@ export function useDraftAutosave<T>(
     clear()
     const draft = latest.current
     latest.current = null
-    if (!draft || paused.current || (skipBlank && adapter.isBlank(draft))) return
+    if (draft === null || paused.current) return
+    if (skipBlank && !savedOnce.current && adapter.isBlank(draft)) return
+    savedOnce.current = true
     adapter.save(id, draft).catch(() => undefined) // a refusal shows up in the sync pill
   }, [id, skipBlank, adapter, clear])
 
