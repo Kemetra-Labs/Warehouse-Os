@@ -5,6 +5,7 @@ import { priceChanged } from '../../domain/receipt'
 import type { Item, ReceiptLine } from '../../domain/types'
 import { Bdi } from '../components/Bdi'
 import { Button } from '../components/Button'
+import { FieldValidityProvider, useValidityScope } from '../components/FieldValidity'
 import { InlineQty, QtyStepper } from '../components/QtyStepper'
 import { ExpiredReason, LineFields } from './LineFields'
 import styles from './LineCard.module.css'
@@ -94,13 +95,22 @@ function PendingBody(props: LineCardProps) {
   const ready = props.problem === null || props.problem === undefined
   const changed = priceChanged(line)
   const open = (): void => setEditing(true)
+  const scope = useValidityScope()
 
   return (
     <>
       {editing ? (
         <>
-          <LineFields line={line} businessDate={businessDate} onChange={onChange} scope="detail" />
-          <Button onClick={() => setEditing(false)}>تم</Button>
+          <FieldValidityProvider value={scope.report}>
+            <LineFields
+              line={line}
+              businessDate={businessDate}
+              onChange={onChange}
+              scope="detail"
+            />
+          </FieldValidityProvider>
+          {scope.stuck ? <BadFieldNote /> : null}
+          <Button onClick={() => scope.leave() && setEditing(false)}>تم</Button>
         </>
       ) : (
         <div className={styles.chips}>
@@ -155,9 +165,19 @@ function PendingBody(props: LineCardProps) {
   )
 }
 
+/** Shown when the editor refuses to close over a field that is not a number. */
+function BadFieldNote() {
+  return (
+    <p className={styles.summary} role="alert" data-testid="bad-field-note">
+      فيه خانة مكتوب فيها رقم مش صحيح (باللون الأحمر). صلّحها الأول وبعدين اقفل.
+    </p>
+  )
+}
+
 function SavedBody(props: LineCardProps) {
   const { line, item, businessDate, onChange } = props
   const [open, setOpen] = useState(false)
+  const scope = useValidityScope()
   const complete = line.invoicedQty > 0 && line.countedQty === line.invoicedQty
   return (
     <>
@@ -191,10 +211,15 @@ function SavedBody(props: LineCardProps) {
         </>
       )}
       {open ? (
-        <LineFields line={line} businessDate={businessDate} onChange={onChange} scope="all" />
+        <FieldValidityProvider value={scope.report}>
+          <LineFields line={line} businessDate={businessDate} onChange={onChange} scope="all" />
+        </FieldValidityProvider>
       ) : null}
+      {open && scope.stuck ? <BadFieldNote /> : null}
       <div className={styles.actions}>
-        <Button onClick={() => setOpen((v) => !v)}>{open ? 'إغلاق' : 'تعديل'}</Button>
+        <Button onClick={() => (open ? scope.leave() && setOpen(false) : setOpen(true))}>
+          {open ? 'إغلاق' : 'تعديل'}
+        </Button>
         {item ? <Button onClick={props.onAddBatch}>تشغيلة تانية</Button> : null}
         <Button variant="danger" onClick={props.onRemove}>
           حذف

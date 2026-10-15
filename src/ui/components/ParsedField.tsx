@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react'
+import { useReportValidity } from './FieldValidity'
 import styles from './ParsedField.module.css'
 
 export type Parsed<T> = { readonly ok: true; readonly value: T } | { readonly ok: false }
@@ -45,6 +46,9 @@ export function ParsedField<T>({
     setText(format(value))
   }
 
+  const invalid = !parse(text).ok
+  useReportValidity(invalid)
+
   const onInput = (next: string): void => {
     setText(next)
     const parsed = parse(next)
@@ -69,7 +73,7 @@ export function ParsedField<T>({
         value={text}
         placeholder={placeholder}
         list={list}
-        aria-invalid={!parse(text).ok}
+        aria-invalid={invalid}
         onChange={(e) => onInput(e.target.value)}
       />
       {hint ? <small className={styles.hint}>{hint}</small> : null}

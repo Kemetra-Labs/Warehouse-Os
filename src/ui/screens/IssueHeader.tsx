@@ -16,15 +16,20 @@ export interface IssueHeaderProps {
   readonly onChange: (draft: IssueDraft) => void
 }
 
-function PermitAdder({ draft, onChange }: IssueHeaderProps) {
-  const [text, setText] = useState('')
+interface PermitAdderProps extends IssueHeaderProps {
+  /** The permit number being typed. The form owns it, so تم can add it before closing. */
+  readonly text: string
+  readonly onText: (text: string) => void
+}
+
+function PermitAdder({ draft, onChange, text, onText }: PermitAdderProps) {
   const permit = parsePermit(text)
 
   const submit = (e: FormEvent<HTMLFormElement>): void => {
     e.preventDefault()
     if (permit === null) return
     onChange(addPermit(draft, permit))
-    setText('')
+    onText('')
   }
 
   return (
@@ -39,7 +44,7 @@ function PermitAdder({ draft, onChange }: IssueHeaderProps) {
             dir="ltr"
             autoComplete="off"
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={(e) => onText(e.target.value)}
           />
         </label>
         <Button type="submit" disabled={permit === null}>
@@ -71,6 +76,19 @@ function PermitAdder({ draft, onChange }: IssueHeaderProps) {
 }
 
 function BatchForm({ draft, onChange, onDone }: IssueHeaderProps & { onDone: () => void }) {
+  const [permitText, setPermitText] = useState('')
+
+  // A permit number typed but not added is added now; one that is not a number keeps the sheet
+  // open (the red line under the box says why) rather than being dropped.
+  const done = (): void => {
+    if (permitText.trim() !== '') {
+      const permit = parsePermit(permitText)
+      if (permit === null) return
+      onChange(addPermit(draft, permit))
+    }
+    onDone()
+  }
+
   return (
     <div className={styles.form}>
       <label className={styles.field}>
@@ -96,8 +114,8 @@ function BatchForm({ draft, onChange, onDone }: IssueHeaderProps & { onDone: () 
           }
         />
       </label>
-      <PermitAdder draft={draft} onChange={onChange} />
-      <Button variant="primary" onClick={onDone}>
+      <PermitAdder draft={draft} onChange={onChange} text={permitText} onText={setPermitText} />
+      <Button variant="primary" onClick={done}>
         تم
       </Button>
     </div>

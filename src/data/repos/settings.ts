@@ -3,6 +3,7 @@ import type { Settings } from '../../domain/types'
 import { parseSettings, stripUndefined } from '../convert'
 import { getFirebase } from '../firebase'
 import { toDataError, type DataError, type SnapshotMeta, type Unsubscribe } from '../listener'
+import { watchWrite } from '../sync'
 
 export interface SettingsListener {
   onData(settings: Settings, meta: SnapshotMeta): void
@@ -29,7 +30,7 @@ export function subscribeSettings(listener: SettingsListener): Unsubscribe {
 /** Merges a partial update into `settings/app`. */
 export function saveSettings(patch: Partial<Settings>): Promise<void> {
   const { db } = getFirebase()
-  return setDoc(doc(db, 'settings', 'app'), stripUndefined(patch), { merge: true })
+  return watchWrite(setDoc(doc(db, 'settings', 'app'), stripUndefined(patch), { merge: true }))
 }
 
 /** The patch that records pasted ledger rows: the ids are unioned in, never rewritten (R8). */

@@ -617,3 +617,33 @@ describe('Issue: a duplicate batch number (R10)', () => {
     expect(host.querySelector('[data-testid="duplicate-number"]')).toBeNull()
   })
 })
+
+describe('Issue: the permit number typed in the batch sheet', () => {
+  const open = () => click(buttonByText(host, 'بيانات الدفعة'))
+  const permitBox = () => inputByLabel(dialog()!, 'رقم إذن المريض (أرقام بس)')
+
+  it('is added by تم even when إضافة إذن was not tapped', async () => {
+    await mount(draftOf({ rep: 'إيجي فيكس', permits: ['1001'] }))
+    open()
+    type(permitBox(), '1002')
+    click(sheetButton('تم'))
+    expect(latest.permits).toEqual(['1001', '1002'])
+  })
+
+  it('keeps the sheet open, and the text, when it is not a number', async () => {
+    await mount(draftOf({ rep: 'إيجي فيكس', permits: ['1001'] }))
+    open()
+    type(permitBox(), '12x')
+    click(sheetButton('تم'))
+    expect(latest.permits).toEqual(['1001'])
+    expect(permitBox()?.value).toBe('12x')
+    expect(dialog()?.textContent).toContain('رقم الإذن لازم يكون أرقام بس')
+  })
+
+  it('closes as before when nothing is typed', async () => {
+    await mount(draftOf({ rep: 'إيجي فيكس', permits: ['1001'] }))
+    open()
+    click(sheetButton('تم'))
+    expect(latest.permits).toEqual(['1001'])
+  })
+})

@@ -35,6 +35,7 @@ import type { Outbox } from '../outbox'
 import { reconcilePendingPosts, type ReattachResult } from '../receiptPost'
 import { cancelledOnServer, commitCancel } from './cancelCommit'
 import { listenCollection } from './shared'
+import { watchWrite } from '../sync'
 
 export type IssueBatchDoc = IssueBatch & { readonly id: string }
 
@@ -59,7 +60,7 @@ export function startIssueDraft(known: readonly { readonly number: number }[]): 
 /** Writes (or overwrites) a draft. Rules reject it once the batch is posted. */
 export function saveIssueDraft(id: string, draft: IssueDraft): Promise<void> {
   const { db } = getFirebase()
-  return setDoc(doc(db, 'issueBatches', id), stripUndefined(toDraftDoc(draft)))
+  return watchWrite(setDoc(doc(db, 'issueBatches', id), stripUndefined(toDraftDoc(draft))))
 }
 
 /** Discards a draft. Rules allow a delete only while the status is draft. */

@@ -644,4 +644,50 @@ describe('Receive: header sheet', () => {
     expect(latest.deliveryNo).toBe('70000409')
     expect(latest.supplier).toBe('إيجي فيكس')
   })
+
+  it('holds the review while a saved line has text that is not a number, until it is fixed', async () => {
+    await mount(draftWith([goodLine(1, ITEM_A, { invoicedQty: 4, countedQty: 4 })]))
+    click(buttonByText(saved()[0]!, 'تعديل'))
+    const qty = (): HTMLInputElement => field('الكمية في الفاتورة', saved()[0]!)!
+    type(qty(), '2.5')
+    expect(latest.lines[0]?.invoicedQty).toBe(4) // nothing committed for the bad text
+    click(buttonByText(host, 'راجع واعتمد'))
+    expect(onReview).not.toHaveBeenCalled()
+    expect(host.querySelector('[data-testid="bad-fields"]')).not.toBeNull()
+
+    type(qty(), '3')
+    expect(host.querySelector('[data-testid="bad-fields"]')).toBeNull()
+    click(buttonByText(host, 'راجع واعتمد'))
+    expect(onReview).toHaveBeenCalledOnce()
+    expect(latest.lines[0]?.invoicedQty).toBe(3)
+  })
+
+  it('will not close a saved line over text that is not a number, so review cannot post the old one', async () => {
+    await mount(draftWith([goodLine(1, ITEM_A, { invoicedQty: 4, countedQty: 4 })]))
+    click(buttonByText(saved()[0]!, 'تعديل'))
+    type(field('الكمية في الفاتورة', saved()[0]!), '2.5')
+
+    click(buttonByText(saved()[0]!, 'إغلاق'))
+    expect(host.querySelector('[data-testid="bad-field-note"]')).not.toBeNull()
+    expect(field('الكمية في الفاتورة', saved()[0]!)?.value).toBe('2.5') // still open, text kept
+    click(buttonByText(host, 'راجع واعتمد'))
+    expect(onReview).not.toHaveBeenCalled()
+
+    type(field('الكمية في الفاتورة', saved()[0]!), '4')
+    expect(host.querySelector('[data-testid="bad-field-note"]')).toBeNull()
+    click(buttonByText(saved()[0]!, 'إغلاق'))
+    expect(field('الكمية في الفاتورة', saved()[0]!)).toBeNull() // closed now
+    click(buttonByText(host, 'راجع واعتمد'))
+    expect(onReview).toHaveBeenCalledOnce()
+  })
+
+  it('will not close the open line over a price that is not a number', async () => {
+    const fake = await mount(newDraft(DAY))
+    act(() => fake.emit(ean(GTIN_A)))
+    expect(field('السعر', pending()!)).not.toBeNull() // no batch or expiry yet: fields start open
+    type(field('السعر', pending()!), '12,5')
+    click(buttonByText(pending()!, 'تم'))
+    expect(host.querySelector('[data-testid="bad-field-note"]')).not.toBeNull()
+    expect(field('السعر', pending()!)?.value).toBe('12,5')
+  })
 })
