@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { classify } from '../domain/search'
 import { createCameraSource } from './camera'
 import { signal } from './feedback'
 import { createScanGate } from './gate'
@@ -28,6 +29,12 @@ const LABELS: Readonly<Record<ScanFeedback, string>> = {
 
 const defaultSource = createCameraSource()
 
+/** What the gate counts once: the box's GTIN when the code carries one, else the code itself. */
+function gateKey(rawValue: string): string {
+  const c = classify(rawValue)
+  return c.kind === 'gtin' ? `gtin:${c.gtin}` : rawValue
+}
+
 /**
  * Camera viewfinder. The whole view is one button (pause or resume), scanning is continuous,
  * and each counted code gets a beep, a vibration and a coloured outline with a glyph.
@@ -55,7 +62,7 @@ export function Scanner({ onCode, source = defaultSource, onUnavailable }: Scann
     let session: ScanSession | null = null
 
     const handle = (code: ScanCode): void => {
-      if (pausedRef.current || !gate.accept(code.rawValue)) return
+      if (pausedRef.current || !gate.accept(gateKey(code.rawValue))) return
       const kind = onCodeRef.current(code)
       signal(kind)
       setFlash((prev) => ({ kind, id: (prev?.id ?? 0) + 1 }))

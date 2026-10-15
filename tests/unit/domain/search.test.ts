@@ -163,6 +163,11 @@ describe('searchItems', () => {
   it('requires all words to match', () => {
     expect(searchItems(items, 'مسمار نخاعي').map((i) => i.code)).toEqual(['SCR-02'])
   })
+  it('matches digits in a name whichever digits the name or the query uses', () => {
+    const named = [{ code: 'PLA-09', nameAr: 'شريحة ٣ ثقوب', nameEn: '' }]
+    expect(searchItems(named, 'شريحة 3').map((i) => i.code)).toEqual(['PLA-09'])
+    expect(searchItems(named, 'شريحه ٣').map((i) => i.code)).toEqual(['PLA-09'])
+  })
   it('returns nothing for an empty query or no match', () => {
     expect(searchItems(items, '  ')).toEqual([])
     expect(searchItems(items, 'zzz')).toEqual([])

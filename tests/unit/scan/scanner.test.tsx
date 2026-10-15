@@ -125,6 +125,17 @@ describe('Scanner', () => {
     expect(onCode).toHaveBeenCalledTimes(2)
   })
 
+  it('counts a box once when it shows both its EAN-13 and its GS1 DataMatrix', async () => {
+    const h = harness()
+    const onCode = await mount(h)
+    const matrix: ScanCode = { rawValue: '0106001234567890\x1d10LOT7', format: 'data_matrix' }
+    for (let i = 0; i < 20; i++) {
+      act(() => h.emit(i % 2 === 0 ? EAN : matrix))
+      act(() => vi.advanceTimersByTime(150))
+    }
+    expect(onCode).toHaveBeenCalledTimes(1)
+  })
+
   it('a tap pauses and resumes continuous scanning', async () => {
     const h = harness()
     const onCode = await mount(h)

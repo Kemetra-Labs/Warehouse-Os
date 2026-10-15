@@ -187,6 +187,31 @@ describe.each(['UTC', 'Africa/Cairo'])('importWorkbook (TZ=%s)', (zone) => {
       expect(r.warnings.some((w) => w.includes('صف 14'))).toBe(true)
     })
 
+    it('refuses an error cell (#N/A) in the quantity instead of reading its error code', () => {
+      const e = expectImportError(
+        () =>
+          importWorkbook(
+            mutateFixture((wb) => {
+              sheet(wb, MOVEMENTS).I6 = { t: 'e', v: 42, w: '#N/A' }
+            }),
+          ),
+        'bad-row',
+      )
+      expect(e.message).toContain('صف 6')
+    })
+
+    it('refuses an error cell in the item price', () => {
+      expectImportError(
+        () =>
+          importWorkbook(
+            mutateFixture((wb) => {
+              sheet(wb, ITEMS).K5 = { t: 'e', v: 7, w: '#DIV/0!' }
+            }),
+          ),
+        'bad-row',
+      )
+    })
+
     it('accepts an ISO date typed as text', () => {
       const r = importWorkbook(
         mutateFixture((wb) => setCell(sheet(wb, MOVEMENTS), 'C', 6, '2026-08-05')),
@@ -210,6 +235,21 @@ describe.each(['UTC', 'Africa/Cairo'])('importWorkbook (TZ=%s)', (zone) => {
   })
 
   describe('cached balances', () => {
+    it('reads an error cell in L as no balance, never as its error code', () => {
+      const cached = importWorkbook(
+        mutateFixture((wb) => {
+          const ws = sheet(wb, BALANCES)
+          const row = Array.from({ length: 40 }, (_, i) => i + 1).find((r) =>
+            /^[A-Z]{3}-\d+$/.test(String(getCell(ws, 'C', r) ?? '')),
+          )
+          if (row === undefined) throw new Error('no item row in the balances sheet')
+          ws[`L${row}`] = { t: 'e', v: 42, w: '#N/A' }
+        }),
+      ).cached
+      expect(cached.some((c) => c.balance === 42)).toBe(false)
+      expect(cached.filter((c) => c.balance === null)).toHaveLength(1)
+    })
+
     it('reads L and N for rows whose column C is an item code, skipping the total row', () => {
       const cached = importWorkbook(fixtureBuffer()).cached
       expect(cached).toHaveLength(8)

@@ -1,4 +1,5 @@
 import type * as XLSX from 'xlsx'
+import { toMinor } from '../domain/money'
 import { itemSchema } from '../domain/types'
 import { cellAt, lastRow, numberOf, textOf } from './cells'
 import { ImportError } from './errors'
@@ -30,7 +31,7 @@ function priceMinorOf(ws: XLSX.WorkSheet, row: number): number {
   if (raw === null || raw === '') return 0
   const price = numberOf(raw)
   if (price === null || price < 0) throw badRow(row, 'سعر القطعة غير صالح')
-  return Math.round(price * 100)
+  return toMinor(price)
 }
 
 /** `String(N)` when it has 8 or 13 digits (a numeric cell converts without loss). */

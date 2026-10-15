@@ -144,7 +144,7 @@ export function searchItems<
   const words = normalizeArabic(normalizeDigits(query)).split(/\s+/).filter(Boolean)
   if (words.length === 0) return []
   return items.filter((item) => {
-    const hay = normalizeArabic(`${item.nameAr} ${item.nameEn ?? ''}`)
+    const hay = normalizeArabic(normalizeDigits(`${item.nameAr} ${item.nameEn ?? ''}`))
     return words.every((w) => hay.includes(w))
   })
 }
