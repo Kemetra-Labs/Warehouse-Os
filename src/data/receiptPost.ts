@@ -122,7 +122,7 @@ export async function runPost(input: PostInput, deps: PostDeps): Promise<PostRes
 export interface SettleDeps<TPlan> {
   readonly outbox: Pick<Outbox, 'markAcked' | 'reconcile'>
   readonly commit: (plan: TPlan) => Promise<void>
-  readonly checkServer: ServerCheck
+  readonly checkServer: (id: string, plan: TPlan) => Promise<boolean>
 }
 
 /** Sends a queued post and clears its outbox entry on ack; on a rejection asks the server (R12). */
@@ -134,7 +134,7 @@ export async function settlePost<TPlan>(
   try {
     await deps.commit(plan)
   } catch (err) {
-    return deps.outbox.reconcile(id, deps.checkServer, messageOf(err))
+    return deps.outbox.reconcile(id, (i) => deps.checkServer(i, plan), messageOf(err))
   }
   try {
     await deps.outbox.markAcked(id)
@@ -167,9 +167,10 @@ async function reattachOne(
   outbox: Pick<Outbox, 'markAcked' | 'markFailed'>,
   id: string,
   checkServer: ServerCheck,
+  payload: unknown,
 ): Promise<ReattachResult> {
   try {
-    if (await checkServer(id)) {
+    if (await checkServer(id, payload)) {
       await outbox.markAcked(id)
       return 'cleared'
     }
@@ -193,6 +194,8 @@ export async function reconcilePendingPosts(
   if (pending.length === 0) return []
   await waitForPendingWrites()
   const results: ReattachResult[] = []
-  for (const entry of pending) results.push(await reattachOne(outbox, entry.id, checkServer))
+  for (const entry of pending) {
+    results.push(await reattachOne(outbox, entry.id, checkServer, entry.payload))
+  }
   return results
 }

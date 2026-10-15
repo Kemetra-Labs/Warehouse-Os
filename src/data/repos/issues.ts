@@ -22,6 +22,7 @@ import {
   type IssueCancelRequest,
 } from '../cancelPost'
 import { stripUndefined } from '../convert'
+import { expectedLines, PostConflictError, sameIssuePost } from '../postConflict'
 import { getFirebase } from '../firebase'
 import {
   reconcilePendingIssuePosts,
@@ -69,12 +70,19 @@ export function deleteIssueDraft(id: string): Promise<void> {
   return deleteDoc(doc(db, 'issueBatches', id))
 }
 
-/** True when the server (not the cache) holds the batch as posted or cancelled (R12). */
-export async function issueBatchPostedOnServer(id: string): Promise<boolean> {
+/**
+ * True when the server (not the cache) holds the batch as posted or cancelled (R12). Throws a
+ * `PostConflictError` when it holds it with other issued lines than `expected`, the ones this
+ * device posted: another device posted the same draft, and clearing the entry would drop them.
+ */
+export async function issueBatchPostedOnServer(id: string, expected?: unknown): Promise<boolean> {
   const { db } = getFirebase()
   const snap = await getDocFromServer(doc(db, 'issueBatches', id))
   const status: unknown = snap.exists() ? snap.get('status') : null
-  return status === 'posted' || status === 'cancelled'
+  if (status !== 'posted' && status !== 'cancelled') return false
+  const mine = expectedLines(expected, 'issued')
+  if (mine !== null && !sameIssuePost(snap.get('issued'), mine)) throw new PostConflictError()
+  return true
 }
 
 function addWrites(db: Firestore, batch: WriteBatch, plan: IssueCommitPlan): void {

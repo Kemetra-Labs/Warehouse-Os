@@ -24,6 +24,7 @@ import {
   type ReceiptCancelRequest,
 } from '../cancelPost'
 import { stripUndefined } from '../convert'
+import { expectedLines, PostConflictError, sameReceiptPost } from '../postConflict'
 import { getFirebase } from '../firebase'
 import type { Listener, Unsubscribe } from '../listener'
 import type { Outbox } from '../outbox'
@@ -72,12 +73,19 @@ export function deleteDraft(id: string): Promise<void> {
   return deleteDoc(doc(db, 'receipts', id))
 }
 
-/** True when the server (not the cache) holds the receipt as posted or cancelled (R12). */
-export async function receiptPostedOnServer(id: string): Promise<boolean> {
+/**
+ * True when the server (not the cache) holds the receipt as posted or cancelled (R12). Throws a
+ * `PostConflictError` when it holds it with other lines than `expected`, the ones this device
+ * posted: another device posted the same draft, and clearing the entry would drop these lines.
+ */
+export async function receiptPostedOnServer(id: string, expected?: unknown): Promise<boolean> {
   const { db } = getFirebase()
   const snap = await getDocFromServer(doc(db, 'receipts', id))
   const status: unknown = snap.exists() ? snap.get('status') : null
-  return status === 'posted' || status === 'cancelled'
+  if (status !== 'posted' && status !== 'cancelled') return false
+  const mine = expectedLines(expected, 'lines')
+  if (mine !== null && !sameReceiptPost(snap.get('lines'), mine)) throw new PostConflictError()
+  return true
 }
 
 function addWrites(db: Firestore, batch: WriteBatch, plan: CommitPlan): void {

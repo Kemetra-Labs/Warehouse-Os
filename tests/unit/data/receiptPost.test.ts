@@ -1,6 +1,7 @@
 import { IDBFactory } from 'fake-indexeddb'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createOutbox, type Outbox } from '../../../src/data/outbox'
+import { PostConflictError, sameReceiptPost } from '../../../src/data/postConflict'
 import {
   RECEIPT_POST_KIND,
   buildWrites,
@@ -138,7 +139,10 @@ describe('runPost', () => {
     const checkServer = vi.fn(() => Promise.resolve(true))
     const r = await runPost(input(), deps({ commit: denied, checkServer }))
     expect(r.ok && (await r.committed)).toBe('cleared')
-    expect(checkServer).toHaveBeenCalledWith('r1')
+    expect(checkServer).toHaveBeenCalledWith(
+      'r1',
+      expect.objectContaining({ draftDoc: expect.anything() }),
+    )
     expect(await outbox.list()).toEqual([])
   })
 
@@ -148,6 +152,21 @@ describe('runPost', () => {
     const [row] = await outbox.list()
     expect(row).toMatchObject({ status: 'failed' })
     expect(row?.error).toContain('permission-denied')
+    expect(row?.payload).toMatchObject({ receiptId: 'r1' })
+  })
+
+  it('fails the entry, keeping its lines, when the server holds the receipt with other lines', async () => {
+    const serverLines = [{ n: 1, itemCode: 'SCR-01', countedQty: 9, priceMinor: 1100 }]
+    const checkServer = (_id: string, plan: unknown): Promise<boolean> => {
+      const mine = (plan as CommitPlan).draftDoc.lines
+      if (!sameReceiptPost(serverLines, mine)) throw new PostConflictError()
+      return Promise.resolve(true)
+    }
+    const r = await runPost(input(), deps({ commit: denied, checkServer }))
+    expect(r.ok && (await r.committed)).toBe('failed')
+    const [row] = await outbox.list()
+    expect(row).toMatchObject({ status: 'failed' })
+    expect(row?.error).toContain('محفوظة هنا')
     expect(row?.payload).toMatchObject({ receiptId: 'r1' })
   })
 
@@ -198,6 +217,21 @@ describe('reconcilePendingPosts', () => {
       ['b', 'failed'],
       ['c', 'pending'],
     ])
+  })
+
+  it('gives the server check what the entry was posting, and fails a conflict instead of clearing it', async () => {
+    const payload = { receiptId: 'a', draft: draft() }
+    await outbox.put({ id: 'a', kind: RECEIPT_POST_KIND, payload })
+    const seen: unknown[] = []
+    const check = (_id: string, expected?: unknown): Promise<boolean> => {
+      seen.push(expected)
+      throw new PostConflictError()
+    }
+    expect(await reconcilePendingPosts(outbox, () => Promise.resolve(), check)).toEqual(['failed'])
+    expect(seen).toEqual([payload])
+    const [row] = await outbox.list()
+    expect(row).toMatchObject({ id: 'a', status: 'failed', payload })
+    expect(row?.error).toContain('محفوظة هنا')
   })
 
   it('keeps the entry pending when the server cannot be reached at restart', async () => {

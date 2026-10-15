@@ -16,8 +16,12 @@ export interface OutboxEntry {
 
 export type NewOutboxEntry = Pick<OutboxEntry, 'id' | 'kind' | 'payload'>
 
-/** Resolves true when the server already holds the posted/cancelled document for `id`. */
-export type ServerCheck = (id: string) => Promise<boolean>
+/**
+ * Resolves true when the server already holds the posted/cancelled document for `id`. `expected`
+ * is what this device meant to post (its commit plan, or the stored payload after a restart): a
+ * check that can tell throws when the server holds the document with other content.
+ */
+export type ServerCheck = (id: string, expected?: unknown) => Promise<boolean>
 
 export type ReconcileResult = 'cleared' | 'failed'
 
