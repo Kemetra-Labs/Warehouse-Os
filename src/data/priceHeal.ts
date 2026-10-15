@@ -6,6 +6,8 @@ import type { MovementDoc } from './deriveLedger'
 export interface PriceHeal {
   readonly itemCode: string
   readonly priceMinor: number
+  /** The late purchase whose price is being corrected: what makes this a new correction. */
+  readonly staleMovementId: string
 }
 
 const isPurchase = (m: MovementDoc): boolean =>
@@ -65,30 +67,43 @@ export function planPriceHeals(
       itemWrittenAt > 0 &&
       itemWrittenAt <= posted(last)
     ) {
-      out.push({ itemCode: item.code, priceMinor: latest.priceMinor })
+      out.push({ itemCode: item.code, priceMinor: latest.priceMinor, staleMovementId: last.id })
     }
   }
   return out
 }
 
+/** A write that keeps failing (refused by the rules, say) is given up on after this many tries. */
+const MAX_ATTEMPTS = 3
+
 /**
  * Applies the corrections once each, and only from a view that the server has confirmed (nothing
  * read from the cache, nothing still waiting to be sent): a decision taken on a stale view could
- * itself be the wrong write. Returns how many it applied, for the caller and the tests.
+ * itself be the wrong write. A correction is the same one only while the same late purchase
+ * causes it, so a second late overwrite of the same item is corrected too, and one whose write
+ * failed is tried again (a few times). Returns how many it applied, for the caller and the tests.
  */
 export function createPriceHealer(
-  apply: (heal: PriceHeal) => void,
+  apply: (heal: PriceHeal) => Promise<unknown> | void,
 ): (items: readonly Item[], movements: readonly MovementDoc[], confirmed: boolean) => number {
-  const attempted = new Set<string>()
+  const handled = new Set<string>()
+  const failures = new Map<string, number>()
   return (items, movements, confirmed) => {
     if (!confirmed) return 0
     let applied = 0
     for (const heal of planPriceHeals(items, movements)) {
-      const key = `${heal.itemCode}:${heal.priceMinor}`
-      if (attempted.has(key)) continue
-      attempted.add(key)
-      apply(heal)
+      const key = `${heal.itemCode}:${heal.staleMovementId}:${heal.priceMinor}`
+      if (handled.has(key)) continue
+      handled.add(key)
       applied += 1
+      const result = apply(heal)
+      if (result) {
+        result.catch(() => {
+          const n = (failures.get(key) ?? 0) + 1
+          failures.set(key, n)
+          if (n < MAX_ATTEMPTS) handled.delete(key)
+        })
+      }
     }
     return applied
   }

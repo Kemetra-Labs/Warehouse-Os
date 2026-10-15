@@ -154,10 +154,7 @@ export function DataProvider({ children }: { readonly children: ReactNode }) {
   // The price follows the latest purchase. A receipt posted offline and synced late can put an
   // older purchase's price over a newer one; correct that, from a server-confirmed view only.
   const healPrices = useMemo(
-    () =>
-      createPriceHealer((h) => {
-        updateItem(h.itemCode, { priceMinor: h.priceMinor }).catch(() => undefined)
-      }),
+    () => createPriceHealer((h) => updateItem(h.itemCode, { priceMinor: h.priceMinor })),
     [],
   )
   useEffect(() => {
