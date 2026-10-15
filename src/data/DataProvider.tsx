@@ -4,6 +4,7 @@ import { DEFAULT_SETTINGS } from './convert'
 import type { MovementDoc } from './deriveLedger'
 import type { DataError } from './listener'
 import { createOutbox, type Outbox } from './outbox'
+import { createPriceHealer } from './priceHeal'
 import { startReconciling } from './reconcileAll'
 import {
   reconcilePendingIssueBatches,
@@ -11,7 +12,7 @@ import {
   subscribeIssueBatches,
   type IssueBatchDoc,
 } from './repos/issues'
-import { subscribeItems } from './repos/items'
+import { subscribeItems, updateItem } from './repos/items'
 import { reconcilePendingManualMovements, subscribeMovements } from './repos/movements'
 import {
   reconcilePendingReceiptCancels,
@@ -53,6 +54,15 @@ interface Loaded {
   settings: boolean
 }
 
+interface Confirmed {
+  items: boolean
+  movements: boolean
+}
+
+function withConfirmed(state: Confirmed, key: keyof Confirmed, value: boolean): Confirmed {
+  return state[key] === value ? state : { ...state, [key]: value }
+}
+
 /** One live listener per collection, fed into the sync store; the outbox feeds failures. */
 export function DataProvider({ children }: { readonly children: ReactNode }) {
   const outbox = useMemo(() => createOutbox(), [])
@@ -64,6 +74,8 @@ export function DataProvider({ children }: { readonly children: ReactNode }) {
   const [issueBatchesLoaded, setIssueBatchesLoaded] = useState(false)
   const [loaded, setLoaded] = useState<Loaded>({ items: false, movements: false, settings: false })
   const [error, setError] = useState<DataError | null>(null)
+  // Items and movements as the server last confirmed them (not from the cache, nothing waiting).
+  const [confirmed, setConfirmed] = useState({ items: false, movements: false })
 
   useEffect(() => {
     const mark = (key: keyof Loaded): void => setLoaded((l) => (l[key] ? l : { ...l, [key]: true }))
@@ -72,6 +84,7 @@ export function DataProvider({ children }: { readonly children: ReactNode }) {
       subscribeItems({
         onData: (rows, meta) => {
           setItems(rows)
+          setConfirmed((c) => withConfirmed(c, 'items', !meta.fromCache && meta.pendingCount === 0))
           syncStore.reportPending('items', meta.pendingCount)
           mark('items')
         },
@@ -80,6 +93,9 @@ export function DataProvider({ children }: { readonly children: ReactNode }) {
       subscribeMovements({
         onData: (rows, meta) => {
           setMovements(rows)
+          setConfirmed((c) =>
+            withConfirmed(c, 'movements', !meta.fromCache && meta.pendingCount === 0),
+          )
           syncStore.reportPending('movements', meta.pendingCount)
           mark('movements')
         },
@@ -134,6 +150,16 @@ export function DataProvider({ children }: { readonly children: ReactNode }) {
       syncStore.reportPending('unverified', 0)
     }
   }, [outbox])
+
+  // The price follows the latest purchase. A receipt posted offline and synced late can put an
+  // older purchase's price over a newer one; correct that, from a server-confirmed view only.
+  const healPrices = useMemo(
+    () => createPriceHealer((h) => updateItem(h.itemCode, { priceMinor: h.priceMinor })),
+    [],
+  )
+  useEffect(() => {
+    healPrices(items, movements, confirmed.items && confirmed.movements)
+  }, [healPrices, items, movements, confirmed])
 
   useEffect(() => {
     const refresh = (): void => {
