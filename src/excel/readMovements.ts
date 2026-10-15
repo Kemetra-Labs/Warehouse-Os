@@ -117,7 +117,9 @@ export function readMovements(
     const type = typeOf(cellAt(ws, 'D', row), row)
     if (numberOf(cellAt(ws, 'I', row)) === 0) {
       skippedZeroRows.push(row)
-      warnings.push(`${MOVEMENTS_SHEET}، صف ${row}: الكمية صفر، الحركة اتتجاهلت (مالهاش أثر على الرصيد)`)
+      warnings.push(
+        `${MOVEMENTS_SHEET}، صف ${row}: الكمية صفر، الحركة اتتجاهلت (مالهاش أثر على الرصيد)`,
+      )
       continue
     }
     const { date, remapped } = remapBusinessDate(dateOf(cellAt(ws, 'C', row), row, date1904))
