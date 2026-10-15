@@ -4,6 +4,7 @@ import { DEFAULT_SETTINGS } from './convert'
 import type { MovementDoc } from './deriveLedger'
 import type { DataError } from './listener'
 import { createOutbox, type Outbox } from './outbox'
+import { startReconciling } from './reconcileAll'
 import {
   reconcilePendingIssueBatches,
   reconcilePendingIssueCancels,
@@ -113,12 +114,25 @@ export function DataProvider({ children }: { readonly children: ReactNode }) {
 
   useEffect(() => {
     // Posts, cancels, returns and adjustments that were pending when the app closed: re-attach,
-    // then ask the server (R12).
-    reconcilePendingReceipts(outbox).catch(() => undefined)
-    reconcilePendingIssueBatches(outbox).catch(() => undefined)
-    reconcilePendingReceiptCancels(outbox).catch(() => undefined)
-    reconcilePendingIssueCancels(outbox).catch(() => undefined)
-    reconcilePendingManualMovements(outbox).catch(() => undefined)
+    // then ask the server (R12). Offline the answer is "cannot tell yet": ask again when the
+    // network is back, and show those as waiting meanwhile, not as synced.
+    const stop = startReconciling(
+      [
+        () => reconcilePendingReceipts(outbox),
+        () => reconcilePendingIssueBatches(outbox),
+        () => reconcilePendingReceiptCancels(outbox),
+        () => reconcilePendingIssueCancels(outbox),
+        () => reconcilePendingManualMovements(outbox),
+      ],
+      {
+        target: window,
+        report: (unverified) => syncStore.reportPending('unverified', unverified),
+      },
+    )
+    return () => {
+      stop()
+      syncStore.reportPending('unverified', 0)
+    }
   }, [outbox])
 
   useEffect(() => {
