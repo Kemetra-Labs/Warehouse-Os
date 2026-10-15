@@ -123,7 +123,10 @@ describe('runIssuePost', () => {
     const checkServer = vi.fn(() => Promise.resolve(true))
     const r = await runIssuePost(input(), deps({ commit: denied, checkServer }))
     expect(r.ok && (await r.committed)).toBe('cleared')
-    expect(checkServer).toHaveBeenCalledWith('b1')
+    expect(checkServer).toHaveBeenCalledWith(
+      'b1',
+      expect.objectContaining({ draftDoc: expect.anything() }),
+    )
     expect(await outbox.list()).toEqual([])
   })
 

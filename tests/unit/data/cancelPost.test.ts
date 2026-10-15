@@ -153,7 +153,7 @@ describe('runReceiptCancel', () => {
     const result = await runReceiptCancel(receiptRequest(), deps({ commit: denied, checkServer }))
     if (!result.ok) throw new Error('expected ok')
     expect(await result.committed).toBe('cleared')
-    expect(checkServer).toHaveBeenCalledWith('cancel-r1')
+    expect(checkServer).toHaveBeenCalledWith('cancel-r1', expect.anything())
     expect(await outbox.list()).toEqual([])
   })
 
