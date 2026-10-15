@@ -5,6 +5,7 @@ import { useNow } from '../useNow'
 import { ExportBackup } from './ExportBackup'
 import { ExportLedger } from './ExportLedger'
 import { ExportPrints } from './ExportPrints'
+import { RestoreBackup } from './RestoreBackup'
 import styles from './Exports.module.css'
 
 /** Printable documents, ledger rows for the workbook, and the backup (US6). */
@@ -20,6 +21,7 @@ export default function Exports() {
           <ExportBackup primary={backupDue} />
           <ExportLedger primary={!backupDue} />
           <ExportPrints />
+          <RestoreBackup />
         </>
       ) : (
         <p className={styles.note}>جاري التحميل...</p>
