@@ -39,7 +39,7 @@ export interface PlanInput {
   readonly ctx: WriterContext
 }
 
-function chunk<T>(list: readonly T[], size: number): T[][] {
+export function chunk<T>(list: readonly T[], size: number): T[][] {
   const out: T[][] = []
   for (let i = 0; i < list.length; i += size) out.push(list.slice(i, i + size))
   return out
