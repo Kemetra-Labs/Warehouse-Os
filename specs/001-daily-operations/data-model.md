@@ -101,8 +101,9 @@ ID schemes:
 
 **Cancel rule** (receipt):
 1. Write a reversal for each line (`rev-{lineMovementId}`, a تسوية with the negated qty).
-2. For each `priceUpdates` entry, if the item's current price still equals `toMinor` (no later
-   receipt changed it), restore `fromMinor`. Otherwise keep the current price.
+2. For each `priceUpdates` entry, if the item's current price still equals `toMinor` and no
+   receipt posted later received the item (at a new price or the same one), restore `fromMinor`.
+   Otherwise keep the current price: the later receipt holds the latest purchase price.
 3. GTIN links made by the receipt **stay**, because the barcode-to-item fact is still true.
 4. Set `status = cancelled`. This is one atomic batch.
 

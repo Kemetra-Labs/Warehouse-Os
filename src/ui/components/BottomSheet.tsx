@@ -22,7 +22,10 @@ const EXIT_FALLBACK_MS = 400
 const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
 
 function trapTab(e: KeyboardEvent<HTMLDivElement>, root: HTMLElement): void {
-  const nodes = [...root.querySelectorAll<HTMLElement>(FOCUSABLE)]
+  // A disabled control cannot take focus: counting it as the last one would let Tab escape.
+  const nodes = [...root.querySelectorAll<HTMLElement>(FOCUSABLE)].filter(
+    (el) => !el.matches(':disabled'),
+  )
   const first = nodes[0]
   const last = nodes[nodes.length - 1]
   if (!first || !last) {

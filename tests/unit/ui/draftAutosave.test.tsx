@@ -82,4 +82,15 @@ describe('useDraftAutosave', () => {
     goHidden()
     expect(save).not.toHaveBeenCalled()
   })
+
+  it('saves a new document emptied again after it was saved, so deleted lines stay deleted', () => {
+    autosave.schedule('one line')
+    goHidden()
+    autosave.schedule('')
+    goHidden()
+    expect(save.mock.calls).toEqual([
+      ['doc-1', 'one line'],
+      ['doc-1', ''],
+    ])
+  })
 })

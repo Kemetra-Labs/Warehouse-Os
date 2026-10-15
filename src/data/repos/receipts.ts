@@ -18,6 +18,7 @@ import { toDraftDoc, type ReceiptDraft } from '../../domain/receipt'
 import { receiptSchema, type Receipt } from '../../domain/types'
 import {
   RECEIPT_CANCEL_KIND,
+  itemsReceivedAfter,
   runReceiptCancel,
   type CancelAttempt,
   type ReceiptCancelRequest,
@@ -168,6 +169,8 @@ export interface CancelReceiptDocInput {
   readonly movements: readonly StoredMovement[]
   /** The items as they are now: a price is restored only while it is still the one the receipt set. */
   readonly items: readonly { readonly code: string; readonly priceMinor: number }[]
+  /** Every receipt the app knows: one posted later keeps the price of the items it received. */
+  readonly receipts: readonly ReceiptDoc[]
   readonly uid: string
   readonly deviceId: string
 }
@@ -178,10 +181,12 @@ export function cancelReceiptDoc(
   input: CancelReceiptDocInput,
   outbox: Pick<Outbox, 'put' | 'markAcked' | 'reconcile'>,
 ): Promise<CancelAttempt> {
+  const { receipts, ...rest } = input
   return cancelReceipt(
     {
-      ...input,
+      ...rest,
       receipt: { id: receipt.id, status: receipt.status },
+      receivedLater: itemsReceivedAfter(receipt, receipts),
       label: receipt.deliveryNo.trim() === '' ? 'الاستلام' : `إذن ${receipt.deliveryNo.trim()}`,
       priceUpdates: receipt.priceUpdates,
       // A line that counted nothing wrote no movement.

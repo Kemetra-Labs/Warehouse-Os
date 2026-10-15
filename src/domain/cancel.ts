@@ -140,19 +140,32 @@ export interface ReceiptCancelInput extends Omit<CancelInput, 'kind'> {
   readonly priceUpdates: readonly PriceUpdate[]
   /** The items as they are now. */
   readonly items: readonly { readonly code: string; readonly priceMinor: number }[]
+  /**
+   * Items a receipt posted after this one received. That receipt's price is the latest purchase
+   * price, even when it equals the one this receipt set (it then recorded no price change).
+   */
+  readonly receivedLater?: readonly string[]
 }
 
 /**
  * The price a cancel gives back: an item goes back to its price before the receipt only while it
- * still holds the price the receipt set. A later receipt that changed it again wins.
+ * still holds the price the receipt set and no later receipt received it. A later receipt wins,
+ * whether it changed the price again or bought at the same price.
  */
 export function priceRestores(
   updates: readonly PriceUpdate[],
   items: ReceiptCancelInput['items'],
+  receivedLater: readonly string[] = [],
 ): PriceRestore[] {
   const current = new Map(items.map((i) => [i.code, i.priceMinor]))
+  const later = new Set(receivedLater)
   return updates
-    .filter((u) => u.fromMinor !== u.toMinor && current.get(u.itemCode) === u.toMinor)
+    .filter(
+      (u) =>
+        u.fromMinor !== u.toMinor &&
+        current.get(u.itemCode) === u.toMinor &&
+        !later.has(u.itemCode),
+    )
     .map((u) => ({ itemCode: u.itemCode, priceMinor: u.fromMinor }))
 }
 
@@ -162,6 +175,6 @@ export function priceRestores(
  * barcode-to-item fact is still true, so the plan never touches them.
  */
 export function planReceiptCancel(input: ReceiptCancelInput): CancelOutcome {
-  const { priceUpdates, items, ...rest } = input
-  return planFor({ ...rest, kind: 'receipt' }, priceRestores(priceUpdates, items))
+  const { priceUpdates, items, receivedLater, ...rest } = input
+  return planFor({ ...rest, kind: 'receipt' }, priceRestores(priceUpdates, items, receivedLater))
 }

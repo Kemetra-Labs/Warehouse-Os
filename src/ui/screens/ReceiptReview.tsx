@@ -182,7 +182,7 @@ export function ReceiptReview(props: ReceiptReviewProps) {
 
   return (
     <section className={styles.screen} aria-labelledby="review-title">
-      {readOnly ? null : (
+      {readOnly || phase.kind === 'posting' ? null : (
         <button type="button" className={styles.back} onClick={props.onBack}>
           <BackIcon />
           ارجع للعدّ
