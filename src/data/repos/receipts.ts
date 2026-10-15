@@ -37,6 +37,7 @@ import {
 } from '../receiptPost'
 import { cancelledOnServer, commitCancel } from './cancelCommit'
 import { listenCollection } from './shared'
+import { watchWrite } from '../sync'
 
 export type ReceiptDoc = Receipt & { readonly id: string }
 
@@ -56,7 +57,7 @@ export function subscribeReceipts(listener: Listener<ReceiptDoc>): Unsubscribe {
 /** Writes (or overwrites) a draft. Rules reject it once the receipt is posted. */
 export function saveDraft(id: string, draft: ReceiptDraft): Promise<void> {
   const { db } = getFirebase()
-  return setDoc(doc(db, 'receipts', id), stripUndefined(toDraftDoc(draft)))
+  return watchWrite(setDoc(doc(db, 'receipts', id), stripUndefined(toDraftDoc(draft))))
 }
 
 /** New draft with a UUID id. The id is returned at once; `written` settles on server ack. */

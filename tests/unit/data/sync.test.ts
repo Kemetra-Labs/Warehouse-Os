@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { createSyncStore, deriveSyncState, syncLabel } from '../../../src/data/sync'
+import { createSyncStore, deriveSyncState, syncLabel, watchWrite } from '../../../src/data/sync'
 
 describe('deriveSyncState', () => {
   it('is synced with nothing pending or failed', () => {
@@ -72,5 +72,32 @@ describe('createSyncStore', () => {
     off()
     s.reportPending('a', 2)
     expect(fn).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('refused writes outside the outbox', () => {
+  beforeEach(() => vi.useFakeTimers())
+  afterEach(() => vi.useRealTimers())
+
+  it('turn the pill to failed until dismissed, whatever else is synced', () => {
+    const s = createSyncStore({ debounceMs: 0 })
+    expect(deriveSyncState(0, 0, 2)).toEqual({ kind: 'failed', count: 2 })
+    s.reportRejected()
+    expect(s.getState()).toEqual({ kind: 'failed', count: 1 })
+    s.reportPending('items', 0)
+    expect(s.getState().kind).toBe('failed')
+    expect(s.rejectedCount()).toBe(1)
+    s.clearRejected()
+    vi.runAllTimers()
+    expect(s.rejectedCount()).toBe(0)
+    expect(s.getState().kind).toBe('synced')
+  })
+
+  it('watchWrite reports a rejected write, passes a good one through, and keeps the rejection', async () => {
+    const s = createSyncStore({ debounceMs: 0 })
+    await expect(watchWrite(Promise.resolve(7), s)).resolves.toBe(7)
+    expect(s.rejectedCount()).toBe(0)
+    await expect(watchWrite(Promise.reject(new Error('denied')), s)).rejects.toThrow('denied')
+    expect(s.rejectedCount()).toBe(1)
   })
 })

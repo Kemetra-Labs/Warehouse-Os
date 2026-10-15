@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useData } from '../../data/DataProvider'
 import { retryOutboxEntry } from '../../data/repos/unsent'
+import { syncStore, useSyncState } from '../../data/sync'
 import { describeUnsent, sortUnsent, type UnsentView } from '../../data/unsent'
 import { useOutboxEntries } from '../../data/useOutboxEntries'
 import { cairoToday } from '../../domain/dates'
@@ -14,6 +15,8 @@ import styles from './Unsent.module.css'
 const REJECTED = 'السيرفر رفض المستند ده. كل بياناته محفوظة هنا.'
 const WAITING = 'مستنية النت. هتتبعت لوحدها أول ما يرجع.'
 const UNREADABLE = 'المستند ده بياناته تالفة وما ينفعش يتبعت تاني. صدّره لإكسيل.'
+const WRITES_REFUSED =
+  'السيرفر رفض تعديل (مسودة أو صنف أو إعدادات) واتشال من الجهاز. افتح الشاشة وراجع آخر تعديلاتك وأعدها لو ناقصة.'
 const EXPORT_FAILED = 'ما قدرناش نجهّز ملف الإكسيل. جرّب تاني.'
 
 type Notes = Readonly<Record<string, string>>
@@ -126,6 +129,8 @@ export default function Unsent() {
   const { entries, loaded } = useOutboxEntries(outbox)
   const [notes, setNotes] = useState<Notes>({})
   const [exportError, setExportError] = useState(false)
+  useSyncState() // re-render when a refused write is reported or dismissed
+  const refused = syncStore.rejectedCount()
 
   const views = useMemo(() => {
     const names = new Map(items.map((i) => [i.code, i.nameAr]))
@@ -159,6 +164,12 @@ export default function Unsent() {
         المستندات اللي اتعتمدت على الجهاز ده ولسه السيرفر ما قبلهاش. بياناتها محفوظة هنا ومفيش حاجة
         بتتمسح لوحدها.
       </p>
+      {refused > 0 ? (
+        <div role="alert">
+          <p className={styles.reason}>{WRITES_REFUSED}</p>
+          <Button onClick={() => syncStore.clearRejected()}>تمام، راجعت</Button>
+        </div>
+      ) : null}
       {loaded && views.length === 0 ? (
         <p className={styles.ok} role="status">
           مفيش حاجة متعلّقة. كل المستندات اتبعتت.

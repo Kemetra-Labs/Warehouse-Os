@@ -4,6 +4,7 @@ import { stripUndefined } from '../convert'
 import { getFirebase } from '../firebase'
 import type { Listener, Unsubscribe } from '../listener'
 import { listenCollection } from './shared'
+import { watchWrite } from '../sync'
 
 export function subscribeItems(listener: Listener<Item>): Unsubscribe {
   const { db } = getFirebase()
@@ -21,7 +22,7 @@ export function subscribeItems(listener: Listener<Item>): Unsubscribe {
 export function saveItem(item: Omit<Item, 'updatedAt'>): Promise<void> {
   const { db } = getFirebase()
   const data = stripUndefined({ ...item, updatedAt: serverTimestamp() })
-  return setDoc(doc(db, 'items', item.code), data)
+  return watchWrite(setDoc(doc(db, 'items', item.code), data))
 }
 
 /**
@@ -33,9 +34,8 @@ export function updateItem(
   patch: Partial<Omit<Item, 'updatedAt' | 'code'>>,
 ): Promise<void> {
   const { db } = getFirebase()
-  return updateDoc(
-    doc(db, 'items', code),
-    stripUndefined({ ...patch, updatedAt: serverTimestamp() }),
+  return watchWrite(
+    updateDoc(doc(db, 'items', code), stripUndefined({ ...patch, updatedAt: serverTimestamp() })),
   )
 }
 
@@ -60,7 +60,7 @@ export function setAuthorityCodes(
         updatedAt: serverTimestamp(),
       })
     }
-    commits.push(batch.commit())
+    commits.push(watchWrite(batch.commit()))
   }
   return Promise.all(commits).then(() => undefined)
 }
