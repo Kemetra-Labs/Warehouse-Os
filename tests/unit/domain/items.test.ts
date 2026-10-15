@@ -8,6 +8,7 @@ import {
   emptyDraft,
   filterCounts,
   filterItems,
+  hasValidCheckDigit,
   itemEditPatch,
   suggestItemCode,
   suggestPage,
@@ -117,8 +118,21 @@ describe('validateItemDraft: GTINs and authority code', () => {
   it('warns, but does not block, when a GTIN already belongs to another item', () => {
     const res = validateItemDraft(fresh({ gtins: ['6001234567890'] }), ITEMS, null)
     expect(res.errors).toEqual({})
-    expect(res.warnings).toHaveLength(1)
-    expect(res.warnings[0]).toContain('SCR-02')
+    expect(res.warnings.filter((w) => w.includes('SCR-02'))).toHaveLength(1)
+  })
+
+  it('warns, but does not block, when a new GTIN fails its check digit', () => {
+    const typo = validateItemDraft(fresh({ gtins: ['6223001234569'] }), ITEMS, null)
+    expect(typo.errors).toEqual({})
+    expect(typo.warnings).toEqual([expect.stringContaining('6223001234569')])
+    expect(validateItemDraft(fresh({ gtins: ['6223001234562'] }), ITEMS, null).warnings).toEqual([])
+  })
+
+  it('checks the GS1 check digit of EAN-13 and EAN-8', () => {
+    expect(hasValidCheckDigit('4006381333931')).toBe(true)
+    expect(hasValidCheckDigit('4006381333932')).toBe(false)
+    expect(hasValidCheckDigit('96385074')).toBe(true)
+    expect(hasValidCheckDigit('96385075')).toBe(false)
   })
 
   it('does not warn again about a GTIN the edited item already had', () => {

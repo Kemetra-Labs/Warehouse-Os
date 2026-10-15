@@ -233,6 +233,24 @@ describe('issue print (إذن صرف)', () => {
     expect(text(sheet, 'G6')).toContain('ملغي 13/10/2026')
   })
 
+  it('grows the status row so a long cancel reason prints whole', async () => {
+    const reason = 'اتصرفت للمندوب الغلط واترجعت الأصناف كلها للمخزن في نفس اليوم بعد المراجعة'
+    const cancelled = issueDoc({
+      status: 'cancelled',
+      cancelledAt: ts(Date.UTC(2026, 9, 13, 8, 0)),
+      cancelReason: reason,
+    })
+    const sheet = await reload(
+      await issuePrintFile({
+        batch: cancelled,
+        items: ITEMS,
+        movements: issueMovements(cancelled),
+      }),
+    )
+    expect(text(sheet, 'G6')).toContain(reason)
+    expect(sheet.getRow(6).height).toBeGreaterThanOrEqual(30)
+  })
+
   it('refuses to print when a line has no movement (the price would be a guess)', () => {
     expect(() => buildIssuePrint({ batch, items: ITEMS, movements: movements.slice(1) })).toThrow(
       PrintError,

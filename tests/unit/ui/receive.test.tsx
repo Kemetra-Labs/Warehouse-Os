@@ -632,4 +632,16 @@ describe('Receive: header sheet', () => {
     expect(latest.deliveryNo).toBe('556')
     expect(latest.invoiceNo).toBe('INV-1')
   })
+
+  it('keeps a delivery note QR read while the sheet was open, saving only what was typed', async () => {
+    const fake = await mount(draftWith([], { deliveryNo: '', supplier: '' }))
+    click(buttonByText(host, 'بيانات الإذن'))
+    const dialog = host.querySelector('[role="dialog"]')!
+    type(inputByLabel(dialog, 'الشركة'), 'إيجي فيكس')
+    act(() => fake.emit(qr('70000409')))
+    expect(latest.deliveryNo).toBe('70000409')
+    click(buttonByText(dialog, 'حفظ'))
+    expect(latest.deliveryNo).toBe('70000409')
+    expect(latest.supplier).toBe('إيجي فيكس')
+  })
 })
