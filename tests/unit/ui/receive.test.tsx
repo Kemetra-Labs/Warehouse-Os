@@ -644,4 +644,21 @@ describe('Receive: header sheet', () => {
     expect(latest.deliveryNo).toBe('70000409')
     expect(latest.supplier).toBe('إيجي فيكس')
   })
+
+  it('holds the review while a saved line has text that is not a number, until it is fixed', async () => {
+    await mount(draftWith([goodLine(1, ITEM_A, { invoicedQty: 4, countedQty: 4 })]))
+    click(buttonByText(saved()[0]!, 'تعديل'))
+    const qty = (): HTMLInputElement => field('الكمية في الفاتورة', saved()[0]!)!
+    type(qty(), '2.5')
+    expect(latest.lines[0]?.invoicedQty).toBe(4) // nothing committed for the bad text
+    click(buttonByText(host, 'راجع واعتمد'))
+    expect(onReview).not.toHaveBeenCalled()
+    expect(host.querySelector('[data-testid="bad-fields"]')).not.toBeNull()
+
+    type(qty(), '3')
+    expect(host.querySelector('[data-testid="bad-fields"]')).toBeNull()
+    click(buttonByText(host, 'راجع واعتمد'))
+    expect(onReview).toHaveBeenCalledOnce()
+    expect(latest.lines[0]?.invoicedQty).toBe(3)
+  })
 })
