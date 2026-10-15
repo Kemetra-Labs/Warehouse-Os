@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { planPriceHeals } from '../../../src/data/priceHeal'
+import { createPriceHealer, planPriceHeals, type PriceHeal } from '../../../src/data/priceHeal'
 import { item, mov, ts } from '../../helpers/exportFixtures'
 
 const T = (n: number): object => ts(1_760_000_000_000 + n * 1000)
@@ -131,5 +131,42 @@ describe('planPriceHeals: what it never touches', () => {
     expect(planPriceHeals(items, [r2, r1, other])).toEqual([
       { itemCode: 'SCR-01', priceMinor: 15_000 },
     ])
+  })
+})
+
+describe('createPriceHealer', () => {
+  const r2 = buy('r2', '2026-10-12', 1, 15_000)
+  const r1 = buy('r1', '2026-10-10', 5, 12_000)
+  const stale = [itemAt(12_000, 5)]
+
+  it('applies nothing from a view the server has not confirmed', () => {
+    const applied: PriceHeal[] = []
+    const heal = createPriceHealer((h) => applied.push(h))
+    expect(heal(stale, [r2, r1], false)).toBe(0)
+    expect(applied).toEqual([])
+  })
+
+  it('applies a correction once, however often it is asked again', () => {
+    const applied: PriceHeal[] = []
+    const heal = createPriceHealer((h) => applied.push(h))
+    expect(heal(stale, [r2, r1], true)).toBe(1)
+    expect(heal(stale, [r2, r1], true)).toBe(0)
+    expect(applied).toEqual([{ itemCode: 'SCR-01', priceMinor: 15_000 }])
+  })
+
+  it('applies a later, different correction for the same item', () => {
+    const applied: PriceHeal[] = []
+    const heal = createPriceHealer((h) => applied.push(h))
+    heal(stale, [r2, r1], true)
+    const r4 = buy('r4', '2026-10-14', 2, 16_000)
+    heal(stale, [r2, r1, r4], true)
+    expect(applied.map((h) => h.priceMinor)).toEqual([15_000, 16_000])
+  })
+
+  it('applies nothing when nothing is wrong', () => {
+    const applied: PriceHeal[] = []
+    const heal = createPriceHealer((h) => applied.push(h))
+    expect(heal([itemAt(15_000, 6)], [r2, r1], true)).toBe(0)
+    expect(applied).toEqual([])
   })
 })

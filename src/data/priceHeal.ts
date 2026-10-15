@@ -70,3 +70,26 @@ export function planPriceHeals(
   }
   return out
 }
+
+/**
+ * Applies the corrections once each, and only from a view that the server has confirmed (nothing
+ * read from the cache, nothing still waiting to be sent): a decision taken on a stale view could
+ * itself be the wrong write. Returns how many it applied, for the caller and the tests.
+ */
+export function createPriceHealer(
+  apply: (heal: PriceHeal) => void,
+): (items: readonly Item[], movements: readonly MovementDoc[], confirmed: boolean) => number {
+  const attempted = new Set<string>()
+  return (items, movements, confirmed) => {
+    if (!confirmed) return 0
+    let applied = 0
+    for (const heal of planPriceHeals(items, movements)) {
+      const key = `${heal.itemCode}:${heal.priceMinor}`
+      if (attempted.has(key)) continue
+      attempted.add(key)
+      apply(heal)
+      applied += 1
+    }
+    return applied
+  }
+}

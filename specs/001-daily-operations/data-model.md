@@ -107,6 +107,16 @@ ID schemes:
 3. GTIN links made by the receipt **stay**, because the barcode-to-item fact is still true.
 4. Set `status = cancelled`. This is one atomic batch.
 
+### Price convergence (client only)
+
+An item's `priceMinor` is the price of its latest purchase by business date, but a post writes it from
+what the device saw, so a receipt posted offline and synced late can put an older purchase's price over
+a newer one (the last write to reach the server wins). The client corrects exactly that signature, and
+only from a view the server has confirmed (nothing from the cache, nothing pending): the purchase
+(`إضافة` from a receipt or the import, not reversed) written last is older by business date than the
+latest one, the item holds exactly its price, and the item was last written by that post. The price is
+then set to the latest purchase's. A price set by hand afterwards is never touched.
+
 ## `issueBatches/{id}` (UUID)
 
 | Field | Type | Notes |
