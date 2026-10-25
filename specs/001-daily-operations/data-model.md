@@ -112,10 +112,13 @@ ID schemes:
 An item's `priceMinor` is the price of its latest purchase by business date, but a post writes it from
 what the device saw, so a receipt posted offline and synced late can put an older purchase's price over
 a newer one (the last write to reach the server wins). The client corrects exactly that signature, and
-only from a view the server has confirmed (nothing from the cache, nothing pending): the purchase
-(`إضافة` from a receipt or the import, not reversed) written last is older by business date than the
-latest one, the item holds exactly its price, and the item was last written by that post. The price is
-then set to the latest purchase's. A price set by hand afterwards is never touched.
+only from a view the server has confirmed (nothing from the cache, nothing pending): the item was last
+written by the post of a purchase (`إضافة` from a receipt or the import, not reversed), shown by its
+`updatedAt` equalling that movement's `postedAt` (one batch, one server time), it holds exactly that
+purchase's price, and that purchase is older by business date than the latest one. Later posts that
+did not write the item (same price as their device saw) do not hide it. The price is then set to the
+latest purchase's. A price set by hand afterwards is never touched, and neither is one a backup restore
+wrote (the restore stamps movements after their items, so the times never match).
 
 ## `issueBatches/{id}` (UUID)
 

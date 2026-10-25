@@ -35,6 +35,15 @@ describe('planPriceHeals: an older receipt that reached the server last', () => 
     expect(planPriceHeals([itemAt(15_000, 6)], [r2, r1])).toEqual([])
   })
 
+  it('heals when a later late purchase at the same price did not write the item', () => {
+    // The phone, offline, posted R1 and then R0 (11 Oct, 120). R0 saw 120 already, so it wrote
+    // no item: the item was last written by R1, not by the purchase that reached the server last.
+    const r0 = buy('r0', '2026-10-11', 7, 12_000)
+    expect(planPriceHeals([itemAt(12_000, 5)], [r2, r1, r0])).toEqual([
+      { itemCode: 'SCR-01', priceMinor: 15_000, staleMovementId: 'r1' },
+    ])
+  })
+
   it('leaves a price the owner set by hand after the late purchase', () => {
     expect(planPriceHeals([itemAt(12_000, 9)], [r2, r1])).toEqual([])
     expect(planPriceHeals([itemAt(13_000, 9)], [r2, r1])).toEqual([])
@@ -114,6 +123,17 @@ describe('planPriceHeals: what it never touches', () => {
     })
     const later = buy('r1', '2026-10-01', 2, 15_000)
     expect(planPriceHeals([itemAt(15_000, 2)], [imp, later])).toEqual([])
+  })
+
+  it('leaves the price a backup restore wrote, although the movements are stamped later', () => {
+    // A restore writes the items in one batch (at 3) and the movements after it (at 4, or later
+    // batches), so a purchase that is older by date can read as written last. The owner had set
+    // the price back to 120 by hand; that must survive.
+    const r2 = buy('a-r2', '2026-10-12', 4, 15_000)
+    const r1 = buy('b-r1', '2026-10-10', 4, 12_000)
+    expect(planPriceHeals([itemAt(12_000, 3)], [r2, r1])).toEqual([])
+    const r1Later = buy('r1', '2026-10-10', 6, 12_000)
+    expect(planPriceHeals([itemAt(12_000, 3)], [r2, r1Later])).toEqual([])
   })
 
   it('does nothing for an item whose update time is unknown', () => {
