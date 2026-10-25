@@ -158,8 +158,8 @@ export function DataProvider({ children }: { readonly children: ReactNode }) {
     [],
   )
   useEffect(() => {
-    healPrices(items, movements, confirmed.items && confirmed.movements)
-  }, [healPrices, items, movements, confirmed])
+    healPrices(items, movements, confirmed.items && confirmed.movements, receipts)
+  }, [healPrices, items, movements, receipts, confirmed])
 
   useEffect(() => {
     const refresh = (): void => {
