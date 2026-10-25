@@ -21,23 +21,31 @@ function newerByDate(a: MovementDoc, b: MovementDoc): number {
   return posted(a) - posted(b) || (a.id < b.id ? -1 : 1)
 }
 
-function newerByPosting(a: MovementDoc, b: MovementDoc): number {
-  return posted(a) - posted(b) || (a.id < b.id ? -1 : 1)
-}
-
 const maxBy = (list: readonly MovementDoc[], cmp: (a: MovementDoc, b: MovementDoc) => number) =>
   list.reduce((best, m) => (cmp(m, best) > 0 ? m : best))
+
+/**
+ * The purchase whose post last wrote the item at its current price. A post writes the item and its
+ * movements in one batch, so they share one server time. Nothing else matches: a hand edit has no
+ * movement, and a restore stamps movements after their items.
+ */
+function writerOf(item: Item, purchases: readonly MovementDoc[]): MovementDoc | undefined {
+  const writtenAt = toMillis(item.updatedAt)
+  if (writtenAt <= 0) return undefined
+  return purchases.find((p) => posted(p) === writtenAt && p.priceMinor === item.priceMinor)
+}
 
 /**
  * The price follows the latest purchase, but it is written from whatever a device saw when it
  * posted, so a receipt posted offline and synced late can put an older purchase's price over a
  * newer one (the last write to reach the server wins). That leaves a signature in the ledger: the
- * purchase written last is older by business date than the latest one, the item holds exactly its
- * price, and the item was last written by that very post (not edited since).
+ * item was last written by a purchase's post, at that purchase's price, and that purchase is older
+ * by business date than the latest one. Later posts that did not write the item (same price, as
+ * their device saw it) do not hide it.
  *
  * Only that case is corrected, to the price of the latest purchase by business date. A price the
- * owner set by hand afterwards (the item is newer than the last purchase) is never touched,
- * neither is one that differs from the late purchase, and cancelled purchases do not count.
+ * owner set by hand afterwards (no purchase was posted with it) is never touched, neither is one
+ * that differs from the writing purchase, and cancelled purchases do not count.
  */
 export function planPriceHeals(
   items: readonly Item[],
@@ -57,17 +65,13 @@ export function planPriceHeals(
     const purchases = byItem.get(item.code)
     if (!purchases || purchases.length < 2) continue
     const latest = maxBy(purchases, newerByDate)
-    const last = maxBy(purchases, newerByPosting)
-    const itemWrittenAt = toMillis(item.updatedAt)
-    const lateAndOlder = last.id !== latest.id && last.businessDate < latest.businessDate
+    const writer = writerOf(item, purchases)
     if (
-      lateAndOlder &&
-      item.priceMinor === last.priceMinor &&
-      last.priceMinor !== latest.priceMinor &&
-      itemWrittenAt > 0 &&
-      itemWrittenAt <= posted(last)
+      writer &&
+      writer.businessDate < latest.businessDate &&
+      writer.priceMinor !== latest.priceMinor
     ) {
-      out.push({ itemCode: item.code, priceMinor: latest.priceMinor, staleMovementId: last.id })
+      out.push({ itemCode: item.code, priceMinor: latest.priceMinor, staleMovementId: writer.id })
     }
   }
   return out
