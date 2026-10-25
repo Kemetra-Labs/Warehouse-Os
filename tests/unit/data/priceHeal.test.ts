@@ -19,6 +19,29 @@ const buy = (id: string, bd: string, at: number, priceMinor: number, over = {}) 
 
 const itemAt = (priceMinor: number, at: number) => item('SCR-01', { priceMinor, updatedAt: T(at) })
 
+type Movements = Parameters<typeof planPriceHeals>[1]
+
+/** One receipt per receipt purchase, each recording the price it wrote (the usual case). */
+const receiptsFor = (movements: Movements): Receipts =>
+  movements.flatMap((m) =>
+    m.type === 'إضافة' && m.source.kind === 'receipt' && m.source.id !== null
+      ? [
+          {
+            id: m.source.id,
+            priceUpdates: [{ itemCode: m.itemCode, fromMinor: 0, toMinor: m.priceMinor }],
+          },
+        ]
+      : [],
+  )
+
+type Receipts = Parameters<typeof planPriceHeals>[2]
+
+const plan = (
+  items: Parameters<typeof planPriceHeals>[0],
+  movements: Movements,
+  receipts: Receipts = receiptsFor(movements),
+) => planPriceHeals(items, movements, receipts)
+
 describe('planPriceHeals: an older receipt that reached the server last', () => {
   // The laptop posted R2 (12 Oct, 150) online; the phone posted R1 (10 Oct, 120) offline and it
   // synced afterwards, so the item holds 120 although the latest purchase is 150.
@@ -26,31 +49,31 @@ describe('planPriceHeals: an older receipt that reached the server last', () => 
   const r1 = buy('r1', '2026-10-10', 5, 12_000)
 
   it('puts the latest purchase price back', () => {
-    expect(planPriceHeals([itemAt(12_000, 5)], [r2, r1])).toEqual([
+    expect(plan([itemAt(12_000, 5)], [r2, r1])).toEqual([
       { itemCode: 'SCR-01', priceMinor: 15_000, staleMovementId: 'r1' },
     ])
   })
 
   it('is settled once the price is the latest purchase price', () => {
-    expect(planPriceHeals([itemAt(15_000, 6)], [r2, r1])).toEqual([])
+    expect(plan([itemAt(15_000, 6)], [r2, r1])).toEqual([])
   })
 
   it('heals when a later late purchase at the same price did not write the item', () => {
     // The phone, offline, posted R1 and then R0 (11 Oct, 120). R0 saw 120 already, so it wrote
     // no item: the item was last written by R1, not by the purchase that reached the server last.
     const r0 = buy('r0', '2026-10-11', 7, 12_000)
-    expect(planPriceHeals([itemAt(12_000, 5)], [r2, r1, r0])).toEqual([
+    expect(plan([itemAt(12_000, 5)], [r2, r1, r0])).toEqual([
       { itemCode: 'SCR-01', priceMinor: 15_000, staleMovementId: 'r1' },
     ])
   })
 
   it('leaves a price the owner set by hand after the late purchase', () => {
-    expect(planPriceHeals([itemAt(12_000, 9)], [r2, r1])).toEqual([])
-    expect(planPriceHeals([itemAt(13_000, 9)], [r2, r1])).toEqual([])
+    expect(plan([itemAt(12_000, 9)], [r2, r1])).toEqual([])
+    expect(plan([itemAt(13_000, 9)], [r2, r1])).toEqual([])
   })
 
   it('leaves a price that is not the late purchase price', () => {
-    expect(planPriceHeals([itemAt(13_000, 5)], [r2, r1])).toEqual([])
+    expect(plan([itemAt(13_000, 5)], [r2, r1])).toEqual([])
   })
 
   it('does not count a cancelled purchase', () => {
@@ -66,7 +89,7 @@ describe('planPriceHeals: an older receipt that reached the server last', () => 
       source: { kind: 'manual', id: null },
     })
     // Only R1 is left: nothing to correct towards.
-    expect(planPriceHeals([itemAt(12_000, 5)], [r2, r1, cancelR2])).toEqual([])
+    expect(plan([itemAt(12_000, 5)], [r2, r1, cancelR2])).toEqual([])
   })
 
   it('heals to the latest purchase that is still standing when the newest was cancelled', () => {
@@ -82,7 +105,7 @@ describe('planPriceHeals: an older receipt that reached the server last', () => 
       businessDate: '2026-10-13',
       source: { kind: 'manual', id: null },
     })
-    expect(planPriceHeals([itemAt(12_000, 5)], [r2, r3, r1, cancelR2])).toEqual([
+    expect(plan([itemAt(12_000, 5)], [r2, r3, r1, cancelR2])).toEqual([
       { itemCode: 'SCR-01', priceMinor: 14_000, staleMovementId: 'r1' },
     ])
   })
@@ -90,21 +113,21 @@ describe('planPriceHeals: an older receipt that reached the server last', () => 
 
 describe('planPriceHeals: what it never touches', () => {
   it('needs two purchases', () => {
-    expect(planPriceHeals([itemAt(12_000, 5)], [buy('r1', '2026-10-10', 5, 12_000)])).toEqual([])
-    expect(planPriceHeals([itemAt(12_000, 5)], [])).toEqual([])
+    expect(plan([itemAt(12_000, 5)], [buy('r1', '2026-10-10', 5, 12_000)])).toEqual([])
+    expect(plan([itemAt(12_000, 5)], [])).toEqual([])
   })
 
   it('leaves purchases in order, whatever their prices', () => {
     const a = buy('a', '2026-10-10', 1, 12_000)
     const b = buy('b', '2026-10-12', 5, 15_000)
-    expect(planPriceHeals([itemAt(15_000, 5)], [a, b])).toEqual([])
+    expect(plan([itemAt(15_000, 5)], [a, b])).toEqual([])
   })
 
   it('does not treat two lines of one receipt (same date, same post) as out of order', () => {
     const a = buy('a-L1', '2026-10-12', 5, 12_000)
     const b = buy('a-L2', '2026-10-12', 5, 15_000)
-    expect(planPriceHeals([itemAt(15_000, 5)], [a, b])).toEqual([])
-    expect(planPriceHeals([itemAt(12_000, 5)], [a, b])).toEqual([])
+    expect(plan([itemAt(15_000, 5)], [a, b])).toEqual([])
+    expect(plan([itemAt(12_000, 5)], [a, b])).toEqual([])
   })
 
   it('ignores movements that are not purchases: issues, returns, manual additions', () => {
@@ -114,7 +137,7 @@ describe('planPriceHeals: what it never touches', () => {
       buy('x2', '2026-10-10', 5, 12_000, { type: 'مرتجع' }),
       buy('x3', '2026-10-10', 5, 12_000, { source: { kind: 'manual', id: null } }),
     ]
-    expect(planPriceHeals([itemAt(12_000, 5)], [r2, ...late])).toEqual([])
+    expect(plan([itemAt(12_000, 5)], [r2, ...late])).toEqual([])
   })
 
   it('counts imported purchases, which carry the item price they were imported with', () => {
@@ -122,7 +145,7 @@ describe('planPriceHeals: what it never touches', () => {
       source: { kind: 'import', id: null, row: 5 },
     })
     const later = buy('r1', '2026-10-01', 2, 15_000)
-    expect(planPriceHeals([itemAt(15_000, 2)], [imp, later])).toEqual([])
+    expect(plan([itemAt(15_000, 2)], [imp, later])).toEqual([])
   })
 
   it('leaves the price a backup restore wrote, although the movements are stamped later', () => {
@@ -131,16 +154,125 @@ describe('planPriceHeals: what it never touches', () => {
     // the price back to 120 by hand; that must survive.
     const r2 = buy('a-r2', '2026-10-12', 4, 15_000)
     const r1 = buy('b-r1', '2026-10-10', 4, 12_000)
-    expect(planPriceHeals([itemAt(12_000, 3)], [r2, r1])).toEqual([])
+    expect(plan([itemAt(12_000, 3)], [r2, r1])).toEqual([])
     const r1Later = buy('r1', '2026-10-10', 6, 12_000)
-    expect(planPriceHeals([itemAt(12_000, 3)], [r2, r1Later])).toEqual([])
+    expect(plan([itemAt(12_000, 3)], [r2, r1Later])).toEqual([])
+  })
+
+  describe('a receipt post that did not write the price', () => {
+    // R1 (10 Oct, 120) saw the item at 120 already, so its post only linked a GTIN: it stamped the
+    // item's update time but wrote no price. The owner had set 120 by hand before that, below the
+    // latest purchase (R2, 150), and that must survive.
+    const r2 = buy('r2', '2026-10-12', 1, 15_000)
+    const r1 = buy('r1', '2026-10-10', 5, 12_000)
+    const r2Prices = {
+      id: 'doc-r2',
+      priceUpdates: [{ itemCode: 'SCR-01', fromMinor: 0, toMinor: 15_000 }],
+    }
+
+    it('leaves a hand-set price when the late receipt only linked a GTIN', () => {
+      const gtinOnly = { id: 'doc-r1', priceUpdates: [] }
+      expect(plan([itemAt(12_000, 5)], [r2, r1], [r2Prices, gtinOnly])).toEqual([])
+    })
+
+    it('leaves the price when the late receipt priced a different item', () => {
+      const other = {
+        id: 'doc-r1',
+        priceUpdates: [{ itemCode: 'SCR-02', fromMinor: 0, toMinor: 12_000 }],
+      }
+      expect(plan([itemAt(12_000, 5)], [r2, r1], [r2Prices, other])).toEqual([])
+    })
+
+    it('leaves the price when the late receipt wrote another price than the one held', () => {
+      const other = {
+        id: 'doc-r1',
+        priceUpdates: [{ itemCode: 'SCR-01', fromMinor: 0, toMinor: 11_000 }],
+      }
+      expect(plan([itemAt(12_000, 5)], [r2, r1], [r2Prices, other])).toEqual([])
+    })
+
+    it('does nothing while the receipt is not known yet', () => {
+      expect(plan([itemAt(12_000, 5)], [r2, r1], [r2Prices])).toEqual([])
+    })
+
+    it('still heals when the late receipt did write that price', () => {
+      const wrote = {
+        id: 'doc-r1',
+        priceUpdates: [{ itemCode: 'SCR-01', fromMinor: 15_000, toMinor: 12_000 }],
+      }
+      expect(plan([itemAt(12_000, 5)], [r2, r1], [r2Prices, wrote])).toEqual([
+        { itemCode: 'SCR-01', priceMinor: 15_000, staleMovementId: 'r1' },
+      ])
+    })
+
+    it('leaves the price when a later GTIN-only post stamped the item after the late overwrite', () => {
+      // R1 overwrote the price (150 -> 120); R0 (11 Oct, 120) then only linked a GTIN. The signature
+      // now points at R0, which wrote no price, and it cannot be told from a hand-set price.
+      const r0 = buy('r0', '2026-10-11', 7, 12_000)
+      const wrote = {
+        id: 'doc-r1',
+        priceUpdates: [{ itemCode: 'SCR-01', fromMinor: 15_000, toMinor: 12_000 }],
+      }
+      const gtinOnly = { id: 'doc-r0', priceUpdates: [] }
+      expect(plan([itemAt(12_000, 7)], [r2, r1, r0], [r2Prices, wrote, gtinOnly])).toEqual([])
+    })
+
+    it('does nothing for a receipt purchase that names no receipt', () => {
+      const orphan = buy('r1', '2026-10-10', 5, 12_000, { source: { kind: 'receipt', id: null } })
+      expect(plan([itemAt(12_000, 5)], [r2, orphan], [r2Prices])).toEqual([])
+    })
+
+    it('uses the last line price when one receipt has two lines for the item', () => {
+      // planPrices keeps the last line's price, so that is the price the post wrote.
+      const l1 = buy('r1-L1', '2026-10-10', 5, 11_000, {
+        source: { kind: 'receipt', id: 'doc-r1' },
+      })
+      const l2 = buy('r1-L2', '2026-10-10', 5, 12_000, {
+        source: { kind: 'receipt', id: 'doc-r1' },
+      })
+      const wrote = {
+        id: 'doc-r1',
+        priceUpdates: [{ itemCode: 'SCR-01', fromMinor: 15_000, toMinor: 12_000 }],
+      }
+      expect(plan([itemAt(12_000, 5)], [r2, l1, l2], [r2Prices, wrote])).toEqual([
+        { itemCode: 'SCR-01', priceMinor: 15_000, staleMovementId: 'r1-L2' },
+      ])
+    })
+
+    it('does not heal from a cancelled receipt that stays in the list', () => {
+      const cancelR1 = mov({
+        id: 'rev-r1',
+        type: 'تسوية',
+        qty: -5,
+        itemCode: 'SCR-01',
+        reverses: 'r1',
+        reason: 'غلط',
+        postedAt: T(7),
+        businessDate: '2026-10-13',
+        source: { kind: 'manual', id: null },
+      })
+      const wrote = {
+        id: 'doc-r1',
+        priceUpdates: [{ itemCode: 'SCR-01', fromMinor: 15_000, toMinor: 12_000 }],
+      }
+      expect(plan([itemAt(12_000, 5)], [r2, r1, cancelR1], [r2Prices, wrote])).toEqual([])
+    })
+
+    it('still heals an imported purchase, which has no receipt', () => {
+      const imp = buy('imp-r5', '2026-08-01', 5, 12_000, {
+        source: { kind: 'import', id: null, row: 5 },
+      })
+      expect(plan([itemAt(12_000, 5)], [r2, imp], [r2Prices])).toEqual([
+        { itemCode: 'SCR-01', priceMinor: 15_000, staleMovementId: 'imp-r5' },
+      ])
+    })
   })
 
   it('does nothing for an item whose update time is unknown', () => {
     const r2 = buy('r2', '2026-10-12', 1, 15_000)
     const r1 = buy('r1', '2026-10-10', 5, 12_000)
     const unknown = item('SCR-01', { priceMinor: 12_000, updatedAt: {} })
-    expect(planPriceHeals([unknown], [r2, r1])).toEqual([])
+    expect(plan([unknown], [r2, r1])).toEqual([])
   })
 
   it('works per item', () => {
@@ -148,7 +280,7 @@ describe('planPriceHeals: what it never touches', () => {
     const r1 = buy('r1', '2026-10-10', 5, 12_000)
     const other = buy('o1', '2026-10-10', 5, 500, { itemCode: 'SCR-02' })
     const items = [itemAt(12_000, 5), item('SCR-02', { priceMinor: 500, updatedAt: T(5) })]
-    expect(planPriceHeals(items, [r2, r1, other])).toEqual([
+    expect(plan(items, [r2, r1, other])).toEqual([
       { itemCode: 'SCR-01', priceMinor: 15_000, staleMovementId: 'r1' },
     ])
   })
@@ -162,41 +294,41 @@ describe('createPriceHealer', () => {
   it('applies nothing from a view the server has not confirmed', () => {
     const applied: PriceHeal[] = []
     const heal = createPriceHealer((h) => void applied.push(h))
-    expect(heal(stale, [r2, r1], false)).toBe(0)
+    expect(heal(stale, [r2, r1], false, receiptsFor([r2, r1]))).toBe(0)
     expect(applied).toEqual([])
   })
 
   it('applies a correction once, however often it is asked again', () => {
     const applied: PriceHeal[] = []
     const heal = createPriceHealer((h) => void applied.push(h))
-    expect(heal(stale, [r2, r1], true)).toBe(1)
-    expect(heal(stale, [r2, r1], true)).toBe(0)
+    expect(heal(stale, [r2, r1], true, receiptsFor([r2, r1]))).toBe(1)
+    expect(heal(stale, [r2, r1], true, receiptsFor([r2, r1]))).toBe(0)
     expect(applied).toEqual([{ itemCode: 'SCR-01', priceMinor: 15_000, staleMovementId: 'r1' }])
   })
 
   it('applies a later, different correction for the same item', () => {
     const applied: PriceHeal[] = []
     const heal = createPriceHealer((h) => void applied.push(h))
-    heal(stale, [r2, r1], true)
+    heal(stale, [r2, r1], true, receiptsFor([r2, r1]))
     const r4 = buy('r4', '2026-10-14', 2, 16_000)
-    heal(stale, [r2, r1, r4], true)
+    heal(stale, [r2, r1, r4], true, receiptsFor([r2, r1, r4]))
     expect(applied.map((h) => h.priceMinor)).toEqual([15_000, 16_000])
   })
 
   it('applies nothing when nothing is wrong', () => {
     const applied: PriceHeal[] = []
     const heal = createPriceHealer((h) => void applied.push(h))
-    expect(heal([itemAt(15_000, 6)], [r2, r1], true)).toBe(0)
+    expect(heal([itemAt(15_000, 6)], [r2, r1], true, receiptsFor([r2, r1]))).toBe(0)
     expect(applied).toEqual([])
   })
 
   it('corrects a second late overwrite of the same item to the same price in one session', async () => {
     const applied: PriceHeal[] = []
     const heal = createPriceHealer((h) => void applied.push(h))
-    heal(stale, [r2, r1], true)
+    heal(stale, [r2, r1], true, receiptsFor([r2, r1]))
     // Later the same tab sees another older receipt (R0, 9 Oct, 130) arrive last and win.
     const r0 = buy('r0', '2026-10-09', 9, 13_000)
-    expect(heal([itemAt(13_000, 9)], [r2, r1, r0], true)).toBe(1)
+    expect(heal([itemAt(13_000, 9)], [r2, r1, r0], true, receiptsFor([r2, r1, r0]))).toBe(1)
     expect(applied.map((h) => [h.staleMovementId, h.priceMinor])).toEqual([
       ['r1', 15_000],
       ['r0', 15_000],
@@ -210,7 +342,7 @@ describe('createPriceHealer', () => {
       return Promise.reject(new Error('denied'))
     })
     for (let i = 0; i < 6; i += 1) {
-      heal(stale, [r2, r1], true)
+      heal(stale, [r2, r1], true, receiptsFor([r2, r1]))
       await Promise.resolve()
       await Promise.resolve()
     }
@@ -226,11 +358,11 @@ describe('createPriceHealer', () => {
         finish = resolve
       })
     })
-    heal(stale, [r2, r1], true)
-    heal(stale, [r2, r1], true)
+    heal(stale, [r2, r1], true, receiptsFor([r2, r1]))
+    heal(stale, [r2, r1], true, receiptsFor([r2, r1]))
     finish()
     await Promise.resolve()
-    heal(stale, [r2, r1], true)
+    heal(stale, [r2, r1], true, receiptsFor([r2, r1]))
     expect(calls).toBe(1)
   })
 })
